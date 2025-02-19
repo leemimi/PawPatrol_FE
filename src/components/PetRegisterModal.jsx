@@ -75,7 +75,7 @@ const PetRegisterModal = ({ isOpen, onClose, onSubmit, petFormData, setPetFormDa
                         <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-200 rounded">
                             취소
                         </button>
-                        <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded">
+                        <button type="submit" className="px-4 py-2 bg-orange-500 text-white rounded">
                             등록하기
                         </button>
                     </div>

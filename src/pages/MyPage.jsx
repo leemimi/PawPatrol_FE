@@ -156,21 +156,13 @@ const MyPage = () => {
         formData.append('file', file);
 
         try {
-            const response = await fetch(
-                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/users/profile-image`,
-                {
-                    method: 'POST',
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
-                    },
-                    body: formData,
-                }
-            );
+            // const response = await fetch(
+            // );
 
-            if (response.ok) {
-                const data = await response.json();
-                setProfileImage(data.profileImageUrl);
-            }
+            // if (response.ok) {
+            //     const data = await response.json();
+            //     setProfileImage(data.profileImageUrl);
+            // }
         } catch (error) {
             console.error('Image upload error:', error);
             alert('이미지 업로드 중 오류가 발생했습니다.');
@@ -179,22 +171,14 @@ const MyPage = () => {
 
     const handleUpdateProfile = async () => {
         try {
-            const response = await fetch(
-                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/users/profile`,
-                {
-                    method: 'PATCH',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
-                    },
-                    body: JSON.stringify({ nickname }),
-                }
-            );
+            // const response = await fetch(
 
-            if (response.ok) {
-                setIsEditing(false);
-                alert('프로필이 업데이트되었습니다.');
-            }
+            // );
+
+            // if (response.ok) {
+            //     setIsEditing(false);
+            //     alert('프로필이 업데이트되었습니다.');
+            // }
         } catch (error) {
             console.error('Profile update error:', error);
             alert('프로필 업데이트 중 오류가 발생했습니다.');
@@ -203,18 +187,13 @@ const MyPage = () => {
 
     const fetchMyPets = async () => {
         try {
-            const response = await fetch(
-                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/pets/my`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
-                    },
-                }
-            );
-            if (response.ok) {
-                const data = await response.json();
-                setMyPets(data);
-            }
+            // const response = await fetch(
+
+            // );
+            // if (response.ok) {
+            //     const data = await response.json();
+            //     setMyPets(data);
+            // }
         } catch (error) {
             console.error('Fetch pets error:', error);
         }
@@ -228,16 +207,9 @@ const MyPage = () => {
         });
 
         try {
-            const response = await fetch(
-                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/pets`,
-                {
-                    method: 'POST',
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
-                    },
-                    body: formData,
-                }
-            );
+            // const response = await fetch(
+
+            // );
             if (response.ok) {
                 alert('반려견 정보가 등록되었습니다.');
                 fetchMyPets();
@@ -261,54 +233,57 @@ const MyPage = () => {
     const fetchMyPosts = async () => {
         try {
             const [reportsRes, witnessesRes] = await Promise.all([
-                fetch(
-                    `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/reports/my`,
-                    {
-                        headers: {
-                            Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
-                        },
-                    }
-                ),
-                fetch(
-                    `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/witnesses/my`,
-                    {
-                        headers: {
-                            Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
-                        },
-                    }
-                )
+                // fetch(
+                //     `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/reports/my`,
+                //     {
+                //         headers: {
+                //             Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+                //         },
+                //     }
+                // ),
+                // fetch(
+                //     `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/witnesses/my`,
+                //     {
+                //         headers: {
+                //             Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+                //         },
+                //     }
+                // )
             ]);
 
-            if (reportsRes.ok && witnessesRes.ok) {
-                const [reports, witnesses] = await Promise.all([
-                    reportsRes.json(),
-                    witnessesRes.json()
-                ]);
-                setMyPosts({ reports, witnesses });
-            }
+            // if (reportsRes.ok && witnessesRes.ok) {
+            //     const [reports, witnesses] = await Promise.all([
+            //         reportsRes.json(),
+            //         witnessesRes.json()
+            //     ]);
+            //     setMyPosts({ reports, witnesses });
+            // }
         } catch (error) {
             console.error('Fetch posts error:', error);
         }
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 py-8">
+        <div className="min-h-screen bg-[#FFF5E6]">
             <div className="max-w-4xl mx-auto bg-white rounded-lg shadow p-8">
                 <div className="flex gap-4 mb-6">
                     <button
-                        className={`px-4 py-2 rounded ${activeTab === 'profile' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+                        className={`px-4 py-2 rounded ${activeTab === 'profile'
+                                ? 'bg-orange-500 text-white' // primary.main
+                                : 'bg-gray-200' // primary.light
+                            }`}
                         onClick={() => setActiveTab('profile')}
                     >
                         프로필
                     </button>
                     <button
-                        className={`px-4 py-2 rounded ${activeTab === 'pets' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+                        className={`px-4 py-2 rounded ${activeTab === 'pets' ? 'bg-orange-500 text-white' : 'bg-gray-200'}`}
                         onClick={() => setActiveTab('pets')}
                     >
                         반려견 관리
                     </button>
                     <button
-                        className={`px-4 py-2 rounded ${activeTab === 'posts' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+                        className={`px-4 py-2 rounded ${activeTab === 'posts' ? 'bg-orange-500 text-white' : 'bg-gray-200'}`}
                         onClick={() => setActiveTab('posts')}
                     >
                         게시글 관리
@@ -323,7 +298,7 @@ const MyPage = () => {
                                 alt="Profile"
                                 className="w-full h-full rounded-full object-cover"
                             />
-                            <label className="absolute bottom-0 right-0 bg-blue-600 p-2 rounded-full cursor-pointer">
+                            <label className="absolute bottom-0 right-0 bg-orange-500 p-2 rounded-full cursor-pointer">
                                 <input
                                     type="file"
                                     className="hidden"
@@ -357,7 +332,7 @@ const MyPage = () => {
                                 <div className="space-x-2">
                                     <button
                                         onClick={handleUpdateProfile}
-                                        className="px-4 py-2 bg-blue-600 text-white rounded-md"
+                                        className="px-4 py-2 bg-orange-500 text-white rounded-md"
                                     >
                                         저장
                                     </button>
@@ -439,7 +414,7 @@ const MyPage = () => {
                                             <button
                                                 type="button"
                                                 onClick={handlePhoneVerification}
-                                                className="px-4 py-2 bg-blue-600 text-white rounded-md"
+                                                className="px-4 py-2 bg-orange-500 text-white rounded-md"
                                                 disabled={personalInfo.isPhoneVerified}
                                             >
                                                 인증요청
@@ -461,7 +436,7 @@ const MyPage = () => {
                                                 <button
                                                     type="button"
                                                     onClick={handleVerificationCodeCheck}
-                                                    className="px-4 py-2 bg-blue-600 text-white rounded-md"
+                                                    className="px-4 py-2 bg-orange-500 text-white rounded-md"
                                                 >
                                                     확인
                                                 </button>
@@ -471,7 +446,7 @@ const MyPage = () => {
 
                                     <button
                                         type="submit"
-                                        className="w-full px-4 py-2 bg-blue-600 text-white rounded-md mt-6"
+                                        className="w-full px-4 py-2 bg-orange-500 text-white rounded-md mt-6"
                                     >
                                         정보 수정
                                     </button>
@@ -498,7 +473,7 @@ const MyPage = () => {
                             <h2 className="text-2xl font-bold">내 반려견 목록</h2>
                             <button
                                 onClick={() => setIsModalOpen(true)}
-                                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                                className="px-4 py-2 bg-orange-500 text-white rounded hover:bg-[#FB8C00]"
                             >
                                 반려견 등록
                             </button>

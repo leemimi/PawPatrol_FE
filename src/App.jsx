@@ -6,6 +6,7 @@ import Login from './pages/Login'
 import MyPage from './pages/MyPage'
 import Register from './pages/Register'
 import LoginPet from './pages/LoginPet'
+import Layout from './layout/Layout.jsx'
 
 import ReportMissingPet  from './pages/ReportMissingPet'
 import { useAuthStore } from './stores/useAuthStore'
@@ -15,13 +16,15 @@ const App = () => {
 
   return (
       <Routes>
-        <Route path="/" element={<Main />} />
-        <Route path="/map" element={<MainMapView />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/mypage" element={<MyPage />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/login-pet" element={<LoginPet />} />
-        <Route path="/find" element={<ReportMissingPet/>} />
+        <Route element={<Layout />}>
+            <Route path="/" element={<Main />} />
+            <Route path="/map" element={<MainMapView />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/login-pet" element={<LoginPet />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/mypage" element={<MyPage />} />
+            <Route path="/find" element={<ReportMissingPet/>} />
+        </Route>
       </Routes>
   );
 };
