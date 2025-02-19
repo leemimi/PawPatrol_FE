@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { MapPin, ChevronRight, Search, MessageSquare, ChevronDown, Share, Dog, Cat, ChevronLeft, Menu, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import defaultImage from '../assets/images/default.png';
@@ -29,7 +29,7 @@ const Main = () => {
     return (
         <div className="h-screen w-full bg-dark text-white relative overflow-hidden">
             {/* Top Navigation */}
-            <div className="fixed top-0 left-0 right-0 z-20 bg-dark-light px-4 py-3 flex items-center justify-between">
+            <div className="fixed top-0 left-0 right-0 z-20 bg-zinc-900 px-4 py-3 flex items-center justify-between">
                 <button onClick={() => setIsMenuOpen(true)} className="p-2">
                     <Menu size={24} />
                 </button>
@@ -41,7 +41,7 @@ const Main = () => {
 
             {/* Slide-in Menu */}
             <div className={`fixed inset-0 z-30 transform ${isMenuOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out`}>
-                <div className="w-4/5 h-full bg-dark-light p-6">
+                <div className="w-4/5 h-full bg-zinc-900 p-6">
                     <div className="flex items-center gap-3 mb-8">
                         {isLoggedIn && userInfo ? (
                             <div className="w-10 h-10 rounded-full bg-gray-700 overflow-hidden">
@@ -67,7 +67,7 @@ const Main = () => {
 
                     <nav className="space-y-6">
                         <div className="space-y-2">
-                            <button className="w-full flex items-center gap-3 p-3 bg-dark-lighter rounded-lg">
+                            <button className="w-full flex items-center gap-3 p-3 bg-zinc-800 rounded-lg">
                                 <MapPin size={20} />
                                 <span>위치</span>
                                 <ChevronRight className="ml-auto" size={18} />
@@ -91,7 +91,7 @@ const Main = () => {
                         </div>
 
                         <div className="space-y-2">
-                            <button className="w-full flex items-center justify-between p-3 bg-dark-lighter rounded-lg">
+                            <button className="w-full flex items-center justify-between p-3 bg-zinc-800 rounded-lg">
                                 <span>목격 신고 정렬</span>
                                 <ChevronDown size={18} />
                             </button>
@@ -110,6 +110,7 @@ const Main = () => {
                 <div className="w-1/5 h-full bg-black/50" onClick={() => setIsMenuOpen(false)} />
             </div>
 
+            {/* 나머지 코드는 동일하게 유지 */}
             {/* Main Map Area */}
             <div className="h-full w-full bg-gray-900 pt-16">
                 {/* Map Overlay */}
@@ -131,7 +132,7 @@ const Main = () => {
             </div>
 
             {/* Bottom Info Panel */}
-            <div className="fixed bottom-0 left-0 right-0 bg-dark-light p-4 rounded-t-3xl">
+            <div className="fixed bottom-0 left-0 right-0 bg-zinc-900 p-4 rounded-t-3xl">
                 <div className="flex justify-between items-center mb-4">
                     {/* User Info */}
                     <div className="flex items-center gap-3">
@@ -159,14 +160,14 @@ const Main = () => {
                     </button>
                 </div>
 
-                <button className="w-full bg-primary py-3 rounded-lg font-medium">
+                <button className="w-full bg-orange-500 hover:bg-orange-600 py-3 rounded-lg font-medium transition-colors">
                     긴급 제보하기
                 </button>
             </div>
 
             {/* Detail Slide-up Panel */}
             <div className={`fixed inset-0 z-40 transform ${isDetailOpen ? 'translate-y-0' : 'translate-y-full'} transition-transform duration-300 ease-in-out`}>
-                <div className="absolute inset-0 bg-dark">
+                <div className="absolute inset-0 bg-zinc-900">
                     <div className="flex items-center justify-between p-4 border-b border-gray-800">
                         <button onClick={() => setIsDetailOpen(false)}>
                             <ChevronLeft size={24} />
@@ -200,7 +201,7 @@ const Main = () => {
 
                         <div className="space-y-2">
                             {petSightings.map((sight) => (
-                                <div key={sight.id} className="p-3 bg-dark-lighter rounded-lg flex items-center gap-2">
+                                <div key={sight.id} className="p-3 bg-zinc-800 rounded-lg flex items-center gap-2">
                                     <div className="w-2 h-2 bg-orange-400 rounded-full"></div>
                                     <span className="text-sm">{sight.location}</span>
                                 </div>
