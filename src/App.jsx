@@ -1,16 +1,14 @@
 import { useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import Main from './pages/Main'
-import Login from './pages/Login'
-import { useAuthStore } from './stores/useAuthStore'
+import Layout from './layout/Layout'
 import './index.css';
 
 const App = () => {
 
   return (
       <Routes>
-        <Route path="/" element={<Main />} />
-        <Route path="/login" element={<Login />} />
+        <Route element={<Layout />}>
+        </Route>
       </Routes>
   );
 };
