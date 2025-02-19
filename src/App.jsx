@@ -4,6 +4,7 @@ import Main from './pages/Main'
 import MainMapView from './pages/MainMapView'
 import Login from './pages/Login'
 import LoginPet from './pages/LoginPet'
+import Layout from './layout/Layout.jsx'
 
 import ReportMissingPet  from './pages/ReportMissingPet'
 import { useAuthStore } from './stores/useAuthStore'
@@ -13,11 +14,13 @@ const App = () => {
 
   return (
       <Routes>
-        <Route path="/" element={<Main />} />
-        <Route path="/map" element={<MainMapView />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/login-pet" element={<LoginPet />} />
-        <Route path="/find" element={<ReportMissingPet/>} />
+        <Route element={<Layout />}>
+            <Route path="/" element={<Main />} />
+            <Route path="/map" element={<MainMapView />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/login-pet" element={<LoginPet />} />
+            <Route path="/find" element={<ReportMissingPet/>} />
+        </Route>
       </Routes>
   );
 };
