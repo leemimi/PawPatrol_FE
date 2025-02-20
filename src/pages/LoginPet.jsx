@@ -1,23 +1,30 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import puppyLogo from '../assets/images/pet.png';
 
 const LoginScreen = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const navigate = useNavigate();
 
     const handleLogin = (e) => {
         e.preventDefault();
         console.log('Login attempt:', { email, password });
     };
 
+    const handleClickSignUp = () => {
+        navigate('/sign-up');
+    };
+
+
     return (
         <div className="min-h-screen bg-orange-50 flex flex-col items-center justify-center p-4">
             {/* Logo Section */}
             <div className="w-full max-w-md flex flex-col items-center mb-8">
                 <div className="relative mb-2">
-                    <img 
+                    <img
                         src={puppyLogo}
-                        alt="PawPatrol Logo" 
+                        alt="PawPatrol Logo"
                         className="w-90 h-90"
                     />
                     <h1 className="text-2xl font-bold text-orange-900 absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-orange-50 px-2">
@@ -79,7 +86,12 @@ const LoginScreen = () => {
                 <div className="flex items-center justify-center space-x-4 text-sm text-gray-600">
                     <button className="hover:text-orange-500">비밀번호 찾기</button>
                     <span>•</span>
-                    <button className="hover:text-orange-500">회원가입</button>
+                    <button
+                        className="hover:text-orange-500"
+                        onClick={handleClickSignUp}
+                    >
+                        회원가입
+                    </button>
                 </div>
             </div>
         </div>
