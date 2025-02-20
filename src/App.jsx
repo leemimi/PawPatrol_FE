@@ -4,7 +4,7 @@ import Main from './pages/Main'
 import MainMapView from './pages/MainMapView'
 import Login from './pages/Login'
 import MyPage from './pages/MyPage'
-import Register from './pages/Register'
+import SignUp from './pages/SignUpPage'
 import LoginPet from './pages/LoginPet'
 import Layout from './layout/Layout.jsx'
 
@@ -21,7 +21,7 @@ const App = () => {
             <Route path="/map" element={<MainMapView />} />
             <Route path="/login" element={<Login />} />
             <Route path="/login-pet" element={<LoginPet />} />
-            <Route path="/register" element={<Register />} />
+            <Route path="/sign-up" element={<SignUp />} />
             <Route path="/mypage" element={<MyPage />} />
             <Route path="/find" element={<ReportMissingPet/>} />
         </Route>
