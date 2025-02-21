@@ -1,13 +1,8 @@
 import { useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import Main from './pages/Main'
-import MainMapView from './pages/MainMapView'
+import Layout from './layout/Layout'
+import Map from './pages/Map'
 import Login from './pages/Login'
-import LoginPet from './pages/LoginPet'
-import Layout from './layout/Layout.jsx'
-
-import ReportMissingPet  from './pages/ReportMissingPet'
-import { useAuthStore } from './stores/useAuthStore'
 import './index.css';
 
 const App = () => {
@@ -15,11 +10,8 @@ const App = () => {
   return (
       <Routes>
         <Route element={<Layout />}>
-            <Route path="/" element={<Main />} />
-            <Route path="/map" element={<MainMapView />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/login-pet" element={<LoginPet />} />
-            <Route path="/find" element={<ReportMissingPet/>} />
+         <Route path="/" element={<Map/>} />
+         <Route path="/login" element={<Login/>} />
         </Route>
       </Routes>
   );
