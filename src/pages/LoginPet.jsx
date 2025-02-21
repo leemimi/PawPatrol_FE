@@ -1,15 +1,54 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { replace, useNavigate } from 'react-router-dom';
 import puppyLogo from '../assets/images/pet.png';
+import axios from 'axios';
 
 const LoginScreen = () => {
+    const socialLoginForKakaoUrl = `http://localhost:8090/oauth2/authorization/kakao`; // 카카오 로그인 요청 URL
+    const socialLoginForGoogleUrl = `http://localhost:8090/oauth2/authorization/google`; // 구글 로그인 요청 URL
+    const socialLoginForNaverUrl = `http://localhost:8090/oauth2/authorization/naver`; // 네이버버 로그인 요청 URL
+    const redirectUrlAfterSocialLogin = import.meta.env.VITE_CORE_FRONT_BASE_URL;   // 소셜 로그인 후 리다이렉트 URL
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const navigate = useNavigate();
 
-    const handleLogin = (e) => {
+    const handleLogin = async (e) => {
         e.preventDefault();
-        console.log('Login attempt:', { email, password });
+
+        const request = {
+            email: email,
+            password: password
+        }
+
+        try {
+            const login_response = await axios.post(
+                `http://localhost:8090/api/v2/auth/login`,
+                request
+            )
+
+            if (login_response.data.statusCode === 200 || login_response.data.statusCode === "200") {
+                const response = await axios.get(   // 로그인 유저 정보(내 정보) 가져오기 api
+                    `http://localhost:8090/api/v2/auth/me`,
+                    { withCredentials: true }
+                )
+
+                // 로그인 성공시
+                if (response) {
+                    const loginUserInfo = {
+                        email: response.data.data.email,
+                        nickname: response.data.data.nickname
+                    };
+
+                    localStorage.setItem('userInfo', JSON.stringify(loginUserInfo));
+                    localStorage.setItem('isLoggedIn', 'true');
+
+                    // 메인 페이지로 이동
+                    navigate('/', { replace: true });
+                }
+            }
+        } catch (error) {
+            alert('로그인 실패');
+        }
     };
 
     const handleClickSignUp = () => {
@@ -74,12 +113,22 @@ const LoginScreen = () => {
 
                 {/* Social Login Buttons */}
                 <div className="space-y-3">
-                    <button className="w-full bg-yellow-400 text-yellow-900 py-3 rounded-xl font-medium hover:bg-yellow-500 transition-colors flex items-center justify-center gap-2">
+                    <a
+                        href={`${socialLoginForKakaoUrl}?redirectUrl=${redirectUrlAfterSocialLogin}`}
+                        className="w-full bg-yellow-400 text-yellow-900 py-3 rounded-xl font-medium hover:bg-yellow-500 transition-colors flex items-center justify-center gap-2"
+                    >
                         카카오로 시작하기
-                    </button>
-                    <button className="w-full bg-white border border-gray-200 text-gray-700 py-3 rounded-xl font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-2">
+                    </a>
+                    <a
+                        href={`${socialLoginForGoogleUrl}?redirectUrl=${redirectUrlAfterSocialLogin}`}
+                        className="w-full bg-white border border-gray-200 text-gray-700 py-3 rounded-xl font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-2">
                         Google로 시작하기
-                    </button>
+                    </a>
+                    <a
+                        href={`${socialLoginForNaverUrl}?redirectUrl=${redirectUrlAfterSocialLogin}`}
+                        className="w-full bg-white border border-gray-200 text-gray-700 py-3 rounded-xl font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-2">
+                        네이버로 시작하기
+                    </a>
                 </div>
 
                 {/* Bottom Links */}
