@@ -29,9 +29,13 @@ const SignUp = () => {
                 }
             );
 
-            if (response.ok) {
+            const responseData = await response.json(); // Json형태의 응답을 받기 위한 설정
+
+            if (responseData.statusCode === 200) {
                 alert('인증 이메일이 발송되었습니다. 이메일을 확인해주세요.');
                 setIsEmailSent(true);
+            } else if (responseData.statusCode === 400) {
+                alert(responseData.message);
             } else {
                 alert('이메일 인증 발송에 실패했습니다.');
             }
