@@ -27,7 +27,7 @@ const LoginScreen = () => {
             )
 
             if (login_response.data.statusCode === 200 || login_response.data.statusCode === "200") {
-                const response = await axios.get(   // 로그인 유저 정보(내 정보) 가져오기 api
+                const response = await axios.get(   // 로그인 유저 정보(내 정보) 가져오기 api, 로그인 상태로 전환하는데 씀
                     `http://localhost:8090/api/v2/auth/me`,
                     { withCredentials: true }
                 )
