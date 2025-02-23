@@ -7,6 +7,7 @@ import MyPage from './pages/MyPage'
 import SignUp from './pages/SignUpPage'
 import LoginPet from './pages/LoginPet'
 import Layout from './layout/Layout.jsx'
+import SocialConnect from './pages/SocialConnectPage'
 
 import ReportMissingPet  from './pages/ReportMissingPet'
 import { useAuthStore } from './stores/useAuthStore'
@@ -24,6 +25,7 @@ const App = () => {
             <Route path="/sign-up" element={<SignUp />} />
             <Route path="/mypage" element={<MyPage />} />
             <Route path="/find" element={<ReportMissingPet/>} />
+            <Route path="/connect" element={<SocialConnect/>} />
         </Route>
       </Routes>
   );
