@@ -4,6 +4,7 @@ import defaultImage from '../assets/images/default.png';
 import PetRegisterModal from '../components/PetRegisterModal.jsx';
 import PetTypeSelectModal from '../components/PetTypeSelectModal';
 import { replace, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 // 실종 신고글 더미 데이터
 const dummyReports = [
@@ -89,9 +90,8 @@ const MyPage = () => {
     const [profileImage, setProfileImage] = useState(defaultImage);
     const [nickname, setNickname] = useState('');
     const [isEditing, setIsEditing] = useState(false);
-    // const [myPets, setMyPets] = useState([]);
+    const [myPets, setMyPets] = useState([]);
     // const [myPosts, setMyPosts] = useState({ reports: [], witnesses: [] });
-    const [myPets, setMyPets] = useState(dummyPets);
     const navigate = useNavigate();
     const [isTypeSelectOpen, setIsTypeSelectOpen] = useState(false);
     const [isRegisterOpen, setIsRegisterOpen] = useState(false);
@@ -151,7 +151,7 @@ const MyPage = () => {
 
             // 모달 닫기
             setIsRegisterOpen(false);  // PetRegisterModal 닫기
-
+            await fetchMyPets();
             setPetFormData({  // 폼 초기화
                 name: '',
                 breed: '',
@@ -201,21 +201,6 @@ const MyPage = () => {
             alert('로그아웃 중 오류가 발생했습니다.');
         }
     };
-
-    useEffect(() => {
-        if (userInfo) {
-            setNickname(userInfo.nickname);
-            setProfileImage(
-                userInfo.profileImageUrl
-                    ? userInfo.profileImageUrl.startsWith('https://')
-                        ? userInfo.profileImageUrl
-                        : `${import.meta.env.VITE_NCP_STORAGE_URL}/${userInfo.profileImageUrl}`
-                    : defaultImage
-            );
-            fetchMyPets();
-            fetchMyPosts();
-        }
-    }, [userInfo]);
 
     // 핸들러 함수 추가
     const handleUpdatePersonalInfo = async (e) => {
@@ -273,15 +258,16 @@ const MyPage = () => {
         }
     };
 
+    // 내 반려동물 리스트 가져오기
     const fetchMyPets = async () => {
         try {
-            // const response = await fetch(
+            const response = await axios.get(`${import.meta.env.VITE_CORE_FRONT_BASE_URL}/api/v2/members/pets`, {
+                withCredentials: true
+            });
 
-            // );
-            // if (response.ok) {
-            //     const data = await response.json();
-            //     setMyPets(data);
-            // }
+            if (response.data.statusCode === 200) {
+                setMyPets(response.data.data);
+            }
         } catch (error) {
             console.error('Fetch pets error:', error);
         }
@@ -319,6 +305,15 @@ const MyPage = () => {
             console.error('Fetch posts error:', error);
         }
     };
+
+    useEffect(() => {
+        const userInfoStr = localStorage.getItem('userInfo');
+        const isLoggedIn = localStorage.getItem('isLoggedIn');
+
+        if (userInfoStr && isLoggedIn === 'true') {
+            fetchMyPets(); // 이미 정의된 함수 사용
+        }
+    }, []);
 
     return (
         <div className="min-h-screen bg-[#FFF5E6]">
@@ -556,9 +551,8 @@ const MyPage = () => {
                                         <h3 className="text-xl font-bold">{pet.name}</h3>
                                         <div className="text-gray-600">
                                             <p>품종: {pet.breed}</p>
-                                            <p>나이: {new Date().getFullYear() - new Date(pet.birthDate).getFullYear()}세</p>
                                             <p>특징: {pet.characteristics}</p>
-                                            <p>크기: {pet.size === 'SMALL' ? 'SMALL' : pet.size === 'MEDIUM' ? 'MEDIUM' : 'LARGE'}</p>
+                                            <p>크기: {pet.size}</p>
                                             <p>동물등록번호: {pet.registrationNumber}</p>
                                         </div>
                                     </div>
