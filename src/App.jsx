@@ -9,7 +9,7 @@ import LoginPet from './pages/LoginPet'
 // import Layout from './layout/Layout.jsx'
 import SocialConnect from './pages/SocialConnectPage'
 import OAuth2RedirectHandler from './components/OAuth2RedirectHandler';
-
+import './api/axiosConfig'; // axios 전역 인터셉터 설정, 토큰 만료시 로그아웃 처리
 import { useAuthStore } from './stores/useAuthStore'
 import './index.css';
 
