@@ -8,6 +8,7 @@ import SignUp from './pages/SignUpPage'
 import LoginPet from './pages/LoginPet'
 // import Layout from './layout/Layout.jsx'
 import SocialConnect from './pages/SocialConnectPage'
+import OAuth2RedirectHandler from './components/OAuth2RedirectHandler';
 
 import { useAuthStore } from './stores/useAuthStore'
 import './index.css';
@@ -23,7 +24,7 @@ const App = () => {
         <Route path="/mypage" element={<MyPage />} />
         <Route path="/connect" element={<SocialConnect />} />
         <Route path="/" element={<Map />} />
-        <Route path="/login" element={<Login />} />
+        <Route path="/oauth2/redirect" element={<OAuth2RedirectHandler />} />
       </Route>
     </Routes>
   );
