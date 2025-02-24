@@ -78,8 +78,8 @@ const Map = () => {
     // API 호출 함수 분리
     const fetchData = async (position, range, mode) => {
         const apiUrl = mode 
-            ? 'http://localhost:8090/api/lost-found/lost/map'
-            : 'http://localhost:8090/api/lost-found/find/map';
+            ? 'http://localhost:8090/api/v1/lostposts/map'
+            : 'http://localhost:8090/api/v1/findposts/map';
 
         try {
             const response = await axios.get(apiUrl, {
@@ -96,7 +96,6 @@ const Map = () => {
                     if (mode) {
                         return {
                             id: pet.lostId,
-                            title: pet.title,
                             content: pet.content,
                             status: pet.status,
                             image: '/api/placeholder/160/160',
@@ -105,16 +104,11 @@ const Map = () => {
                             position: {
                                 lat: pet.latitude,
                                 lng: pet.longitude
-                            },
-                            ownerPhone: pet.ownerPhone,
-                            tags: pet.tags
+                            }
                         };
                     } else {
                         return {
                             id: pet.foundId,
-                            breed: pet.breed,
-                            age: pet.birthDate ? new Date().getFullYear() - new Date(pet.birthDate).getFullYear() : null,
-                            gender: pet.gender === 'MALE' ? '수컷' : '암컷',
                             status: pet.status,
                             image: '/api/placeholder/160/160',
                             time: new Date(pet.findTime).toLocaleString(),
@@ -123,12 +117,7 @@ const Map = () => {
                                 lat: pet.latitude,
                                 lng: pet.longitude
                             },
-                            characteristics: pet.characteristics,
-                            name: pet.name,
-                            size: pet.size,
-                            title: pet.title,
-                            content: pet.content,
-                            tags: pet.tags
+                            content: pet.content
                         };
                     }
                 });
