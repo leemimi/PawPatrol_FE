@@ -15,9 +15,9 @@ export const PetCard = ({ pet, onClose }) => (
                 </span>
                 <span className="text-sm text-gray-500">{pet.time}</span>
             </div>
-            <h3 className="text-lg font-bold text-orange-900 mb-1">
+            {/* <h3 className="text-lg font-bold text-orange-900 mb-1">
                 {pet.breed} / {pet.age}세 / {pet.gender}
-            </h3>
+            </h3> */}
             <p className="text-sm text-orange-600 flex items-center gap-1">
                 <MapPin size={14} />
                 {pet.location}
