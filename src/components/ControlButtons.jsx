@@ -5,7 +5,7 @@ export const ControlButtons = ({ onLocationClick, onListClick }) => (
     <>
         <button
             onClick={onLocationClick}
-            className="fixed bottom-4 left-4 z-50 bg-white rounded-full p-4 shadow-lg text-orange-400 hover:text-orange-500 transition-colors border-2 border-orange-100"
+            className="fixed bottom-20 left-4 z-50 bg-white rounded-full p-3 shadow-lg text-orange-400 hover:text-orange-500 transition-colors border-2 border-orange-100"
         >
             <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none">
                 <circle cx="12" cy="12" r="3" />
@@ -17,7 +17,7 @@ export const ControlButtons = ({ onLocationClick, onListClick }) => (
         </button>
         <button
             onClick={onListClick}
-            className="fixed bottom-4 right-4 z-50 bg-white rounded-full p-4 shadow-lg text-orange-400 hover:text-orange-500 transition-colors border-2 border-orange-100"
+            className="fixed bottom-20 right-4 z-50 bg-white rounded-full p-3 shadow-lg text-orange-400 hover:text-orange-500 transition-colors border-2 border-orange-100"
         >
             <List size={24} strokeWidth={2.5} />
         </button>

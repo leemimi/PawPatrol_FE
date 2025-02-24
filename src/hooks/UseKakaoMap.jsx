@@ -21,7 +21,7 @@ export const useKakaoMap = (initialPosition) => {
                         initialPosition.lat,
                         initialPosition.lng
                     ),
-                    level: 3
+                    level: 5
                 };
 
                 const newMap = new window.kakao.maps.Map(container, options);
@@ -34,7 +34,7 @@ export const useKakaoMap = (initialPosition) => {
                         initialPosition.lat,
                         initialPosition.lng
                     ),
-                    radius: 30000,
+                    radius: 3000,
                     strokeWeight: 3,
                     strokeColor: '#FB923C',
                     strokeOpacity: 1,

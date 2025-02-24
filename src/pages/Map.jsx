@@ -11,7 +11,6 @@ import _ from 'lodash';
 const Map = () => {
     const centerPosition = { lat: 37.498095, lng: 127.027610 };
     
-    // 상태 관리
     const [selectedRange, setSelectedRange] = useState(3);
     const [selectedPet, setSelectedPet] = useState(null);
     const [showList, setShowList] = useState(false);
@@ -19,21 +18,53 @@ const Map = () => {
     const [currentPosition, setCurrentPosition] = useState(centerPosition);
     const [isCardVisible, setIsCardVisible] = useState(false);
     const [isMarkerTransitioning, setIsMarkerTransitioning] = useState(false);
+    const [isLostMode, setIsLostMode] = useState(true);  
     
-    // 카카오맵 커스텀 훅 사용
     const { map, setMarkers, circleRef } = useKakaoMap(currentPosition);
 
-    // 마커 생성 함수
     const createMarkers = useCallback((pets) => {
         if (!map) return;
+    
+        // status에 따른 마커 이미지 정의
+        const getMarkerImage = (status) => {
+            const imageSize = new window.kakao.maps.Size(22, 32); // 크기를 조금 키움
+        let markerColor;
         
+        switch(status) {
+            case 'FINDING':
+                markerColor = '#FFA000';
+                break;
+            case 'FOUND':
+                markerColor = '#F44336';
+                break;
+            case 'FOSTERING':
+                markerColor = '#4CAF50';
+                break;
+            default:
+                markerColor = '#757575';
+        }
+
+        const svg = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="32" viewBox="0 0 22 32">
+                <path d="M11 0C4.934 0 0 4.934 0 11c0 8.25 11 21 11 21s11-12.75 11-21c0-6.066-4.934-11-11-11z" 
+                      fill="${markerColor}"/>
+                <circle cx="11" cy="11" r="4.5" fill="white"/>
+            </svg>
+        `;
+
+
+        const url = 'data:image/svg+xml;base64,' + btoa(svg);
+    
+            return new window.kakao.maps.MarkerImage(url, imageSize);
+        };
+    
         const newMarkers = pets.map(pet => {
             const marker = new window.kakao.maps.Marker({
                 position: new window.kakao.maps.LatLng(pet.position.lat, pet.position.lng),
-                map: map
+                map: map,
+                image: getMarkerImage(pet.status)
             });
             
-            // 마커 클릭시 해당 펫 정보 표시
             window.kakao.maps.event.addListener(marker, 'click', () => {
                 setSelectedPet(pet);
             });
@@ -44,48 +75,85 @@ const Map = () => {
         setMarkers(newMarkers);
     }, [map, setMarkers]);
 
-    useEffect(() => {
-        console.log("currentPosition 변경:", currentPosition);
-    }, [currentPosition]);
+    // API 호출 함수 분리
+    const fetchData = async (position, range, mode) => {
+        const apiUrl = mode 
+            ? 'http://localhost:8090/api/lost-found/lost/map'
+            : 'http://localhost:8090/api/lost-found/find/map';
 
-    // 데이터 가져오기 (디바운스 적용)
-    const fetchLostPets = useCallback(
-        _.debounce(async () => {
-            try {
-                const response = await axios.get('http://localhost:8090/api/lost-found/find', {
-                    credentials: 'include',
+        try {
+            const response = await axios.get(apiUrl, {
+                params: {
+                    latitude: position.lat,
+                    longitude: position.lng,
+                    radius: range * 1000
+                },
+                credentials: 'include',
+            });
+
+            if (response.data.resultCode === "200") {
+                const transformedData = response.data.data.map(pet => {
+                    if (mode) {
+                        return {
+                            id: pet.lostId,
+                            title: pet.title,
+                            content: pet.content,
+                            status: pet.status,
+                            image: '/api/placeholder/160/160',
+                            time: pet.lostTime,
+                            location: pet.location,
+                            position: {
+                                lat: pet.latitude,
+                                lng: pet.longitude
+                            },
+                            ownerPhone: pet.ownerPhone,
+                            tags: pet.tags
+                        };
+                    } else {
+                        return {
+                            id: pet.foundId,
+                            breed: pet.breed,
+                            age: pet.birthDate ? new Date().getFullYear() - new Date(pet.birthDate).getFullYear() : null,
+                            gender: pet.gender === 'MALE' ? '수컷' : '암컷',
+                            status: pet.status,
+                            image: '/api/placeholder/160/160',
+                            time: new Date(pet.findTime).toLocaleString(),
+                            location: pet.location,
+                            position: {
+                                lat: pet.latitude,
+                                lng: pet.longitude
+                            },
+                            characteristics: pet.characteristics,
+                            name: pet.name,
+                            size: pet.size,
+                            title: pet.title,
+                            content: pet.content,
+                            tags: pet.tags
+                        };
+                    }
                 });
                 
-                if (response.data.resultCode === "200") {
-                    const transformedData = response.data.data.content.map(pet => ({
-                        id: pet.foundId,
-                        breed: pet.breed,
-                        age: new Date().getFullYear() - new Date(pet.birthDate).getFullYear(),
-                        gender: pet.gender === 'MALE' ? '수컷' : '암컷',
-                        status: '찾는중',
-                        image: '/api/placeholder/160/160',
-                        time: new Date(pet.findTime).toLocaleString(),
-                        location: '위치 정보',
-                        position: { 
-                            lat: pet.latitude,
-                            lng: pet.longitude
-                        },
-                        characteristics: pet.characteristics,
-                        name: pet.name,
-                        size: pet.size
-                    }));
-                    
-                    setLostPets(transformedData);
-                    createMarkers(transformedData);
-                }
-            } catch (error) {
-                console.error('Failed to fetch lost pets:', error);
+                setLostPets(transformedData);
+                createMarkers(transformedData);
             }
+        } catch (error) {
+            console.error('Failed to fetch pets:', error);
+        }
+    };
+
+    // 드래그용 디바운스 함수
+    const debouncedFetchForDrag = useCallback(
+        _.debounce((position, range, mode) => {
+            fetchData(position, range, mode);
         }, 500),
-        [createMarkers]
+        []
     );
 
-    // 현재 위치 가져오기
+    // 일반 데이터 가져오기 함수
+    const fetchLostPets = useCallback((position, range) => {
+        fetchData(position, range, isLostMode);
+    }, [isLostMode]);
+
     const getCurrentLocation = useCallback(() => {
         if (!navigator.geolocation) {
             console.error('Geolocation is not supported by this browser.');
@@ -104,7 +172,7 @@ const Map = () => {
                     const moveLatLon = new window.kakao.maps.LatLng(pos.lat, pos.lng);
                     map.setCenter(moveLatLon);
                     if (circleRef.current) {
-                        circleRef.current.setPosition(moveLatLon);  // 원 위치 갱신
+                        circleRef.current.setPosition(moveLatLon);
                     }
                     fetchLostPets(pos, selectedRange);
                 }
@@ -116,12 +184,13 @@ const Map = () => {
     }, [map, circleRef, selectedRange, fetchLostPets]);
 
     useEffect(() => {
-        if (map && circleRef.current) {
+        if (map && circleRef.current) {    
+            const moveLatLon = new window.kakao.maps.LatLng(currentPosition.lat, currentPosition.lng);
+            circleRef.current.setPosition(moveLatLon);
             circleRef.current.setMap(map);
         }
-    }, [map, currentPosition]);
+    }, [currentPosition, map, circleRef]);
 
-    // 반경 변경 핸들러
     const handleRangeChange = useCallback((newRange) => {
         setIsMarkerTransitioning(true);
         setSelectedRange(newRange);
@@ -149,7 +218,6 @@ const Map = () => {
         }
     }, [circleRef, currentPosition, fetchLostPets]);
 
-    // 지도 드래그 이벤트
     useEffect(() => {
         if (map) {
             const handleDragEnd = () => {
@@ -159,7 +227,8 @@ const Map = () => {
                     lng: center.getLng()
                 };
                 setCurrentPosition(newPosition);
-                fetchLostPets(newPosition, selectedRange);
+                debouncedFetchForDrag(newPosition, selectedRange, isLostMode);
+                fetchData(newPosition, selectedRange, isLostMode);
             };
 
             window.kakao.maps.event.addListener(map, 'dragend', handleDragEnd);
@@ -167,9 +236,8 @@ const Map = () => {
                 window.kakao.maps.event.removeListener(map, 'dragend', handleDragEnd);
             };
         }
-    }, [map, selectedRange, fetchLostPets]);
+    }, [map, selectedRange, isLostMode, debouncedFetchForDrag]);
 
-    // 선택된 펫 카드 애니메이션
     useEffect(() => {
         if (selectedPet) {
             setTimeout(() => setIsCardVisible(true), 50);
@@ -178,14 +246,22 @@ const Map = () => {
         }
     }, [selectedPet]);
 
-    // 초기 데이터 로드
     useEffect(() => {
         fetchLostPets(currentPosition, selectedRange);
     }, []);
 
+    const handleModeChange = useCallback((mode) => {
+        setIsLostMode(mode);
+        // 모드 변경 시 즉시 새로운 데이터 가져오기
+        fetchData(currentPosition, selectedRange, mode);
+    }, [currentPosition, selectedRange]);
+
     return (
         <div className="h-screen w-full bg-orange-50/30 relative overflow-hidden">
-            <Header />
+            <Header 
+                onModeChange={handleModeChange}
+                isLostMode={isLostMode}
+            />
             
             <div className="h-full pt-14">
                 <div className="relative h-full">
