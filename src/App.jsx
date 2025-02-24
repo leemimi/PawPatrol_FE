@@ -6,6 +6,7 @@ import Login from './pages/Login'
 import MyPage from './pages/MyPage'
 import SignUp from './pages/SignUpPage'
 import LoginPet from './pages/LoginPet'
+import Protection from './pages/Protection'
 // import Layout from './layout/Layout.jsx'
 import SocialConnect from './pages/SocialConnectPage'
 
@@ -23,6 +24,7 @@ const App = () => {
         <Route path="/mypage" element={<MyPage />} />
         <Route path="/connect" element={<SocialConnect />} />
         <Route path="/" element={<Map />} />
+        <Route path="/protection" element={<Protection />} />
         <Route path="/login" element={<Login />} />
       </Route>
     </Routes>
