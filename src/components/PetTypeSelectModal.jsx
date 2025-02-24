@@ -4,13 +4,13 @@ import catLogo from '../assets/images/cat.png';
 const PetTypeSelectModal = ({ isOpen, onClose, onSelect, petFormData, setPetFormData }) => {
     if (!isOpen) return null;
 
-    const handleSelect = (type) => {
-        setPetFormData({
+    const handleSelect = async (type) => {
+        await setPetFormData({
             ...petFormData,
             animalType: type
         });
-        onSelect(type);
-        onClose(); // 선택 후 모달 닫기
+        await onSelect(type);
+        await onClose(); // 선택 후 모달 닫기
     };
 
     return (

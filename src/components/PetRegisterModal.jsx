@@ -46,9 +46,9 @@ const PetRegisterModal = ({ isOpen, onClose, onSubmit, petFormData, setPetFormDa
                             onChange={e => setPetFormData({ ...petFormData, size: e.target.value })}
                             required
                         >
-                            <option value="small">소형</option>
-                            <option value="medium">중형</option>
-                            <option value="large">대형</option>
+                            <option value="SMALL">소형</option>
+                            <option value="MEDIUM">중형</option>
+                            <option value="LARGE">대형</option>
                         </select>
                         <input
                             type="text"

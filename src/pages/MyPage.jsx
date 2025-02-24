@@ -89,7 +89,6 @@ const MyPage = () => {
     const [profileImage, setProfileImage] = useState(defaultImage);
     const [nickname, setNickname] = useState('');
     const [isEditing, setIsEditing] = useState(false);
-    const [isModalOpen, setIsModalOpen] = useState(false);
     // const [myPets, setMyPets] = useState([]);
     // const [myPosts, setMyPosts] = useState({ reports: [], witnesses: [] });
     const [myPets, setMyPets] = useState(dummyPets);
@@ -128,15 +127,12 @@ const MyPage = () => {
             const formData = new FormData();
 
             // 모든 데이터를 FormData에 추가
-            formData.append('name', petFormData.name);
-            formData.append('breed', petFormData.breed);
-            formData.append('gender', petFormData.gender);
-            formData.append('size', petFormData.size);
-            formData.append('estimatedAge', petFormData.estimatedAge);
-            formData.append('registrationNo', petFormData.registrationNo);
-            formData.append('healthCondition', petFormData.healthCondition);
-            formData.append('feature', petFormData.feature);
-            formData.append('animalType', petFormData.animalType);
+            // FormData에 값들 추가
+            Object.keys(petFormData).forEach(key => {
+                if (key !== 'image') {
+                    formData.append(key, petFormData[key]);
+                }
+            });
 
             if (petFormData.image) {
                 formData.append('imageFile', petFormData.image);
@@ -152,7 +148,10 @@ const MyPage = () => {
             }
 
             alert('반려동물이 성공적으로 등록되었습니다.');
-            setIsModalOpen(false);
+
+            // 모달 닫기
+            setIsRegisterOpen(false);  // PetRegisterModal 닫기
+
             setPetFormData({  // 폼 초기화
                 name: '',
                 breed: '',
