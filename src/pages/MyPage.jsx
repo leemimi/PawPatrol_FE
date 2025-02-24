@@ -186,7 +186,7 @@ const MyPage = () => {
     // 로그아웃 함수
     const handleLogout = async () => {
         try {
-            const response = await fetch('http://localhost:8090/api/v2/auth/logout', {
+            const response = await fetch(`${import.meta.env.VITE_CORE_FRONT_BASE_URL}/api/v2/auth/logout`, {
                 method: 'POST'
             });
 

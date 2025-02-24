@@ -9,7 +9,7 @@ const OAuth2RedirectHandler = () => {
         const fetchUserInfo = async () => {
             try {
                 const response = await axios.get(
-                    'http://localhost:8090/api/v2/auth/me',
+                    `${import.meta.env.VITE_CORE_FRONT_BASE_URL}/api/v2/auth/me`,
                     { withCredentials: true }
                 );
 
