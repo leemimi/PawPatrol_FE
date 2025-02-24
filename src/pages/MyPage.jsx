@@ -174,7 +174,7 @@ const MyPage = () => {
 
     // 반려동물 등록 모달 함수 (petType 모달 > 등록 모달)
     const handleTypeSelect = (type) => {
-        setPetFormData(prev => ({ ...prev, petType: type }));
+        setPetFormData(prev => ({ ...prev, animalType: type }));
         setIsTypeSelectOpen(false);
         setIsRegisterOpen(true);
     };
@@ -570,6 +570,8 @@ const MyPage = () => {
                         <PetTypeSelectModal
                             isOpen={isTypeSelectOpen}
                             onClose={() => setIsTypeSelectOpen(false)}
+                            petFormData={petFormData}
+                            setPetFormData={setPetFormData}
                             onSelect={handleTypeSelect}
                         />
                         <PetRegisterModal

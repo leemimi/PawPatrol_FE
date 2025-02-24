@@ -1,8 +1,17 @@
 import dogLogo from '../assets/images/dog.png';
 import catLogo from '../assets/images/cat.png';
 
-const PetTypeSelectModal = ({ isOpen, onClose, onSelect }) => {
+const PetTypeSelectModal = ({ isOpen, onClose, onSelect, petFormData, setPetFormData }) => {
     if (!isOpen) return null;
+
+    const handleSelect = (type) => {
+        setPetFormData({
+            ...petFormData,
+            animalType: type
+        });
+        onSelect(type);
+        onClose(); // 선택 후 모달 닫기
+    };
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -17,17 +26,17 @@ const PetTypeSelectModal = ({ isOpen, onClose, onSelect }) => {
                 </div>
                 <div className="flex justify-center gap-4">
                     <button
-                        onClick={() => onSelect('DOG')}
+                        onClick={() => handleSelect('DOG')}
                         className="flex flex-col items-center p-6 border-2 rounded-lg hover:border-orange-500 transition-colors"
                     >
-                        <img src={dogLogo} alt="강아지" className="w-24 h-24 mb-2" />
+                        <img src={dogLogo} alt="DOG" className="w-24 h-24 mb-2" />
                         <span className="text-lg font-medium">강아지</span>
                     </button>
                     <button
-                        onClick={() => onSelect('CAT')}
+                        onClick={() => handleSelect('CAT')}
                         className="flex flex-col items-center p-6 border-2 rounded-lg hover:border-orange-500 transition-colors"
                     >
-                        <img src={catLogo} alt="고양이" className="w-24 h-24 mb-2" />
+                        <img src={catLogo} alt="CAT" className="w-24 h-24 mb-2" />
                         <span className="text-lg font-medium">고양이</span>
                     </button>
                 </div>
