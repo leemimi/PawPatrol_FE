@@ -110,17 +110,67 @@ const MyPage = () => {
         verificationCode: ''
     });
     const [petFormData, setPetFormData] = useState({
-        petType: '',  // 고양이 or 강아지
+        animalType: '',  // 고양이 or 강아지
         name: '',   // 이름
         breed: '',  // 품종
         gender: 'M',    // 성별
-        size: 'small',  // 크기
+        size: 'SMALL',  // 크기
         estimatedAge: '',   // 나이
-        registrationNumber: '', // 동물등록번호
+        registrationNo: '', // 동물등록번호
         healthCondition: '',    // 건강상태
-        characteristics: '',
+        feature: '',    // 특징
         image: null // 사진
     });
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            const formData = new FormData();
+
+            // 모든 데이터를 FormData에 추가
+            formData.append('name', petFormData.name);
+            formData.append('breed', petFormData.breed);
+            formData.append('gender', petFormData.gender);
+            formData.append('size', petFormData.size);
+            formData.append('estimatedAge', petFormData.estimatedAge);
+            formData.append('registrationNo', petFormData.registrationNo);
+            formData.append('healthCondition', petFormData.healthCondition);
+            formData.append('feature', petFormData.feature);
+            formData.append('animalType', petFormData.animalType);
+
+            if (petFormData.image) {
+                formData.append('imageFile', petFormData.image);
+            }
+
+            const response = await fetch('/api/v2/members/pets/register', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error('반려동물 등록에 실패했습니다.');
+            }
+
+            alert('반려동물이 성공적으로 등록되었습니다.');
+            setIsModalOpen(false);
+            setPetFormData({  // 폼 초기화
+                name: '',
+                breed: '',
+                gender: 'M',
+                size: 'SMALL',
+                estimatedAge: '',
+                registrationNo: '',
+                healthCondition: '',
+                feature: '',
+                animalType: 'DOG',
+                image: null
+            });
+
+        } catch (error) {
+            console.error('Error:', error);
+            alert('반려동물 등록 중 오류가 발생했습니다.');
+        }
+    };
 
     // 반려동물 등록 모달 함수 (petType 모달 > 등록 모달)
     const handleTypeSelect = (type) => {
@@ -235,37 +285,6 @@ const MyPage = () => {
             // }
         } catch (error) {
             console.error('Fetch pets error:', error);
-        }
-    };
-
-    const handlePetSubmit = async (e) => {
-        e.preventDefault();
-        const formData = new FormData();
-        Object.keys(petFormData).forEach(key => {
-            formData.append(key, petFormData[key]);
-        });
-
-        try {
-            // const response = await fetch(
-
-            // );
-            if (response.ok) {
-                alert('반려동물 정보가 등록되었습니다.');
-                fetchMyPets();
-                setPetFormData({
-                    name: '',
-                    birthDate: '',
-                    breed: '',
-                    characteristics: '',
-                    size: 'small',
-                    registrationNumber: '',
-                    image: null
-                });
-                setIsModalOpen(false);
-            }
-        } catch (error) {
-            console.error('Pet registration error:', error);
-            alert('반려동물 등록 중 오류가 발생했습니다.');
         }
     };
 
@@ -540,7 +559,7 @@ const MyPage = () => {
                                             <p>품종: {pet.breed}</p>
                                             <p>나이: {new Date().getFullYear() - new Date(pet.birthDate).getFullYear()}세</p>
                                             <p>특징: {pet.characteristics}</p>
-                                            <p>크기: {pet.size === 'small' ? '소형' : pet.size === 'medium' ? '중형' : '대형'}</p>
+                                            <p>크기: {pet.size === 'SMALL' ? 'SMALL' : pet.size === 'MEDIUM' ? 'MEDIUM' : 'LARGE'}</p>
                                             <p>동물등록번호: {pet.registrationNumber}</p>
                                         </div>
                                     </div>
@@ -556,7 +575,7 @@ const MyPage = () => {
                         <PetRegisterModal
                             isOpen={isRegisterOpen}
                             onClose={() => setIsRegisterOpen(false)}
-                            onSubmit={handlePetSubmit}
+                            onSubmit={handleSubmit}
                             petFormData={petFormData}
                             setPetFormData={setPetFormData}
                         />
