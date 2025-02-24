@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuthStore } from '../stores/useAuthStore';
 import defaultImage from '../assets/images/default.png';
 import PetRegisterModal from '../components/PetRegisterModal.jsx';
+import PetTypeSelectModal from '../components/PetTypeSelectModal';
 import { replace, useNavigate } from 'react-router-dom';
 
 // 실종 신고글 더미 데이터
@@ -48,7 +49,7 @@ const dummyWitnesses = [
     }
 ];
 
-// 반려견 더미 데이터
+// 반려동물 더미 데이터
 const dummyPets = [
     {
         id: 1,
@@ -93,6 +94,8 @@ const MyPage = () => {
     // const [myPosts, setMyPosts] = useState({ reports: [], witnesses: [] });
     const [myPets, setMyPets] = useState(dummyPets);
     const navigate = useNavigate();
+    const [isTypeSelectOpen, setIsTypeSelectOpen] = useState(false);
+    const [isRegisterOpen, setIsRegisterOpen] = useState(false);
     const [myPosts, setMyPosts] = useState({
         reports: dummyReports,
         witnesses: dummyWitnesses
@@ -107,14 +110,79 @@ const MyPage = () => {
         verificationCode: ''
     });
     const [petFormData, setPetFormData] = useState({
-        name: '',
-        birthDate: '',
-        breed: '',
-        characteristics: '',
-        size: 'small',
-        registrationNumber: '',
-        image: null
+        animalType: '',  // 고양이 or 강아지
+        name: '',   // 이름
+        breed: '',  // 품종
+        gender: 'M',    // 성별
+        size: 'SMALL',  // 크기
+        estimatedAge: '',   // 나이
+        registrationNo: '', // 동물등록번호
+        healthCondition: '',    // 건강상태
+        feature: '',    // 특징
+        image: null // 사진
     });
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            const formData = new FormData();
+
+            // 모든 데이터를 FormData에 추가
+            formData.append('name', petFormData.name);
+            formData.append('breed', petFormData.breed);
+            formData.append('gender', petFormData.gender);
+            formData.append('size', petFormData.size);
+            formData.append('estimatedAge', petFormData.estimatedAge);
+            formData.append('registrationNo', petFormData.registrationNo);
+            formData.append('healthCondition', petFormData.healthCondition);
+            formData.append('feature', petFormData.feature);
+            formData.append('animalType', petFormData.animalType);
+
+            if (petFormData.image) {
+                formData.append('imageFile', petFormData.image);
+            }
+
+            const response = await fetch('/api/v2/members/pets/register', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error('반려동물 등록에 실패했습니다.');
+            }
+
+            alert('반려동물이 성공적으로 등록되었습니다.');
+            setIsModalOpen(false);
+            setPetFormData({  // 폼 초기화
+                name: '',
+                breed: '',
+                gender: 'M',
+                size: 'SMALL',
+                estimatedAge: '',
+                registrationNo: '',
+                healthCondition: '',
+                feature: '',
+                animalType: 'DOG',
+                image: null
+            });
+
+        } catch (error) {
+            console.error('Error:', error);
+            alert('반려동물 등록 중 오류가 발생했습니다.');
+        }
+    };
+
+    // 반려동물 등록 모달 함수 (petType 모달 > 등록 모달)
+    const handleTypeSelect = (type) => {
+        setPetFormData(prev => ({ ...prev, petType: type }));
+        setIsTypeSelectOpen(false);
+        setIsRegisterOpen(true);
+    };
+
+    // pets 탭의 반려동물 등록 버튼 클릭 핸들러
+    const handlePetRegistrationClick = () => {
+        setIsTypeSelectOpen(true);
+    };
 
     // 로그아웃 함수
     const handleLogout = async () => {
@@ -220,37 +288,6 @@ const MyPage = () => {
         }
     };
 
-    const handlePetSubmit = async (e) => {
-        e.preventDefault();
-        const formData = new FormData();
-        Object.keys(petFormData).forEach(key => {
-            formData.append(key, petFormData[key]);
-        });
-
-        try {
-            // const response = await fetch(
-
-            // );
-            if (response.ok) {
-                alert('반려견 정보가 등록되었습니다.');
-                fetchMyPets();
-                setPetFormData({
-                    name: '',
-                    birthDate: '',
-                    breed: '',
-                    characteristics: '',
-                    size: 'small',
-                    registrationNumber: '',
-                    image: null
-                });
-                setIsModalOpen(false);
-            }
-        } catch (error) {
-            console.error('Pet registration error:', error);
-            alert('반려견 등록 중 오류가 발생했습니다.');
-        }
-    };
-
     const fetchMyPosts = async () => {
         try {
             const [reportsRes, witnessesRes] = await Promise.all([
@@ -309,7 +346,7 @@ const MyPage = () => {
                         className={`px-4 py-2 rounded ${activeTab === 'pets' ? 'bg-orange-500 text-white' : 'bg-gray-200'}`}
                         onClick={() => setActiveTab('pets')}
                     >
-                        반려견 관리
+                        반려동물 관리
                     </button>
                     <button
                         className={`px-4 py-2 rounded ${activeTab === 'posts' ? 'bg-orange-500 text-white' : 'bg-gray-200'}`}
@@ -499,12 +536,12 @@ const MyPage = () => {
                 {activeTab === 'pets' && (
                     <div className="space-y-6">
                         <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-2xl font-bold">내 반려견 목록</h2>
+                            <h2 className="text-2xl font-bold">내 반려동물 목록</h2>
                             <button
-                                onClick={() => setIsModalOpen(true)}
+                                onClick={handlePetRegistrationClick}
                                 className="px-4 py-2 bg-orange-500 text-white rounded hover:bg-[#FB8C00]"
                             >
-                                반려견 등록
+                                반려동물 등록
                             </button>
                         </div>
 
@@ -522,7 +559,7 @@ const MyPage = () => {
                                             <p>품종: {pet.breed}</p>
                                             <p>나이: {new Date().getFullYear() - new Date(pet.birthDate).getFullYear()}세</p>
                                             <p>특징: {pet.characteristics}</p>
-                                            <p>크기: {pet.size === 'small' ? '소형' : pet.size === 'medium' ? '중형' : '대형'}</p>
+                                            <p>크기: {pet.size === 'SMALL' ? 'SMALL' : pet.size === 'MEDIUM' ? 'MEDIUM' : 'LARGE'}</p>
                                             <p>동물등록번호: {pet.registrationNumber}</p>
                                         </div>
                                     </div>
@@ -530,10 +567,15 @@ const MyPage = () => {
                             ))}
                         </div>
 
+                        <PetTypeSelectModal
+                            isOpen={isTypeSelectOpen}
+                            onClose={() => setIsTypeSelectOpen(false)}
+                            onSelect={handleTypeSelect}
+                        />
                         <PetRegisterModal
-                            isOpen={isModalOpen}
-                            onClose={() => setIsModalOpen(false)}
-                            onSubmit={handlePetSubmit}
+                            isOpen={isRegisterOpen}
+                            onClose={() => setIsRegisterOpen(false)}
+                            onSubmit={handleSubmit}
                             petFormData={petFormData}
                             setPetFormData={setPetFormData}
                         />
