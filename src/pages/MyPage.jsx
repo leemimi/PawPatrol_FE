@@ -4,6 +4,7 @@ import defaultImage from '../assets/images/default.png';
 import PetRegisterModal from '../components/PetRegisterModal.jsx';
 import PetTypeSelectModal from '../components/PetTypeSelectModal';
 import { replace, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 // 실종 신고글 더미 데이터
 const dummyReports = [
@@ -49,50 +50,18 @@ const dummyWitnesses = [
     }
 ];
 
-// 반려동물 더미 데이터
-const dummyPets = [
-    {
-        id: 1,
-        name: "몽이",
-        breed: "말티즈",
-        birthDate: "2022-03-15",
-        characteristics: "활발하고 사교적인 성격",
-        size: "small",
-        registrationNumber: "123456789",
-        imageUrl: "https://example.com/pet1.jpg"
-    },
-    {
-        id: 2,
-        name: "초코",
-        breed: "푸들",
-        birthDate: "2021-08-22",
-        characteristics: "조용하고 온순한 성격",
-        size: "medium",
-        registrationNumber: "987654321",
-        imageUrl: "https://example.com/pet2.jpg"
-    },
-    {
-        id: 3,
-        name: "해피",
-        breed: "비숑프리제",
-        birthDate: "2023-01-10",
-        characteristics: "장난기 많고 애교가 많음",
-        size: "small",
-        registrationNumber: "456789123",
-        imageUrl: "https://example.com/pet3.jpg"
-    }
-];
-
 const MyPage = () => {
-    const userInfo = useAuthStore((state) => state.userInfo?.data);
+    const [isPasswordEditing, setIsPasswordEditing] = useState(false);
+    const [isPhoneEditing, setIsPhoneEditing] = useState(false);
+    const userInfoStr = localStorage.getItem('userInfo');
+    const userInfo = userInfoStr ? JSON.parse(userInfoStr) : null;
+    // const userInfo = useAuthStore((state) => state.userInfo?.data);
     const [activeTab, setActiveTab] = useState('profile');
     const [profileImage, setProfileImage] = useState(defaultImage);
     const [nickname, setNickname] = useState('');
     const [isEditing, setIsEditing] = useState(false);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    // const [myPets, setMyPets] = useState([]);
+    const [myPets, setMyPets] = useState([]);
     // const [myPosts, setMyPosts] = useState({ reports: [], witnesses: [] });
-    const [myPets, setMyPets] = useState(dummyPets);
     const navigate = useNavigate();
     const [isTypeSelectOpen, setIsTypeSelectOpen] = useState(false);
     const [isRegisterOpen, setIsRegisterOpen] = useState(false);
@@ -122,37 +91,126 @@ const MyPage = () => {
         image: null // 사진
     });
 
+    // 닉네임 변경
+    const handleUpdateProfile = async () => {
+        try {
+            const response = await axios.patch(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/profile`, {
+                nickname: nickname,
+                withCredentials: true
+            })
+
+            if (response.data.statusCode === 200) {
+                // 로컬 스토리지의 사용자 정보 업데이트
+                const userInfoStr = localStorage.getItem('userInfo');
+                if (userInfoStr) {
+                    const userInfo = JSON.parse(userInfoStr);
+                    userInfo.nickname = nickname;
+                    localStorage.setItem('userInfo', JSON.stringify(userInfo));
+                }
+
+                // 필요한 경우 상태 업데이트 또는 페이지 리로드
+                setIsEditing(false); // 편집 모드 종료
+            }
+        } catch (error) {
+            console.error('Profile update error:', error);
+            alert('프로필 업데이트 중 오류가 발생했습니다.');
+        }
+    };
+
+    // 비밀번호 변경
+    const handleUpdatePassword = async (e) => {
+        e.preventDefault();
+        if (personalInfo.newPassword !== personalInfo.confirmPassword) {
+            alert('새 비밀번호가 일치하지 않습니다.');
+            return;
+        }
+    
+        try {
+            // 비밀번호 변경 API 호출
+            const response = await axios.patch(
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/profile`, 
+                {
+                    currentPassword: personalInfo.currentPassword,
+                    newPassword: personalInfo.newPassword,
+                    confirmPassword: personalInfo.confirmPassword
+                },
+                {
+                    withCredentials: true,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+    
+            if (response.data.statusCode === 200) {
+                // 성공 시 처리
+                alert('비밀번호가 성공적으로 변경되었습니다.');
+                setIsPasswordEditing(false);
+                setPersonalInfo({
+                    ...personalInfo,
+                    currentPassword: '',
+                    newPassword: '',
+                    confirmPassword: ''
+                });
+            }
+        } catch (error) {
+            console.error('Password update error:', error);
+            alert('비밀번호 변경 중 오류가 발생했습니다.');
+        }
+    };
+
+    // 전화번호 변경
+    const handleUpdatePhone = async () => {
+        try {
+            // 전화번호 업데이트 API 호출
+            // const response = await axios.patch(...);
+
+            // 성공 시 처리
+            alert('전화번호가 성공적으로 변경되었습니다.');
+            setIsPhoneEditing(false);
+        } catch (error) {
+            console.error('Phone update error:', error);
+            alert('전화번호 변경 중 오류가 발생했습니다.');
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
             const formData = new FormData();
 
             // 모든 데이터를 FormData에 추가
-            formData.append('name', petFormData.name);
-            formData.append('breed', petFormData.breed);
-            formData.append('gender', petFormData.gender);
-            formData.append('size', petFormData.size);
-            formData.append('estimatedAge', petFormData.estimatedAge);
-            formData.append('registrationNo', petFormData.registrationNo);
-            formData.append('healthCondition', petFormData.healthCondition);
-            formData.append('feature', petFormData.feature);
-            formData.append('animalType', petFormData.animalType);
+            // FormData에 값들 추가
+            Object.keys(petFormData).forEach(key => {
+                if (key !== 'image') {
+                    formData.append(key, petFormData[key]);
+                }
+            });
 
             if (petFormData.image) {
                 formData.append('imageFile', petFormData.image);
             }
 
-            const response = await fetch('/api/v2/members/pets/register', {
-                method: 'POST',
-                body: formData
-            });
+            const response = await axios.post(
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/pets/register`, 
+                formData,  // FormData를 직접 전달
+                {
+                    withCredentials: true,
+                    headers: {
+                        'Content-Type': 'multipart/form-data'
+                    }
+                }
+            );
 
-            if (!response.ok) {
+            if (!response.data.statusCode === 401) {
                 throw new Error('반려동물 등록에 실패했습니다.');
             }
 
             alert('반려동물이 성공적으로 등록되었습니다.');
-            setIsModalOpen(false);
+
+            // 모달 닫기
+            setIsRegisterOpen(false);  // PetRegisterModal 닫기
+            await fetchMyPets();
             setPetFormData({  // 폼 초기화
                 name: '',
                 breed: '',
@@ -187,11 +245,11 @@ const MyPage = () => {
     // 로그아웃 함수
     const handleLogout = async () => {
         try {
-            const response = await fetch('http://localhost:8090/api/v2/auth/logout', {
-                method: 'POST'
+            const response = await axios.post(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/auth/logout`, {
+                withCredentials: true
             });
 
-            if (response.ok) {
+            if (response.data.statusCode === 200) {
                 localStorage.removeItem('accessToken');
                 localStorage.removeItem('userInfo');
                 localStorage.removeItem('isLoggedIn');
@@ -202,21 +260,6 @@ const MyPage = () => {
             alert('로그아웃 중 오류가 발생했습니다.');
         }
     };
-
-    useEffect(() => {
-        if (userInfo) {
-            setNickname(userInfo.nickname);
-            setProfileImage(
-                userInfo.profileImageUrl
-                    ? userInfo.profileImageUrl.startsWith('https://')
-                        ? userInfo.profileImageUrl
-                        : `${import.meta.env.VITE_NCP_STORAGE_URL}/${userInfo.profileImageUrl}`
-                    : defaultImage
-            );
-            fetchMyPets();
-            fetchMyPosts();
-        }
-    }, [userInfo]);
 
     // 핸들러 함수 추가
     const handleUpdatePersonalInfo = async (e) => {
@@ -258,31 +301,16 @@ const MyPage = () => {
         }
     };
 
-    const handleUpdateProfile = async () => {
-        try {
-            // const response = await fetch(
-
-            // );
-
-            // if (response.ok) {
-            //     setIsEditing(false);
-            //     alert('프로필이 업데이트되었습니다.');
-            // }
-        } catch (error) {
-            console.error('Profile update error:', error);
-            alert('프로필 업데이트 중 오류가 발생했습니다.');
-        }
-    };
-
+    // 내 반려동물 리스트 가져오기
     const fetchMyPets = async () => {
         try {
-            // const response = await fetch(
+            const response = await axios.get(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/pets`, {
+                withCredentials: true
+            });
 
-            // );
-            // if (response.ok) {
-            //     const data = await response.json();
-            //     setMyPets(data);
-            // }
+            if (response.data.statusCode === 200) {
+                setMyPets(response.data.data);
+            }
         } catch (error) {
             console.error('Fetch pets error:', error);
         }
@@ -320,6 +348,19 @@ const MyPage = () => {
             console.error('Fetch posts error:', error);
         }
     };
+
+    useEffect(() => {
+        const userInfoStr = localStorage.getItem('userInfo');
+        const isLoggedIn = localStorage.getItem('isLoggedIn');
+
+        if (userInfoStr && isLoggedIn === 'true') {
+            fetchMyPets(); // 이미 정의된 함수 사용
+        }
+
+        if (userInfo?.nickname) {
+            setNickname(userInfo.nickname);
+        }
+    }, []);
 
     return (
         <div className="min-h-screen bg-[#FFF5E6]">
@@ -412,122 +453,158 @@ const MyPage = () => {
                             </div>
                         ) : (
                             <div>
-                                <h2 className="text-xl font-bold mb-2">{nickname}</h2>
+                                <h2 className="text-xl font-bold mb-2">{userInfo?.nickname}</h2>
                                 <button
                                     onClick={() => setIsEditing(true)}
                                     className="px-4 py-2 bg-gray-100 rounded-md"
                                 >
-                                    프로필 수정
+                                    닉네임 변경
                                 </button>
                             </div>
                         )}
-
-                        <div className="mt-8 space-y-6">
-                            <div className="border-t pt-4">
-                                <h3 className="text-xl font-bold mb-4">개인정보 수정</h3>
-                                <form className="space-y-4 max-w-md mx-auto text-left" onSubmit={handleUpdatePersonalInfo}>
-                                    {/* 비밀번호 변경 */}
-                                    <div>
-                                        <label className="block text-gray-700 mb-2">현재 비밀번호</label>
-                                        <input
-                                            type="password"
-                                            value={personalInfo.password}
-                                            onChange={(e) => setPersonalInfo({ ...personalInfo, password: e.target.value })}
-                                            className="w-full px-3 py-2 border rounded-md"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-gray-700 mb-2">새 비밀번호</label>
-                                        <input
-                                            type="password"
-                                            value={personalInfo.newPassword}
-                                            onChange={(e) => setPersonalInfo({ ...personalInfo, newPassword: e.target.value })}
-                                            className="w-full px-3 py-2 border rounded-md"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-gray-700 mb-2">새 비밀번호 확인</label>
-                                        <input
-                                            type="password"
-                                            value={personalInfo.confirmPassword}
-                                            onChange={(e) => setPersonalInfo({ ...personalInfo, confirmPassword: e.target.value })}
-                                            className="w-full px-3 py-2 border rounded-md"
-                                        />
-                                    </div>
-
-                                    {/* 주소 정보 */}
-                                    <div>
-                                        <label className="block text-gray-700 mb-2">주소</label>
-                                        <input
-                                            type="text"
-                                            value={personalInfo.address}
-                                            onChange={(e) => setPersonalInfo({ ...personalInfo, address: e.target.value })}
-                                            className="w-full px-3 py-2 border rounded-md"
-                                        />
-                                    </div>
-
-                                    {/* 전화번호 인증 */}
-                                    <div>
-                                        <label className="block text-gray-700 mb-2">전화번호</label>
-                                        <div className="flex gap-2">
-                                            <input
-                                                type="tel"
-                                                value={personalInfo.phone}
-                                                onChange={(e) => setPersonalInfo({ ...personalInfo, phone: e.target.value })}
-                                                className="flex-1 px-3 py-2 border rounded-md"
-                                                disabled={personalInfo.isPhoneVerified}
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={handlePhoneVerification}
-                                                className="px-4 py-2 bg-orange-500 text-white rounded-md"
-                                                disabled={personalInfo.isPhoneVerified}
-                                            >
-                                                인증요청
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    {/* 인증번호 입력 */}
-                                    {!personalInfo.isPhoneVerified && personalInfo.phone && (
-                                        <div>
-                                            <label className="block text-gray-700 mb-2">인증번호</label>
-                                            <div className="flex gap-2">
-                                                <input
-                                                    type="text"
-                                                    value={personalInfo.verificationCode}
-                                                    onChange={(e) => setPersonalInfo({ ...personalInfo, verificationCode: e.target.value })}
-                                                    className="flex-1 px-3 py-2 border rounded-md"
-                                                />
-                                                <button
-                                                    type="button"
-                                                    onClick={handleVerificationCodeCheck}
-                                                    className="px-4 py-2 bg-orange-500 text-white rounded-md"
-                                                >
-                                                    확인
-                                                </button>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    <button
-                                        type="submit"
-                                        className="w-full px-4 py-2 bg-orange-500 text-white rounded-md mt-6"
-                                    >
-                                        정보 수정
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
 
                         <div className="mt-8 space-y-4">
                             <div className="border-t pt-4">
                                 <h3 className="font-bold mb-2">이메일</h3>
                                 <p>{userInfo?.email}</p>
                             </div>
+                        </div>
+
+                        <div className="mt-8 space-y-6">
                             <div className="border-t pt-4">
-                                <h3 className="font-bold mb-2">가입일</h3>
-                                <p>{new Date(userInfo?.createdAt).toLocaleDateString()}</p>
+                                <h3 className="text-xl font-bold mb-4">개인정보 관리</h3>
+
+                                {/* 비밀번호 변경 섹션 */}
+                                <div className="mb-6">
+                                    <div className="flex justify-between items-center mb-4">
+                                        <h4 className="text-lg font-semibold">비밀번호 관리</h4>
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsPasswordEditing(prev => !prev)}
+                                            className="px-4 py-2 bg-gray-100 rounded-md hover:bg-gray-200"
+                                        >
+                                            {isPasswordEditing ? '취소' : '비밀번호 변경'}
+                                        </button>
+                                    </div>
+
+                                    {isPasswordEditing && (
+                                        <form className="space-y-4 max-w-md mx-auto text-left" onSubmit={handleUpdatePassword}>
+                                            <div>
+                                                <label className="block text-gray-700 mb-2">현재 비밀번호</label>
+                                                <input
+                                                    type="password"
+                                                    value={personalInfo.currentPassword}
+                                                    onChange={(e) => setPersonalInfo({ ...personalInfo, currentPassword: e.target.value })}
+                                                    className="w-full px-3 py-2 border rounded-md"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-gray-700 mb-2">새 비밀번호</label>
+                                                <input
+                                                    type="password"
+                                                    value={personalInfo.newPassword}
+                                                    onChange={(e) => setPersonalInfo({ ...personalInfo, newPassword: e.target.value })}
+                                                    className="w-full px-3 py-2 border rounded-md"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-gray-700 mb-2">새 비밀번호 확인</label>
+                                                <input
+                                                    type="password"
+                                                    value={personalInfo.confirmPassword}
+                                                    onChange={(e) => setPersonalInfo({ ...personalInfo, confirmPassword: e.target.value })}
+                                                    className="w-full px-3 py-2 border rounded-md"
+                                                />
+                                            </div>
+                                            <button
+                                                type="submit"
+                                                className="w-full px-4 py-2 bg-orange-500 text-white rounded-md mt-2"
+                                            >
+                                                비밀번호 변경하기
+                                            </button>
+                                        </form>
+                                    )}
+                                </div>
+
+                                {/* 전화번호 관리 섹션 */}
+                                <div className="border-t pt-4">
+                                    <div className="flex justify-between items-center mb-4">
+                                        <h4 className="text-lg font-semibold">전화번호 관리</h4>
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsPhoneEditing(prev => !prev)}
+                                            className="px-4 py-2 bg-gray-100 rounded-md hover:bg-gray-200"
+                                        >
+                                            {isPhoneEditing ? '취소' : '전화번호 변경'}
+                                        </button>
+                                    </div>
+
+                                    {/* 현재 전화번호 표시 */}
+                                    {!isPhoneEditing && (
+                                        <p className="text-gray-700">
+                                            {personalInfo.phone ?
+                                                `${personalInfo.phone} ${personalInfo.isPhoneVerified ? '(인증됨)' : '(미인증)'}` :
+                                                '등록된 전화번호가 없습니다.'}
+                                        </p>
+                                    )}
+
+                                    {isPhoneEditing && (
+                                        <div className="space-y-4 max-w-md mx-auto text-left">
+                                            <div>
+                                                <label className="block text-gray-700 mb-2">전화번호</label>
+                                                <div className="flex gap-2">
+                                                    <input
+                                                        type="tel"
+                                                        value={personalInfo.phone}
+                                                        onChange={(e) => setPersonalInfo({ ...personalInfo, phone: e.target.value })}
+                                                        className="flex-1 px-3 py-2 border rounded-md"
+                                                        disabled={personalInfo.isPhoneVerified}
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={handlePhoneVerification}
+                                                        className="px-4 py-2 bg-orange-500 text-white rounded-md"
+                                                        disabled={personalInfo.isPhoneVerified}
+                                                    >
+                                                        인증요청
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            {/* 인증번호 입력 */}
+                                            {!personalInfo.isPhoneVerified && personalInfo.phone && (
+                                                <div>
+                                                    <label className="block text-gray-700 mb-2">인증번호</label>
+                                                    <div className="flex gap-2">
+                                                        <input
+                                                            type="text"
+                                                            value={personalInfo.verificationCode}
+                                                            onChange={(e) => setPersonalInfo({ ...personalInfo, verificationCode: e.target.value })}
+                                                            className="flex-1 px-3 py-2 border rounded-md"
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={handleVerificationCodeCheck}
+                                                            className="px-4 py-2 bg-orange-500 text-white rounded-md"
+                                                        >
+                                                            확인
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {personalInfo.isPhoneVerified && (
+                                                <button
+                                                    type="button"
+                                                    onClick={handleUpdatePhone}
+                                                    className="w-full px-4 py-2 bg-orange-500 text-white rounded-md mt-2"
+                                                >
+                                                    전화번호 저장하기
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -557,9 +634,8 @@ const MyPage = () => {
                                         <h3 className="text-xl font-bold">{pet.name}</h3>
                                         <div className="text-gray-600">
                                             <p>품종: {pet.breed}</p>
-                                            <p>나이: {new Date().getFullYear() - new Date(pet.birthDate).getFullYear()}세</p>
                                             <p>특징: {pet.characteristics}</p>
-                                            <p>크기: {pet.size === 'SMALL' ? 'SMALL' : pet.size === 'MEDIUM' ? 'MEDIUM' : 'LARGE'}</p>
+                                            <p>크기: {pet.size}</p>
                                             <p>동물등록번호: {pet.registrationNumber}</p>
                                         </div>
                                     </div>
