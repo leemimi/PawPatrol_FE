@@ -7,7 +7,7 @@ const LoginScreen = () => {
     const socialLoginForKakaoUrl = `${import.meta.env.VITE_CORE_API_BASE_URL}/oauth2/authorization/kakao`; // 카카오 로그인 요청 URL
     const socialLoginForGoogleUrl = `${import.meta.env.VITE_CORE_API_BASE_URL}/oauth2/authorization/google`; // 구글 로그인 요청 URL
     const socialLoginForNaverUrl = `${import.meta.env.VITE_CORE_API_BASE_URL}/oauth2/authorization/naver`; // 네이버 로그인 요청 URL
-    const redirectUrlAfterSocialLogin = `${import.meta.env.VITE_CORE_API_BASE_URL}/oauth2/redirect`;   // 소셜 로그인 후 리다이렉트 URL
+    const redirectUrlAfterSocialLogin = `${import.meta.env.VITE_CORE_FRONT_BASE_URL}/oauth2/redirect`;   // 소셜 로그인 후 리다이렉트 URL
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const navigate = useNavigate();
