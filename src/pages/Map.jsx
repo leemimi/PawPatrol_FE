@@ -3,13 +3,13 @@ import axios from 'axios';
 import { RadiusControl } from '../components/RadiusControl';
 import { PetCard } from '../components/PetCard';
 import { ControlButtons } from '../components/ControlButtons';
-import { useKakaoMap } from '../hooks/useKakaoMap';
+import { useKakaoMap } from '@/hooks/UseKakaoMap';
 import PetList from '../components/PetList';
 import _ from 'lodash';
 
 const Map = () => {
     const centerPosition = { lat: 37.498095, lng: 127.027610 };
-    
+
     const [selectedRange, setSelectedRange] = useState(3);
     const [selectedPet, setSelectedPet] = useState(null);
     const [showList, setShowList] = useState(false);
@@ -257,7 +257,7 @@ const Map = () => {
                     lng: position.coords.longitude
                 };
                 setCurrentPosition(pos);
-                
+
                 if (map) {
                     const moveLatLon = new window.kakao.maps.LatLng(pos.lat, pos.lng);
                     map.setCenter(moveLatLon);
@@ -274,7 +274,7 @@ const Map = () => {
     }, [map, circleRef, selectedRange]);
 
     useEffect(() => {
-        if (map && circleRef.current) {    
+        if (map && circleRef.current) {
             const moveLatLon = new window.kakao.maps.LatLng(currentPosition.lat, currentPosition.lng);
             circleRef.current.setPosition(moveLatLon);
             circleRef.current.setMap(map);
@@ -284,13 +284,13 @@ const Map = () => {
     const handleRangeChange = useCallback((newRange) => {
         setIsMarkerTransitioning(true);
         setSelectedRange(newRange);
-        
+
         if (circleRef.current) {
             const currentRadius = circleRef.current.getRadius();
             const targetRadius = newRange * 1000;
             const steps = 20;
             const increment = (targetRadius - currentRadius) / steps;
-            
+
             let step = 0;
             const animate = () => {
                 if (step < steps) {
@@ -303,7 +303,7 @@ const Map = () => {
                     fetchData(currentPosition, newRange);
                 }
             };
-            
+
             animate();
         }
     }, [circleRef, currentPosition]);
@@ -359,7 +359,7 @@ const Map = () => {
                         onRangeChange={handleRangeChange}
                         isTransitioning={isMarkerTransitioning}
                     />
-                    
+
                     <ControlButtons
                         onLocationClick={getCurrentLocation}
                         onListClick={() => setShowList(!showList)}
