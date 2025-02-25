@@ -51,7 +51,9 @@ const dummyWitnesses = [
 ];
 
 const MyPage = () => {
-    const userInfo = useAuthStore((state) => state.userInfo?.data);
+    const userInfoStr = localStorage.getItem('userInfo');
+    const userInfo = userInfoStr ? JSON.parse(userInfoStr) : null;
+    // const userInfo = useAuthStore((state) => state.userInfo?.data);
     const [activeTab, setActiveTab] = useState('profile');
     const [profileImage, setProfileImage] = useState(defaultImage);
     const [nickname, setNickname] = useState('');
@@ -104,12 +106,12 @@ const MyPage = () => {
                 formData.append('imageFile', petFormData.image);
             }
 
-            const response = await fetch('/api/v2/members/pets/register', {
-                method: 'POST',
+            const response = await axios.post(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/pets/register`, {
+                withCredentials: true,
                 body: formData
             });
 
-            if (!response.ok) {
+            if (!response.data.statusCode === 401) {
                 throw new Error('반려동물 등록에 실패했습니다.');
             }
 
@@ -152,11 +154,11 @@ const MyPage = () => {
     // 로그아웃 함수
     const handleLogout = async () => {
         try {
-            const response = await fetch(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/auth/logout`, {
-                method: 'POST'
+            const response = await axios.post(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/auth/logout`, {
+                withCredentials: true
             });
 
-            if (response.ok) {
+            if (response.data.statusCode === 200) {
                 localStorage.removeItem('accessToken');
                 localStorage.removeItem('userInfo');
                 localStorage.removeItem('isLoggedIn');
@@ -208,16 +210,26 @@ const MyPage = () => {
         }
     };
 
+    // 닉네임 변경
     const handleUpdateProfile = async () => {
         try {
-            // const response = await fetch(
+            const response = await axios.patch(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/profile`, {
+                nickname: nickname,
+                withCredentials: true
+            })
 
-            // );
+            if (response.data.statusCode === 200) {
+                // 로컬 스토리지의 사용자 정보 업데이트
+                const userInfoStr = localStorage.getItem('userInfo');
+                if (userInfoStr) {
+                    const userInfo = JSON.parse(userInfoStr);
+                    userInfo.nickname = nickname;
+                    localStorage.setItem('userInfo', JSON.stringify(userInfo));
+                }
 
-            // if (response.ok) {
-            //     setIsEditing(false);
-            //     alert('프로필이 업데이트되었습니다.');
-            // }
+                // 필요한 경우 상태 업데이트 또는 페이지 리로드
+                setIsEditing(false); // 편집 모드 종료
+            }
         } catch (error) {
             console.error('Profile update error:', error);
             alert('프로필 업데이트 중 오류가 발생했습니다.');
@@ -279,8 +291,12 @@ const MyPage = () => {
         if (userInfoStr && isLoggedIn === 'true') {
             fetchMyPets(); // 이미 정의된 함수 사용
         }
-    }, []);
 
+        if (userInfo?.nickname) {
+            setNickname(userInfo.nickname);
+        }
+    }, []);
+    
     return (
         <div className="min-h-screen bg-[#FFF5E6]">
             <div className="max-w-4xl mx-auto bg-white rounded-lg shadow p-8">
@@ -372,15 +388,22 @@ const MyPage = () => {
                             </div>
                         ) : (
                             <div>
-                                <h2 className="text-xl font-bold mb-2">{nickname}</h2>
+                                <h2 className="text-xl font-bold mb-2">{userInfo?.nickname}</h2>
                                 <button
                                     onClick={() => setIsEditing(true)}
                                     className="px-4 py-2 bg-gray-100 rounded-md"
                                 >
-                                    프로필 수정
+                                    닉네임 변경
                                 </button>
                             </div>
                         )}
+
+                        <div className="mt-8 space-y-4">
+                            <div className="border-t pt-4">
+                                <h3 className="font-bold mb-2">이메일</h3>
+                                <p>{userInfo?.email}</p>
+                            </div>
+                        </div>
 
                         <div className="mt-8 space-y-6">
                             <div className="border-t pt-4">
@@ -411,17 +434,6 @@ const MyPage = () => {
                                             type="password"
                                             value={personalInfo.confirmPassword}
                                             onChange={(e) => setPersonalInfo({ ...personalInfo, confirmPassword: e.target.value })}
-                                            className="w-full px-3 py-2 border rounded-md"
-                                        />
-                                    </div>
-
-                                    {/* 주소 정보 */}
-                                    <div>
-                                        <label className="block text-gray-700 mb-2">주소</label>
-                                        <input
-                                            type="text"
-                                            value={personalInfo.address}
-                                            onChange={(e) => setPersonalInfo({ ...personalInfo, address: e.target.value })}
                                             className="w-full px-3 py-2 border rounded-md"
                                         />
                                     </div>
@@ -477,17 +489,6 @@ const MyPage = () => {
                                         정보 수정
                                     </button>
                                 </form>
-                            </div>
-                        </div>
-
-                        <div className="mt-8 space-y-4">
-                            <div className="border-t pt-4">
-                                <h3 className="font-bold mb-2">이메일</h3>
-                                <p>{userInfo?.email}</p>
-                            </div>
-                            <div className="border-t pt-4">
-                                <h3 className="font-bold mb-2">가입일</h3>
-                                <p>{new Date(userInfo?.createdAt).toLocaleDateString()}</p>
                             </div>
                         </div>
                     </div>
