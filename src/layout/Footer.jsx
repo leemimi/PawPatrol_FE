@@ -59,7 +59,6 @@ const Footer = () => {
         }
     };
 
-
     return (
         <div className="fixed bottom-0 left-0 right-0 z-20 bg-white border-t-2 border-orange-100">
             <div className="flex items-center justify-around px-2 py-1">
@@ -70,7 +69,6 @@ const Footer = () => {
                     <Home size={20} strokeWidth={2.5} />
                     <span className="text-xs font-medium">홈</span>
                 </button>
-
                 <button
                     onClick={() => navigate('/community')}
                     className="flex flex-col items-center gap-1 p-2 text-orange-400 hover:text-orange-500 transition-colors"

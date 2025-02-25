@@ -15,7 +15,6 @@ import { useAuthStore } from './stores/useAuthStore'
 import './index.css';
 
 const App = () => {
-
   return (
     <Routes>
       <Route element={<Layout />}>
