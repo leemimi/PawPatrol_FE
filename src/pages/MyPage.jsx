@@ -3,6 +3,7 @@ import { useAuthStore } from '../stores/useAuthStore';
 import defaultImage from '../assets/images/default.png';
 import PetRegisterModal from '../components/PetRegisterModal.jsx';
 import PetTypeSelectModal from '../components/PetTypeSelectModal';
+import PetEditModal from '../components/PetEditModal.jsx';
 import { replace, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
@@ -51,6 +52,10 @@ const dummyWitnesses = [
 ];
 
 const MyPage = () => {
+    const [isEditOpen, setIsEditOpen] = useState(false);
+    const [selectedPet, setSelectedPet] = useState(null);
+    const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+    const [petToDelete, setPetToDelete] = useState(null);
     const [isPasswordEditing, setIsPasswordEditing] = useState(false);
     const [isPhoneEditing, setIsPhoneEditing] = useState(false);
     const userInfoStr = localStorage.getItem('userInfo');
@@ -69,6 +74,8 @@ const MyPage = () => {
         reports: dummyReports,
         witnesses: dummyWitnesses
     });
+
+
     const [personalInfo, setPersonalInfo] = useState({
         password: '',
         newPassword: '',
@@ -78,6 +85,8 @@ const MyPage = () => {
         isPhoneVerified: false,
         verificationCode: ''
     });
+
+    // 반려동물 등록용 폼 데이터 추가
     const [petFormData, setPetFormData] = useState({
         animalType: '',  // 고양이 or 강아지
         name: '',   // 이름
@@ -90,6 +99,104 @@ const MyPage = () => {
         feature: '',    // 특징
         image: null // 사진
     });
+
+    // 수정용 폼 데이터 추가
+    const [editPetFormData, setEditPetFormData] = useState({
+        animalType: '',
+        name: '',
+        breed: '',
+        gender: 'M',
+        size: 'SMALL',
+        estimatedAge: '',
+        registrationNo: '',
+        healthCondition: '',
+        feature: '',
+        image: null
+    });
+
+
+    // 반려동물 수정 핸들러
+    const handleEditPet = (pet) => {
+        setSelectedPet(pet);
+        setEditPetFormData({
+            name: pet?.name || '',
+            breed: pet?.breed || '',
+            gender: pet?.gender || 'M',
+            size: pet?.size || 'SMALL',
+            estimatedAge: pet?.estimatedAge || '',
+            registrationNo: pet?.registrationNumber || '',
+            healthCondition: pet?.healthCondition || '',
+            feature: pet?.feature || pet?.characteristics || '',
+            animalType: pet?.animalType || 'DOG',
+            image: null
+        });
+        setIsEditOpen(true);
+    };
+
+    // 반려동물 수정 제출 핸들러
+    const handleEditSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            const formData = new FormData();
+
+            // 모든 데이터를 FormData에 추가
+            Object.keys(editPetFormData).forEach(key => {
+                if (key !== 'image') {
+                    formData.append(key, editPetFormData[key]);
+                }
+            });
+
+            if (editPetFormData.image) {
+                formData.append('imageFile', editPetFormData.image);
+            }
+
+            const response = await axios.patch(
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/pets/${selectedPet.id}`,
+                formData,
+                {
+                    withCredentials: true,
+                    headers: {
+                        'Content-Type': 'multipart/form-data'
+                    }
+                }
+            );
+
+            if (response.data.statusCode === 200) {
+                alert('반려동물 정보가 성공적으로 수정되었습니다.');
+                setIsEditOpen(false);
+                await fetchMyPets(); // 반려동물 목록 새로고침
+            }
+        } catch (error) {
+            console.error('Error updating pet:', error);
+            alert('반려동물 정보 수정 중 오류가 발생했습니다.');
+        }
+    };
+
+    // 반려동물 삭제 확인 모달 열기
+    const handleDeleteConfirm = (pet) => {
+        setPetToDelete(pet);
+        setIsDeleteConfirmOpen(true);
+    };
+
+    // 반려동물 삭제 실행
+    const handleDeletePet = async () => {
+        try {
+            const response = await axios.delete(
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/pets/${petToDelete.id}`,
+                { withCredentials: true }
+            );
+
+            if (response.data.statusCode === 200) {
+                alert('반려동물이 성공적으로 삭제되었습니다.');
+                setIsDeleteConfirmOpen(false);
+                setPetToDelete(null);
+                await fetchMyPets(); // 반려동물 목록 새로고침
+            }
+        } catch (error) {
+            console.error('Error deleting pet:', error);
+            alert('반려동물 삭제 중 오류가 발생했습니다.');
+        }
+    };
 
     // 닉네임 변경
     const handleUpdateProfile = async () => {
@@ -124,11 +231,11 @@ const MyPage = () => {
             alert('새 비밀번호가 일치하지 않습니다.');
             return;
         }
-    
+
         try {
             // 비밀번호 변경 API 호출
             const response = await axios.patch(
-                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/profile`, 
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/profile`,
                 {
                     currentPassword: personalInfo.currentPassword,
                     newPassword: personalInfo.newPassword,
@@ -141,7 +248,7 @@ const MyPage = () => {
                     }
                 }
             );
-    
+
             if (response.data.statusCode === 200) {
                 // 성공 시 처리
                 alert('비밀번호가 성공적으로 변경되었습니다.');
@@ -192,7 +299,7 @@ const MyPage = () => {
             }
 
             const response = await axios.post(
-                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/pets/register`, 
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/pets/register`,
                 formData,  // FormData를 직접 전달
                 {
                     withCredentials: true,
@@ -638,6 +745,20 @@ const MyPage = () => {
                                             <p>크기: {pet.size}</p>
                                             <p>동물등록번호: {pet.registrationNumber}</p>
                                         </div>
+                                        <div className="flex justify-end space-x-2 mt-4">
+                                            <button
+                                                onClick={() => handleEditPet(pet)}
+                                                className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                                            >
+                                                수정
+                                            </button>
+                                            <button
+                                                onClick={() => handleDeleteConfirm(pet)}
+                                                className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                                            >
+                                                삭제
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             ))}
@@ -657,6 +778,41 @@ const MyPage = () => {
                             petFormData={petFormData}
                             setPetFormData={setPetFormData}
                         />
+
+                        <PetEditModal
+                            isOpen={isEditOpen}
+                            onClose={() => setIsEditOpen(false)}
+                            onSubmit={handleEditSubmit}
+                            petFormData={editPetFormData}
+                            setPetFormData={setEditPetFormData}
+                            pet={selectedPet}
+                        />
+
+                        {/* 삭제 확인 모달 */}
+                        {isDeleteConfirmOpen && (
+                            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                                <div className="bg-white p-6 rounded-lg w-full max-w-md">
+                                    <h3 className="text-xl font-bold mb-4">반려동물 삭제</h3>
+                                    <p className="mb-6">
+                                        정말로 {petToDelete?.name}을(를) 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+                                    </p>
+                                    <div className="flex justify-end space-x-2">
+                                        <button
+                                            onClick={() => setIsDeleteConfirmOpen(false)}
+                                            className="px-4 py-2 bg-gray-200 rounded"
+                                        >
+                                            취소
+                                        </button>
+                                        <button
+                                            onClick={handleDeletePet}
+                                            className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                                        >
+                                            삭제
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
 
