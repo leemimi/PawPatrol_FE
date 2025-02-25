@@ -1,17 +1,59 @@
 import React from 'react';
 import { Home, Users, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const Footer = () => {
     const navigate = useNavigate();
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-    const handleMyPageClick = () => {
-        const isLoggedIn = localStorage.getItem('isLoggedIn');
+    // 컴포넌트 마운트 시 인증 상태 확인
+    useEffect(() => {
+        checkAuthStatus();
+    }, []);
 
-        if (isLoggedIn === 'true') {
-            navigate('/mypage');
-        } else {
-            navigate('/login-pet');
+
+    // API를 통한 인증 상태 확인
+    const checkAuthStatus = async () => {
+        try {
+            const isLoggedIn = localStorage.getItem('isLoggedIn');
+
+            if (!isLoggedIn) {
+                setIsAuthenticated(false);
+                return;
+            }
+
+            // API 요청으로 토큰 유효성 검증
+            const response = await axios.get('/api/v1/members/me', {
+                withCredentials: true // 쿠키 포함 요청
+            });
+
+            // 요청이 성공하면 인증된 상태
+            setIsAuthenticated(true);
+            localStorage.setItem('isLoggedIn', 'true');
+
+        } catch (error) {
+            // 401 에러 등이 발생하면 인증되지 않은 상태
+            console.error('인증 확인 중 오류 발생:', error);
+            setIsAuthenticated(false);
+            localStorage.removeItem('isLoggedIn');
+        }
+    };
+
+    const handleMyPageClick = async () => {
+        try {
+            // 클릭 시점에 최신 인증 상태 확인
+            await checkAuthStatus();
+
+            // 업데이트된 인증 상태에 따라 페이지 이동
+            if (isAuthenticated) {
+                navigate('/mypage');
+            } else {
+                navigate('/login-pet');
+            }
+        } catch (error) {
+            console.error('인증 확인 중 오류 발생:', error);
+            navigate('/login-pet'); // 오류 발생 시 로그인 페이지로 이동
         }
     };
 
@@ -35,7 +77,7 @@ const Footer = () => {
                     <span className="text-xs font-medium">커뮤니티</span>
                 </button>
 
-                <button 
+                <button
                     onClick={handleMyPageClick}
                     className="flex flex-col items-center gap-1 p-2 text-orange-400 hover:text-orange-500 transition-colors"
                 >
