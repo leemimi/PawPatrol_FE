@@ -51,6 +51,8 @@ const dummyWitnesses = [
 ];
 
 const MyPage = () => {
+    const [isPasswordEditing, setIsPasswordEditing] = useState(false);
+    const [isPhoneEditing, setIsPhoneEditing] = useState(false);
     const userInfoStr = localStorage.getItem('userInfo');
     const userInfo = userInfoStr ? JSON.parse(userInfoStr) : null;
     // const userInfo = useAuthStore((state) => state.userInfo?.data);
@@ -89,6 +91,89 @@ const MyPage = () => {
         image: null // 사진
     });
 
+    // 닉네임 변경
+    const handleUpdateProfile = async () => {
+        try {
+            const response = await axios.patch(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/profile`, {
+                nickname: nickname,
+                withCredentials: true
+            })
+
+            if (response.data.statusCode === 200) {
+                // 로컬 스토리지의 사용자 정보 업데이트
+                const userInfoStr = localStorage.getItem('userInfo');
+                if (userInfoStr) {
+                    const userInfo = JSON.parse(userInfoStr);
+                    userInfo.nickname = nickname;
+                    localStorage.setItem('userInfo', JSON.stringify(userInfo));
+                }
+
+                // 필요한 경우 상태 업데이트 또는 페이지 리로드
+                setIsEditing(false); // 편집 모드 종료
+            }
+        } catch (error) {
+            console.error('Profile update error:', error);
+            alert('프로필 업데이트 중 오류가 발생했습니다.');
+        }
+    };
+
+    // 비밀번호 변경
+    const handleUpdatePassword = async (e) => {
+        e.preventDefault();
+        if (personalInfo.newPassword !== personalInfo.confirmPassword) {
+            alert('새 비밀번호가 일치하지 않습니다.');
+            return;
+        }
+    
+        try {
+            // 비밀번호 변경 API 호출
+            const response = await axios.patch(
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/profile`, 
+                {
+                    currentPassword: personalInfo.currentPassword,
+                    newPassword: personalInfo.newPassword,
+                    confirmPassword: personalInfo.confirmPassword
+                },
+                {
+                    withCredentials: true,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+    
+            if (response.data.statusCode === 200) {
+                // 성공 시 처리
+                alert('비밀번호가 성공적으로 변경되었습니다.');
+                setIsPasswordEditing(false);
+                setPersonalInfo({
+                    ...personalInfo,
+                    currentPassword: '',
+                    newPassword: '',
+                    confirmPassword: ''
+                });
+            }
+        } catch (error) {
+            console.error('Password update error:', error);
+            alert('비밀번호 변경 중 오류가 발생했습니다.');
+        }
+    };
+
+    // 전화번호 변경
+    const handleUpdatePhone = async () => {
+        try {
+            // 전화번호 업데이트 API 호출
+            // const response = await axios.patch(...);
+
+            // 성공 시 처리
+            alert('전화번호가 성공적으로 변경되었습니다.');
+            setIsPhoneEditing(false);
+        } catch (error) {
+            console.error('Phone update error:', error);
+            alert('전화번호 변경 중 오류가 발생했습니다.');
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
@@ -106,10 +191,16 @@ const MyPage = () => {
                 formData.append('imageFile', petFormData.image);
             }
 
-            const response = await axios.post(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/pets/register`, {
-                withCredentials: true,
-                body: formData
-            });
+            const response = await axios.post(
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/pets/register`, 
+                formData,  // FormData를 직접 전달
+                {
+                    withCredentials: true,
+                    headers: {
+                        'Content-Type': 'multipart/form-data'
+                    }
+                }
+            );
 
             if (!response.data.statusCode === 401) {
                 throw new Error('반려동물 등록에 실패했습니다.');
@@ -210,32 +301,6 @@ const MyPage = () => {
         }
     };
 
-    // 닉네임 변경
-    const handleUpdateProfile = async () => {
-        try {
-            const response = await axios.patch(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/profile`, {
-                nickname: nickname,
-                withCredentials: true
-            })
-
-            if (response.data.statusCode === 200) {
-                // 로컬 스토리지의 사용자 정보 업데이트
-                const userInfoStr = localStorage.getItem('userInfo');
-                if (userInfoStr) {
-                    const userInfo = JSON.parse(userInfoStr);
-                    userInfo.nickname = nickname;
-                    localStorage.setItem('userInfo', JSON.stringify(userInfo));
-                }
-
-                // 필요한 경우 상태 업데이트 또는 페이지 리로드
-                setIsEditing(false); // 편집 모드 종료
-            }
-        } catch (error) {
-            console.error('Profile update error:', error);
-            alert('프로필 업데이트 중 오류가 발생했습니다.');
-        }
-    };
-
     // 내 반려동물 리스트 가져오기
     const fetchMyPets = async () => {
         try {
@@ -296,7 +361,7 @@ const MyPage = () => {
             setNickname(userInfo.nickname);
         }
     }, []);
-    
+
     return (
         <div className="min-h-screen bg-[#FFF5E6]">
             <div className="max-w-4xl mx-auto bg-white rounded-lg shadow p-8">
@@ -407,88 +472,139 @@ const MyPage = () => {
 
                         <div className="mt-8 space-y-6">
                             <div className="border-t pt-4">
-                                <h3 className="text-xl font-bold mb-4">개인정보 수정</h3>
-                                <form className="space-y-4 max-w-md mx-auto text-left" onSubmit={handleUpdatePersonalInfo}>
-                                    {/* 비밀번호 변경 */}
-                                    <div>
-                                        <label className="block text-gray-700 mb-2">현재 비밀번호</label>
-                                        <input
-                                            type="password"
-                                            value={personalInfo.password}
-                                            onChange={(e) => setPersonalInfo({ ...personalInfo, password: e.target.value })}
-                                            className="w-full px-3 py-2 border rounded-md"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-gray-700 mb-2">새 비밀번호</label>
-                                        <input
-                                            type="password"
-                                            value={personalInfo.newPassword}
-                                            onChange={(e) => setPersonalInfo({ ...personalInfo, newPassword: e.target.value })}
-                                            className="w-full px-3 py-2 border rounded-md"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-gray-700 mb-2">새 비밀번호 확인</label>
-                                        <input
-                                            type="password"
-                                            value={personalInfo.confirmPassword}
-                                            onChange={(e) => setPersonalInfo({ ...personalInfo, confirmPassword: e.target.value })}
-                                            className="w-full px-3 py-2 border rounded-md"
-                                        />
+                                <h3 className="text-xl font-bold mb-4">개인정보 관리</h3>
+
+                                {/* 비밀번호 변경 섹션 */}
+                                <div className="mb-6">
+                                    <div className="flex justify-between items-center mb-4">
+                                        <h4 className="text-lg font-semibold">비밀번호 관리</h4>
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsPasswordEditing(prev => !prev)}
+                                            className="px-4 py-2 bg-gray-100 rounded-md hover:bg-gray-200"
+                                        >
+                                            {isPasswordEditing ? '취소' : '비밀번호 변경'}
+                                        </button>
                                     </div>
 
-                                    {/* 전화번호 인증 */}
-                                    <div>
-                                        <label className="block text-gray-700 mb-2">전화번호</label>
-                                        <div className="flex gap-2">
-                                            <input
-                                                type="tel"
-                                                value={personalInfo.phone}
-                                                onChange={(e) => setPersonalInfo({ ...personalInfo, phone: e.target.value })}
-                                                className="flex-1 px-3 py-2 border rounded-md"
-                                                disabled={personalInfo.isPhoneVerified}
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={handlePhoneVerification}
-                                                className="px-4 py-2 bg-orange-500 text-white rounded-md"
-                                                disabled={personalInfo.isPhoneVerified}
-                                            >
-                                                인증요청
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    {/* 인증번호 입력 */}
-                                    {!personalInfo.isPhoneVerified && personalInfo.phone && (
-                                        <div>
-                                            <label className="block text-gray-700 mb-2">인증번호</label>
-                                            <div className="flex gap-2">
+                                    {isPasswordEditing && (
+                                        <form className="space-y-4 max-w-md mx-auto text-left" onSubmit={handleUpdatePassword}>
+                                            <div>
+                                                <label className="block text-gray-700 mb-2">현재 비밀번호</label>
                                                 <input
-                                                    type="text"
-                                                    value={personalInfo.verificationCode}
-                                                    onChange={(e) => setPersonalInfo({ ...personalInfo, verificationCode: e.target.value })}
-                                                    className="flex-1 px-3 py-2 border rounded-md"
+                                                    type="password"
+                                                    value={personalInfo.currentPassword}
+                                                    onChange={(e) => setPersonalInfo({ ...personalInfo, currentPassword: e.target.value })}
+                                                    className="w-full px-3 py-2 border rounded-md"
                                                 />
-                                                <button
-                                                    type="button"
-                                                    onClick={handleVerificationCodeCheck}
-                                                    className="px-4 py-2 bg-orange-500 text-white rounded-md"
-                                                >
-                                                    확인
-                                                </button>
                                             </div>
-                                        </div>
+                                            <div>
+                                                <label className="block text-gray-700 mb-2">새 비밀번호</label>
+                                                <input
+                                                    type="password"
+                                                    value={personalInfo.newPassword}
+                                                    onChange={(e) => setPersonalInfo({ ...personalInfo, newPassword: e.target.value })}
+                                                    className="w-full px-3 py-2 border rounded-md"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-gray-700 mb-2">새 비밀번호 확인</label>
+                                                <input
+                                                    type="password"
+                                                    value={personalInfo.confirmPassword}
+                                                    onChange={(e) => setPersonalInfo({ ...personalInfo, confirmPassword: e.target.value })}
+                                                    className="w-full px-3 py-2 border rounded-md"
+                                                />
+                                            </div>
+                                            <button
+                                                type="submit"
+                                                className="w-full px-4 py-2 bg-orange-500 text-white rounded-md mt-2"
+                                            >
+                                                비밀번호 변경하기
+                                            </button>
+                                        </form>
+                                    )}
+                                </div>
+
+                                {/* 전화번호 관리 섹션 */}
+                                <div className="border-t pt-4">
+                                    <div className="flex justify-between items-center mb-4">
+                                        <h4 className="text-lg font-semibold">전화번호 관리</h4>
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsPhoneEditing(prev => !prev)}
+                                            className="px-4 py-2 bg-gray-100 rounded-md hover:bg-gray-200"
+                                        >
+                                            {isPhoneEditing ? '취소' : '전화번호 변경'}
+                                        </button>
+                                    </div>
+
+                                    {/* 현재 전화번호 표시 */}
+                                    {!isPhoneEditing && (
+                                        <p className="text-gray-700">
+                                            {personalInfo.phone ?
+                                                `${personalInfo.phone} ${personalInfo.isPhoneVerified ? '(인증됨)' : '(미인증)'}` :
+                                                '등록된 전화번호가 없습니다.'}
+                                        </p>
                                     )}
 
-                                    <button
-                                        type="submit"
-                                        className="w-full px-4 py-2 bg-orange-500 text-white rounded-md mt-6"
-                                    >
-                                        정보 수정
-                                    </button>
-                                </form>
+                                    {isPhoneEditing && (
+                                        <div className="space-y-4 max-w-md mx-auto text-left">
+                                            <div>
+                                                <label className="block text-gray-700 mb-2">전화번호</label>
+                                                <div className="flex gap-2">
+                                                    <input
+                                                        type="tel"
+                                                        value={personalInfo.phone}
+                                                        onChange={(e) => setPersonalInfo({ ...personalInfo, phone: e.target.value })}
+                                                        className="flex-1 px-3 py-2 border rounded-md"
+                                                        disabled={personalInfo.isPhoneVerified}
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={handlePhoneVerification}
+                                                        className="px-4 py-2 bg-orange-500 text-white rounded-md"
+                                                        disabled={personalInfo.isPhoneVerified}
+                                                    >
+                                                        인증요청
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            {/* 인증번호 입력 */}
+                                            {!personalInfo.isPhoneVerified && personalInfo.phone && (
+                                                <div>
+                                                    <label className="block text-gray-700 mb-2">인증번호</label>
+                                                    <div className="flex gap-2">
+                                                        <input
+                                                            type="text"
+                                                            value={personalInfo.verificationCode}
+                                                            onChange={(e) => setPersonalInfo({ ...personalInfo, verificationCode: e.target.value })}
+                                                            className="flex-1 px-3 py-2 border rounded-md"
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={handleVerificationCodeCheck}
+                                                            className="px-4 py-2 bg-orange-500 text-white rounded-md"
+                                                        >
+                                                            확인
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {personalInfo.isPhoneVerified && (
+                                                <button
+                                                    type="button"
+                                                    onClick={handleUpdatePhone}
+                                                    className="w-full px-4 py-2 bg-orange-500 text-white rounded-md mt-2"
+                                                >
+                                                    전화번호 저장하기
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
