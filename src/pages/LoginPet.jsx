@@ -4,10 +4,10 @@ import puppyLogo from '../assets/images/pet.png';
 import axios from 'axios';
 
 const LoginScreen = () => {
-    const socialLoginForKakaoUrl = `http://localhost:8090/oauth2/authorization/kakao`; // 카카오 로그인 요청 URL
-    const socialLoginForGoogleUrl = `http://localhost:8090/oauth2/authorization/google`; // 구글 로그인 요청 URL
-    const socialLoginForNaverUrl = `http://localhost:8090/oauth2/authorization/naver`; // 네이버버 로그인 요청 URL
-    const redirectUrlAfterSocialLogin = import.meta.env.VITE_CORE_FRONT_BASE_URL;   // 소셜 로그인 후 리다이렉트 URL
+    const socialLoginForKakaoUrl = `${import.meta.env.VITE_CORE_API_BASE_URL}/oauth2/authorization/kakao`; // 카카오 로그인 요청 URL
+    const socialLoginForGoogleUrl = `${import.meta.env.VITE_CORE_API_BASE_URL}/oauth2/authorization/google`; // 구글 로그인 요청 URL
+    const socialLoginForNaverUrl = `${import.meta.env.VITE_CORE_API_BASE_URL}/oauth2/authorization/naver`; // 네이버 로그인 요청 URL
+    const redirectUrlAfterSocialLogin = `${import.meta.env.VITE_CORE_FRONT_BASE_URL}/oauth2/redirect`;   // 소셜 로그인 후 리다이렉트 URL
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const navigate = useNavigate();
@@ -22,13 +22,13 @@ const LoginScreen = () => {
 
         try {
             const login_response = await axios.post(
-                `http://localhost:8090/api/v2/auth/login`,
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/auth/login`,
                 request
             )
 
             if (login_response.data.statusCode === 200 || login_response.data.statusCode === "200") {
                 const response = await axios.get(   // 로그인 유저 정보(내 정보) 가져오기 api, 로그인 상태로 전환하는데 씀
-                    `http://localhost:8090/api/v2/auth/me`,
+                    `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/auth/me`,
                     { withCredentials: true }
                 )
 

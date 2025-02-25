@@ -17,7 +17,7 @@ const SignUp = () => {
     const handleEmailVerification = async () => {
         try {
             const response = await fetch(
-                'http://localhost:8090/api/v2/auth/email/verification-code',
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/auth/email/verification-code`,
                 {
                     method: 'POST',
                     headers: {
@@ -49,7 +49,7 @@ const SignUp = () => {
     const handleVerifyCode = async () => {
         try {
             const response = await fetch(
-                'http://localhost:8090/api/v2/auth/email/verify',
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/auth/email/verify`,
                 {
                     method: 'POST',
                     headers: {
@@ -97,7 +97,7 @@ const SignUp = () => {
 
         try {
             const response = await fetch(
-                `http://localhost:8090/api/v2/auth/sign-up`,
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/auth/sign-up`,
                 {
                     method: 'POST',
                     headers: {
