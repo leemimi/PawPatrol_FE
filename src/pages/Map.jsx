@@ -4,7 +4,7 @@ import { Header } from '../components/Header';
 import { RadiusControl } from '../components/RadiusControl';
 import { PetCard } from '../components/PetCard';
 import { ControlButtons } from '../components/ControlButtons';
-import { useKakaoMap } from '@/hooks/useKakaoMap';
+import { useKakaoMap } from '@/hooks/UseKakaoMap';
 import PetList from '../components/PetList';
 import _ from 'lodash';
 
