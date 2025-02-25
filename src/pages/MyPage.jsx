@@ -50,40 +50,6 @@ const dummyWitnesses = [
     }
 ];
 
-// 반려동물 더미 데이터
-const dummyPets = [
-    {
-        id: 1,
-        name: "몽이",
-        breed: "말티즈",
-        birthDate: "2022-03-15",
-        characteristics: "활발하고 사교적인 성격",
-        size: "small",
-        registrationNumber: "123456789",
-        imageUrl: "https://example.com/pet1.jpg"
-    },
-    {
-        id: 2,
-        name: "초코",
-        breed: "푸들",
-        birthDate: "2021-08-22",
-        characteristics: "조용하고 온순한 성격",
-        size: "medium",
-        registrationNumber: "987654321",
-        imageUrl: "https://example.com/pet2.jpg"
-    },
-    {
-        id: 3,
-        name: "해피",
-        breed: "비숑프리제",
-        birthDate: "2023-01-10",
-        characteristics: "장난기 많고 애교가 많음",
-        size: "small",
-        registrationNumber: "456789123",
-        imageUrl: "https://example.com/pet3.jpg"
-    }
-];
-
 const MyPage = () => {
     const userInfo = useAuthStore((state) => state.userInfo?.data);
     const [activeTab, setActiveTab] = useState('profile');
@@ -186,7 +152,7 @@ const MyPage = () => {
     // 로그아웃 함수
     const handleLogout = async () => {
         try {
-            const response = await fetch(`${import.meta.env.VITE_CORE_FRONT_BASE_URL}/api/v2/auth/logout`, {
+            const response = await fetch(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/auth/logout`, {
                 method: 'POST'
             });
 
@@ -261,7 +227,7 @@ const MyPage = () => {
     // 내 반려동물 리스트 가져오기
     const fetchMyPets = async () => {
         try {
-            const response = await axios.get(`${import.meta.env.VITE_CORE_FRONT_BASE_URL}/api/v2/members/pets`, {
+            const response = await axios.get(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/pets`, {
                 withCredentials: true
             });
 
