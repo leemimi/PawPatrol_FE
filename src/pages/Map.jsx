@@ -4,13 +4,13 @@ import { Header } from '../components/Header';
 import { RadiusControl } from '../components/RadiusControl';
 import { PetCard } from '../components/PetCard';
 import { ControlButtons } from '../components/ControlButtons';
-import { useKakaoMap } from '../hooks/useKakaoMap';
+import { useKakaoMap } from '@/hooks/UseKakaoMap';
 import PetList from '../components/PetList';
 import _ from 'lodash';
 
 const Map = () => {
     const centerPosition = { lat: 37.498095, lng: 127.027610 };
-    
+
     const [selectedRange, setSelectedRange] = useState(3);
     const [selectedPet, setSelectedPet] = useState(null);
     const [showList, setShowList] = useState(false);
@@ -18,33 +18,33 @@ const Map = () => {
     const [currentPosition, setCurrentPosition] = useState(centerPosition);
     const [isCardVisible, setIsCardVisible] = useState(false);
     const [isMarkerTransitioning, setIsMarkerTransitioning] = useState(false);
-    const [isLostMode, setIsLostMode] = useState(true);  
-    
+    const [isLostMode, setIsLostMode] = useState(true);
+
     const { map, setMarkers, circleRef } = useKakaoMap(currentPosition);
 
     const createMarkers = useCallback((pets) => {
         if (!map) return;
-    
+
         // status에 따른 마커 이미지 정의
         const getMarkerImage = (status) => {
             const imageSize = new window.kakao.maps.Size(22, 32); // 크기를 조금 키움
-        let markerColor;
-        
-        switch(status) {
-            case 'FINDING':
-                markerColor = '#FFA000';
-                break;
-            case 'FOUND':
-                markerColor = '#F44336';
-                break;
-            case 'FOSTERING':
-                markerColor = '#4CAF50';
-                break;
-            default:
-                markerColor = '#757575';
-        }
+            let markerColor;
 
-        const svg = `
+            switch (status) {
+                case 'FINDING':
+                    markerColor = '#FFA000';
+                    break;
+                case 'FOUND':
+                    markerColor = '#F44336';
+                    break;
+                case 'FOSTERING':
+                    markerColor = '#4CAF50';
+                    break;
+                default:
+                    markerColor = '#757575';
+            }
+
+            const svg = `
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="32" viewBox="0 0 22 32">
                 <path d="M11 0C4.934 0 0 4.934 0 11c0 8.25 11 21 11 21s11-12.75 11-21c0-6.066-4.934-11-11-11z" 
                       fill="${markerColor}"/>
@@ -53,31 +53,31 @@ const Map = () => {
         `;
 
 
-        const url = 'data:image/svg+xml;base64,' + btoa(svg);
-    
+            const url = 'data:image/svg+xml;base64,' + btoa(svg);
+
             return new window.kakao.maps.MarkerImage(url, imageSize);
         };
-    
+
         const newMarkers = pets.map(pet => {
             const marker = new window.kakao.maps.Marker({
                 position: new window.kakao.maps.LatLng(pet.position.lat, pet.position.lng),
                 map: map,
                 image: getMarkerImage(pet.status)
             });
-            
+
             window.kakao.maps.event.addListener(marker, 'click', () => {
                 setSelectedPet(pet);
             });
-    
+
             return marker;
         });
-    
+
         setMarkers(newMarkers);
     }, [map, setMarkers]);
 
     // API 호출 함수 분리
     const fetchData = async (position, range, mode) => {
-        const apiUrl = mode 
+        const apiUrl = mode
             ? 'http://localhost:8090/api/v1/lostposts/map'
             : 'http://localhost:8090/api/v1/findposts/map';
 
@@ -121,7 +121,7 @@ const Map = () => {
                         };
                     }
                 });
-                
+
                 setLostPets(transformedData);
                 createMarkers(transformedData);
             }
@@ -156,7 +156,7 @@ const Map = () => {
                     lng: position.coords.longitude
                 };
                 setCurrentPosition(pos);
-                
+
                 if (map) {
                     const moveLatLon = new window.kakao.maps.LatLng(pos.lat, pos.lng);
                     map.setCenter(moveLatLon);
@@ -173,7 +173,7 @@ const Map = () => {
     }, [map, circleRef, selectedRange, fetchLostPets]);
 
     useEffect(() => {
-        if (map && circleRef.current) {    
+        if (map && circleRef.current) {
             const moveLatLon = new window.kakao.maps.LatLng(currentPosition.lat, currentPosition.lng);
             circleRef.current.setPosition(moveLatLon);
             circleRef.current.setMap(map);
@@ -183,13 +183,13 @@ const Map = () => {
     const handleRangeChange = useCallback((newRange) => {
         setIsMarkerTransitioning(true);
         setSelectedRange(newRange);
-        
+
         if (circleRef.current) {
             const currentRadius = circleRef.current.getRadius();
             const targetRadius = newRange * 1000;
             const steps = 20;
             const increment = (targetRadius - currentRadius) / steps;
-            
+
             let step = 0;
             const animate = () => {
                 if (step < steps) {
@@ -202,7 +202,7 @@ const Map = () => {
                     fetchLostPets(currentPosition, newRange);
                 }
             };
-            
+
             animate();
         }
     }, [circleRef, currentPosition, fetchLostPets]);
@@ -247,21 +247,21 @@ const Map = () => {
 
     return (
         <div className="h-screen w-full bg-orange-50/30 relative overflow-hidden">
-            <Header 
+            <Header
                 onModeChange={handleModeChange}
                 isLostMode={isLostMode}
             />
-            
+
             <div className="h-full pt-14">
                 <div className="relative h-full">
                     <div id="map" className="w-full h-full overflow-visible" />
-                    
+
                     <RadiusControl
                         selectedRange={selectedRange}
                         onRangeChange={handleRangeChange}
                         isTransitioning={isMarkerTransitioning}
                     />
-                    
+
                     <ControlButtons
                         onLocationClick={getCurrentLocation}
                         onListClick={() => setShowList(!showList)}
@@ -270,15 +270,14 @@ const Map = () => {
             </div>
 
             {selectedPet && !showList && (
-                <div className={`fixed bottom-0 left-0 right-0 p-4 bg-white rounded-t-3xl shadow-lg border-t-2 border-orange-100 z-50 transition-all duration-300 ease-in-out ${
-                    isCardVisible ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'
-                }`}>
+                <div className={`fixed bottom-0 left-0 right-0 p-4 bg-white rounded-t-3xl shadow-lg border-t-2 border-orange-100 z-50 transition-all duration-300 ease-in-out ${isCardVisible ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'
+                    }`}>
                     <PetCard pet={selectedPet} onClose={() => setSelectedPet(null)} />
                 </div>
             )}
-                        
+
             {showList && (
-                <PetList 
+                <PetList
                     pets={lostPets}
                     onPetClick={(pet) => {
                         setSelectedPet(pet);

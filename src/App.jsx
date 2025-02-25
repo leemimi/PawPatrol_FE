@@ -2,7 +2,6 @@ import { useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import Layout from './layout/Layout'
 import Map from './pages/Map'
-import Login from './pages/Login'
 import MyPage from './pages/MyPage'
 import SignUp from './pages/SignUpPage'
 import LoginPet from './pages/LoginPet'
@@ -18,7 +17,6 @@ const App = () => {
   return (
     <Routes>
       <Route element={<Layout />}>
-        <Route path="/login" element={<Login />} />
         <Route path="/login-pet" element={<LoginPet />} />
         <Route path="/sign-up" element={<SignUp />} />
         <Route path="/mypage" element={<MyPage />} />
