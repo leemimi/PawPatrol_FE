@@ -9,12 +9,10 @@ import LoginPet from './pages/LoginPet'
 import Protection from './pages/Protection'
 // import Layout from './layout/Layout.jsx'
 import SocialConnect from './pages/SocialConnectPage'
-
 import { useAuthStore } from './stores/useAuthStore'
 import './index.css';
 
 const App = () => {
-
   return (
     <Routes>
       <Route element={<Layout />}>
