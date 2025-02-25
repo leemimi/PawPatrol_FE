@@ -24,7 +24,7 @@ const Footer = () => {
             }
 
             // API 요청으로 토큰 유효성 검증
-            await axios.get(`${import.meta.env.VITE_CORE_FRONT_BASE_URL}/api/v2/auth/me`, {
+            await axios.get(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/auth/me`, {
                 withCredentials: true // 쿠키 포함 요청
             });
 
