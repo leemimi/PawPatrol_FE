@@ -188,7 +188,10 @@ const MyPage = () => {
         try {
             const response = await axios.delete(
                 `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/pets/${petToDelete.id}`,
-                { withCredentials: true }
+                {
+                    withCredentials: true,
+                    data: { id: petToDelete.id }
+                }
             );
 
             if (response.data.statusCode === 200) {
@@ -208,8 +211,7 @@ const MyPage = () => {
         try {
             const response = await axios.patch(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/profile`, {
                 nickname: nickname,
-                withCredentials: true
-            })
+            }, { withCredentials: true })
 
             if (response.data.statusCode === 200) {
                 // 로컬 스토리지의 사용자 정보 업데이트
