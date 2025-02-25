@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const SignUp = () => {
     const navigate = useNavigate();
@@ -16,26 +17,24 @@ const SignUp = () => {
     // 이메일 인증
     const handleEmailVerification = async () => {
         try {
-            const response = await fetch(
+            const response = await axios.post(
                 `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/auth/email/verification-code`,
                 {
-                    method: 'POST',
+                    email: formData.email
+                },
+                {
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({
-                        email: formData.email
-                    }),
+                    withCredentials: true // 쿠키 포함 설정
                 }
             );
 
-            const responseData = await response.json(); // Json형태의 응답을 받기 위한 설정
-
-            if (responseData.statusCode === 200) {
+            if (response.data.statusCode === 200) {
                 alert('인증 이메일이 발송되었습니다. 이메일을 확인해주세요.');
                 setIsEmailSent(true);
-            } else if (responseData.statusCode === 400) {
-                alert(responseData.message);
+            } else if (response.data.statusCode === 400) {
+                alert(response.data.message);
             } else {
                 alert('이메일 인증 발송에 실패했습니다.');
             }
@@ -48,30 +47,29 @@ const SignUp = () => {
     // 이메일 인증 코드 확인
     const handleVerifyCode = async () => {
         try {
-            const response = await fetch(
+            const response = await axios.post(
                 `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/auth/email/verify`,
                 {
-                    method: 'POST',
+                    email: formData.email,
+                    code: verificationCode
+                },
+                {
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({
-                        email: formData.email,
-                        code: verificationCode
-                    }),
+                    withCredentials: true // 쿠키 포함 설정
                 }
             );
 
-            if (response.ok) {
-                alert('이메일 인증이 완료되었습니다.');
-                setIsEmailVerified(true);
-            } else {
-                const errorData = await response.json();
-                alert(errorData.msg || '인증 코드가 일치하지 않습니다.');
-            }
+            alert('이메일 인증이 완료되었습니다.');
+            setIsEmailVerified(true);
         } catch (error) {
             console.error('Verification code error:', error);
-            alert('인증 코드 확인 중 오류가 발생했습니다.');
+            if (error.response && error.response.data) {
+                alert(error.response.data.msg || '인증 코드가 일치하지 않습니다.');
+            } else {
+                alert('인증 코드 확인 중 오류가 발생했습니다.');
+            }
         }
     };
 
@@ -96,34 +94,33 @@ const SignUp = () => {
         }
 
         try {
-            const response = await fetch(
+            const response = await axios.post(
                 `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/auth/sign-up`,
                 {
-                    method: 'POST',
+                    email: formData.email,
+                    password: formData.password,
+                    nickname: formData.nickname,
+                },
+                {
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({
-                        email: formData.email,
-                        password: formData.password,
-                        nickname: formData.nickname,
-                    }),
+                    withCredentials: true // 쿠키 포함 설정
                 }
             );
 
-            if (response.ok) {
-                alert('회원가입이 완료되었습니다.');
-                navigate('/login-pet');
-            } else {
-                const errorData = await response.json();
-                alert(errorData.msg || '회원가입에 실패했습니다.');
-            }
+            alert('회원가입이 완료되었습니다.');
+            navigate('/login-pet');
         } catch (error) {
             console.error('SignUp error:', error);
-            alert('회원가입 중 오류가 발생했습니다.');
+            if (error.response && error.response.data) {
+                alert(error.response.data.msg || '회원가입에 실패했습니다.');
+            } else {
+                alert('회원가입 중 오류가 발생했습니다.');
+            }
         }
     };
-
+    
     return (
         <div className="min-h-screen bg-orange-50 flex flex-col items-center justify-center p-4">
             <div className="w-full max-w-md">
