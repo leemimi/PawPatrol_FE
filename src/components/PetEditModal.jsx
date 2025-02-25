@@ -35,31 +35,25 @@ const PetEditModal = ({ isOpen, onClose, onSubmit, petFormData, setPetFormData, 
 
                 <form onSubmit={onSubmit} className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
+                        {/* 숨겨진 ID 필드 추가 */}
                         <input
-                            type="text"
-                            placeholder="이름"
-                            className="px-3 py-2 border rounded"
-                            value={petFormData.name}
-                            onChange={e => setPetFormData({ ...petFormData, name: e.target.value })}
-                            required
+                            type="hidden"
+                            name="id"
+                            value={pet.id}
                         />
-                        <input
-                            type="text"
-                            placeholder="품종"
-                            className="px-3 py-2 border rounded"
-                            value={petFormData.breed}
-                            onChange={e => setPetFormData({ ...petFormData, breed: e.target.value })}
-                            required
-                        />
-                        <select
-                            className="px-3 py-2 border rounded"
-                            value={petFormData.gender}
-                            onChange={e => setPetFormData({ ...petFormData, gender: e.target.value })}
-                            required
-                        >
-                            <option value="M">남자</option>
-                            <option value="W">여자</option>
-                        </select>
+                        {/* 이름과 품종은 수정 불가능하므로 읽기 전용으로 표시 */}
+                        <div className="px-3 py-2 border rounded bg-gray-100">
+                            <span className="text-gray-600">이름: {pet.name}</span>
+                        </div>
+                        <div className="px-3 py-2 border rounded bg-gray-100">
+                            <span className="text-gray-600">품종: {pet.breed}</span>
+                        </div>
+
+                        {/* 성별도 수정 불가능 */}
+                        <div className="px-3 py-2 border rounded bg-gray-100">
+                            <span className="text-gray-600">성별: {pet.gender === 'M' ? '남자' : '여자'}</span>
+                        </div>
+                        {/* 수정 가능한 필드들 */}
                         <select
                             className="px-3 py-2 border rounded"
                             value={petFormData.size}

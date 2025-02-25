@@ -119,15 +119,12 @@ const MyPage = () => {
     const handleEditPet = (pet) => {
         setSelectedPet(pet);
         setEditPetFormData({
-            name: pet?.name || '',
-            breed: pet?.breed || '',
-            gender: pet?.gender || 'M',
-            size: pet?.size || 'SMALL',
+            id: pet?.id,
             estimatedAge: pet?.estimatedAge || '',
-            registrationNo: pet?.registrationNumber || '',
-            healthCondition: pet?.healthCondition || '',
             feature: pet?.feature || pet?.characteristics || '',
-            animalType: pet?.animalType || 'DOG',
+            size: pet?.size || 'SMALL',
+            registrationNo: pet?.registrationNo || '',
+            healthCondition: pet?.healthCondition || '',
             image: null
         });
         setIsEditOpen(true);
@@ -139,19 +136,27 @@ const MyPage = () => {
         try {
             const formData = new FormData();
 
-            // 모든 데이터를 FormData에 추가
-            Object.keys(editPetFormData).forEach(key => {
-                if (key !== 'image') {
-                    formData.append(key, editPetFormData[key]);
-                }
-            });
+            // id 추가
+            formData.append('id', editPetFormData.id);
 
+            // 필수 필드 추가
+            formData.append('estimatedAge', editPetFormData.estimatedAge);
+            formData.append('feature', editPetFormData.feature);
+            formData.append('healthCondition', editPetFormData.healthCondition);
+            formData.append('registrationNo', editPetFormData.registrationNo);
+
+            // size 추가 (Enum 타입)
+            if (editPetFormData.size) {
+                formData.append('size', editPetFormData.size);
+            }
+
+            // 이미지 파일이 있는 경우에만 추가
             if (editPetFormData.image) {
                 formData.append('imageFile', editPetFormData.image);
             }
 
             const response = await axios.patch(
-                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/pets/${selectedPet.id}`,
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/pets`,
                 formData,
                 {
                     withCredentials: true,
@@ -281,6 +286,7 @@ const MyPage = () => {
         }
     };
 
+    // 반려동물 등록
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
@@ -299,7 +305,7 @@ const MyPage = () => {
             }
 
             const response = await axios.post(
-                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/pets/register`,
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/pets`,
                 formData,  // FormData를 직접 전달
                 {
                     withCredentials: true,
@@ -366,24 +372,6 @@ const MyPage = () => {
             console.error('Logout error:', error);
             alert('로그아웃 중 오류가 발생했습니다.');
         }
-    };
-
-    // 핸들러 함수 추가
-    const handleUpdatePersonalInfo = async (e) => {
-        e.preventDefault();
-        if (personalInfo.newPassword !== personalInfo.confirmPassword) {
-            alert('새 비밀번호가 일치하지 않습니다.');
-            return;
-        }
-        // API 호출 로직 구현
-    };
-
-    const handlePhoneVerification = async () => {
-        // 전화번호 인증 요청 API 호출
-    };
-
-    const handleVerificationCodeCheck = async () => {
-        // 인증번호 확인 API 호출
     };
 
 
@@ -743,7 +731,7 @@ const MyPage = () => {
                                             <p>품종: {pet.breed}</p>
                                             <p>특징: {pet.characteristics}</p>
                                             <p>크기: {pet.size}</p>
-                                            <p>동물등록번호: {pet.registrationNumber}</p>
+                                            <p>동물등록번호: {pet.registrationNo}</p>
                                         </div>
                                         <div className="flex justify-end space-x-2 mt-4">
                                             <button
