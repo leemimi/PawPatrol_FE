@@ -1,177 +1,112 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
-import { Header } from '../components/Header';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { RadiusControl } from '../components/RadiusControl';
-import { PetCard } from '../components/PetCard';
 import { ControlButtons } from '../components/ControlButtons';
 import { useKakaoMap } from '@/hooks/UseKakaoMap';
-import PetList from '../components/PetList';
-import _ from 'lodash';
+import { usePetData } from '../hooks/UsePetData';
+import { useFacilitiesData } from '../hooks/UseFacilitiesData.jsx';
+import { useGeolocation } from '../hooks/UseGeolocation.jsx';
+import { useCustomOverlays } from '../hooks/UseCustomOverlays';
+import { useFacilityOverlays } from '../hooks/UseFacilityOverlays'; 
+import { CommonList } from '../components/CommonList';
+import { CommonCard } from '../components/CommonCard';
+import WriteButton from '../components/WriteButton';
 
 const Map = () => {
     const centerPosition = { lat: 37.498095, lng: 127.027610 };
 
     const [selectedRange, setSelectedRange] = useState(3);
     const [selectedPet, setSelectedPet] = useState(null);
+    const [selectedFacility, setSelectedFacility] = useState(null);
     const [showList, setShowList] = useState(false);
-    const [lostPets, setLostPets] = useState([]);
+    const [showFacilitiesList, setShowFacilitiesList] = useState(false);
     const [currentPosition, setCurrentPosition] = useState(centerPosition);
     const [isCardVisible, setIsCardVisible] = useState(false);
     const [isMarkerTransitioning, setIsMarkerTransitioning] = useState(false);
-    const [isLostMode, setIsLostMode] = useState(true);
-
+    const [showFacilities, setShowFacilities] = useState(false);
+    
+    // 초기 렌더링 및 데이터 로딩 추적을 위한 ref
+    const initialLoadRef = useRef(false);
+    const modeChangeRef = useRef(false);
+    
     const { map, setMarkers, circleRef } = useKakaoMap(currentPosition);
-
-    const createMarkers = useCallback((pets) => {
-        if (!map) return;
-
-        // status에 따른 마커 이미지 정의
-        const getMarkerImage = (status) => {
-            const imageSize = new window.kakao.maps.Size(22, 32); // 크기를 조금 키움
-            let markerColor;
-
-            switch (status) {
-                case 'FINDING':
-                    markerColor = '#FFA000';
-                    break;
-                case 'FOUND':
-                    markerColor = '#F44336';
-                    break;
-                case 'FOSTERING':
-                    markerColor = '#4CAF50';
-                    break;
-                default:
-                    markerColor = '#757575';
-            }
-
-            const svg = `
-            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="32" viewBox="0 0 22 32">
-                <path d="M11 0C4.934 0 0 4.934 0 11c0 8.25 11 21 11 21s11-12.75 11-21c0-6.066-4.934-11-11-11z" 
-                      fill="${markerColor}"/>
-                <circle cx="11" cy="11" r="4.5" fill="white"/>
-            </svg>
-        `;
-
-
-            const url = 'data:image/svg+xml;base64,' + btoa(svg);
-
-            return new window.kakao.maps.MarkerImage(url, imageSize);
-        };
-
-        const newMarkers = pets.map(pet => {
-            const marker = new window.kakao.maps.Marker({
-                position: new window.kakao.maps.LatLng(pet.position.lat, pet.position.lng),
-                map: map,
-                image: getMarkerImage(pet.status)
-            });
-
-            window.kakao.maps.event.addListener(marker, 'click', () => {
-                setSelectedPet(pet);
-            });
-
-            return marker;
-        });
-
-        setMarkers(newMarkers);
-    }, [map, setMarkers]);
-
-    // API 호출 함수 분리
-    const fetchData = async (position, range, mode) => {
-        const apiUrl = mode
-            ? 'http://localhost:8090/api/v1/lostposts/map'
-            : 'http://localhost:8090/api/v1/findposts/map';
-
-        try {
-            const response = await axios.get(apiUrl, {
-                params: {
-                    latitude: position.lat,
-                    longitude: position.lng,
-                    radius: range * 1000
-                },
-                credentials: 'include',
-            });
-
-            if (response.data.resultCode === "200") {
-                const transformedData = response.data.data.map(pet => {
-                    if (mode) {
-                        return {
-                            id: pet.lostId,
-                            content: pet.content,
-                            status: pet.status,
-                            image: '/api/placeholder/160/160',
-                            time: pet.lostTime,
-                            location: pet.location,
-                            position: {
-                                lat: pet.latitude,
-                                lng: pet.longitude
-                            }
-                        };
-                    } else {
-                        return {
-                            id: pet.foundId,
-                            status: pet.status,
-                            image: '/api/placeholder/160/160',
-                            time: new Date(pet.findTime).toLocaleString(),
-                            location: pet.location,
-                            position: {
-                                lat: pet.latitude,
-                                lng: pet.longitude
-                            },
-                            content: pet.content
-                        };
-                    }
-                });
-
-                setLostPets(transformedData);
-                createMarkers(transformedData);
-            }
-        } catch (error) {
-            console.error('Failed to fetch pets:', error);
+    
+    // 펫 데이터 관련 훅 사용
+    const { 
+        pets, 
+        fetchPets, 
+        debouncedFetchPets 
+    } = usePetData(currentPosition, selectedRange);
+    
+    // 시설 데이터 관련 훅 사용
+    const { 
+        facilities, 
+        fetchFacilities, 
+        debouncedFetchFacilities 
+    } = useFacilitiesData(currentPosition, selectedRange);
+    
+    // 위치 관련 훅 사용
+    const { getCurrentLocation } = useGeolocation(map, circleRef, (newPosition) => {
+        setCurrentPosition(newPosition);
+        if (showFacilities) {
+            fetchFacilities(newPosition, selectedRange);
+        } else {
+            fetchPets(newPosition, selectedRange);
         }
+    });
+    
+    // 펫 오버레이 관련 훅 사용
+    const { 
+        customOverlays, 
+        createCustomOverlays, 
+        cleanupOverlays 
+    } = useCustomOverlays({
+        map,
+        selectedRange,
+        selectedPet,
+        onSelectPet: setSelectedPet
+    });
+
+    // 시설 오버레이 관련 훅 사용
+    const { 
+        facilityOverlays, 
+        createFacilityCustomOverlays, 
+        cleanupFacilityOverlays 
+    } = useFacilityOverlays({
+        map,
+        selectedFacility,
+        onSelectFacility: setSelectedFacility
+    });
+
+    const handleSelectMissingPost = () => {
+        console.log('실종글 작성 버튼 클릭됨');
+        // 여기에 실종글 작성 페이지로 이동 또는 모달 표시 로직 추가
+        // 예: 라우팅 또는 상태 관리를 통한 모달 표시
     };
 
-    // 드래그용 디바운스 함수
-    const debouncedFetchForDrag = useCallback(
-        _.debounce((position, range, mode) => {
-            fetchData(position, range, mode);
-        }, 500),
-        []
-    );
+    const handleSelectReportPost = () => {
+        console.log('제보글 작성 버튼 클릭됨');
+        // 여기에 제보글 작성 페이지로 이동 또는 모달 표시 로직 추가
+        // 예: 라우팅 또는 상태 관리를 통한 모달 표시
+    };
 
-    // 일반 데이터 가져오기 함수
-    const fetchLostPets = useCallback((position, range) => {
-        fetchData(position, range, isLostMode);
-    }, [isLostMode]);
+    // 기존 스타일 설정 useEffect
+    useEffect(() => {
+        document.documentElement.style.height = '100%';
+        document.body.style.height = '100%';
+        document.body.style.margin = '0';
+        document.body.style.padding = '0';
+        document.body.style.overflow = 'hidden';
+        
+        return () => {
+            document.documentElement.style.height = '';
+            document.body.style.height = '';
+            document.body.style.margin = '';
+            document.body.style.padding = '';
+            document.body.style.overflow = '';
+        };
+    }, []);
 
-    const getCurrentLocation = useCallback(() => {
-        if (!navigator.geolocation) {
-            console.error('Geolocation is not supported by this browser.');
-            return;
-        }
-
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                const pos = {
-                    lat: position.coords.latitude,
-                    lng: position.coords.longitude
-                };
-                setCurrentPosition(pos);
-
-                if (map) {
-                    const moveLatLon = new window.kakao.maps.LatLng(pos.lat, pos.lng);
-                    map.setCenter(moveLatLon);
-                    if (circleRef.current) {
-                        circleRef.current.setPosition(moveLatLon);
-                    }
-                    fetchLostPets(pos, selectedRange);
-                }
-            },
-            (error) => {
-                console.error('Geolocation failed:', error);
-            }
-        );
-    }, [map, circleRef, selectedRange, fetchLostPets]);
-
+    // 원형 반경 위치 설정 useEffect
     useEffect(() => {
         if (map && circleRef.current) {
             const moveLatLon = new window.kakao.maps.LatLng(currentPosition.lat, currentPosition.lng);
@@ -180,6 +115,7 @@ const Map = () => {
         }
     }, [currentPosition, map, circleRef]);
 
+    // 반경 변경 핸들러
     const handleRangeChange = useCallback((newRange) => {
         setIsMarkerTransitioning(true);
         setSelectedRange(newRange);
@@ -199,14 +135,21 @@ const Map = () => {
                 } else {
                     circleRef.current.setRadius(targetRadius);
                     setIsMarkerTransitioning(false);
-                    fetchLostPets(currentPosition, newRange);
+                    
+                    // 현재 모드에 따라 다른 데이터 페치
+                    if (showFacilities) {
+                        fetchFacilities(currentPosition, newRange);
+                    } else {
+                        fetchPets(currentPosition, newRange);
+                    }
                 }
             };
 
             animate();
         }
-    }, [circleRef, currentPosition, fetchLostPets]);
+    }, [circleRef, currentPosition, fetchPets, fetchFacilities, showFacilities]);
 
+    // 맵 드래그 종료 이벤트 useEffect
     useEffect(() => {
         if (map) {
             const handleDragEnd = () => {
@@ -216,8 +159,13 @@ const Map = () => {
                     lng: center.getLng()
                 };
                 setCurrentPosition(newPosition);
-                debouncedFetchForDrag(newPosition, selectedRange, isLostMode);
-                fetchData(newPosition, selectedRange, isLostMode);
+                
+                // 현재 모드에 따라 다른 데이터 페치
+                if (showFacilities) {
+                    debouncedFetchFacilities(newPosition, selectedRange);
+                } else {
+                    debouncedFetchPets(newPosition, selectedRange);
+                }
             };
 
             window.kakao.maps.event.addListener(map, 'dragend', handleDragEnd);
@@ -225,37 +173,103 @@ const Map = () => {
                 window.kakao.maps.event.removeListener(map, 'dragend', handleDragEnd);
             };
         }
-    }, [map, selectedRange, isLostMode, debouncedFetchForDrag]);
+    }, [map, selectedRange, debouncedFetchPets, debouncedFetchFacilities, showFacilities]);
 
+    // 선택된 항목에 따른 카드 가시성 useEffect
     useEffect(() => {
-        if (selectedPet) {
+        if (selectedPet || selectedFacility) {
             setTimeout(() => setIsCardVisible(true), 50);
         } else {
             setIsCardVisible(false);
         }
-    }, [selectedPet]);
+    }, [selectedPet, selectedFacility]);
 
+    // showFacilities 변경 시 모드 변경 플래그 설정
     useEffect(() => {
-        fetchLostPets(currentPosition, selectedRange);
-    }, []);
+        modeChangeRef.current = true;
+    }, [showFacilities]);
 
-    const handleModeChange = useCallback((mode) => {
-        setIsLostMode(mode);
-        // 모드 변경 시 즉시 새로운 데이터 가져오기
-        fetchData(currentPosition, selectedRange, mode);
-    }, [currentPosition, selectedRange]);
+    // 펫 데이터 변경 시 오버레이 업데이트
+    useEffect(() => {
+        if (map && !showFacilities && pets.length > 0) {
+            createCustomOverlays(pets);
+        }
+    }, [map, pets, showFacilities, createCustomOverlays]);
+
+    // 시설 데이터 변경 시 오버레이 업데이트
+    useEffect(() => {
+        if (map && showFacilities && facilities.length > 0) {
+            createFacilityCustomOverlays(facilities);
+        }
+    }, [map, facilities, showFacilities, createFacilityCustomOverlays]);
+    
+    // 선택된 시설이 변경될 때도 오버레이 업데이트
+    useEffect(() => {
+        if (map && showFacilities && facilities.length > 0 && selectedFacility) {
+            createFacilityCustomOverlays(facilities);
+        }
+    }, [map, selectedFacility, facilities, showFacilities, createFacilityCustomOverlays]);
+
+    // 초기 데이터 로딩 useEffect
+    useEffect(() => {
+        if (map && !initialLoadRef.current) {
+            initialLoadRef.current = true;
+            if (showFacilities) {
+                fetchFacilities(currentPosition, selectedRange);
+            } else {
+                fetchPets(currentPosition, selectedRange);
+            }
+        }
+    }, [map, currentPosition, selectedRange, showFacilities, fetchPets, fetchFacilities]);
+
+    // 모드 변경 시 오버레이 및 데이터 관리
+    useEffect(() => {
+        if (map && modeChangeRef.current) {
+            modeChangeRef.current = false;
+            
+            if (showFacilities) {
+                cleanupOverlays();
+                fetchFacilities(currentPosition, selectedRange);
+            } else {
+                cleanupFacilityOverlays();
+                fetchPets(currentPosition, selectedRange);
+            }
+        }
+    }, [
+        map, 
+        showFacilities, 
+        currentPosition, 
+        selectedRange, 
+        fetchFacilities, 
+        fetchPets, 
+        cleanupOverlays, 
+        cleanupFacilityOverlays
+    ]);
+
+    // // 컴포넌트 언마운트 시 오버레이 정리
+    // useEffect(() => {
+    //     return () => {
+    //         cleanupOverlays();
+    //         cleanupFacilityOverlays();
+    //     };
+    // }, [cleanupOverlays, cleanupFacilityOverlays]);
+
+    // 시설/펫 토글 핸들러
+    const handleFacilitiesToggle = () => {
+        setShowFacilities(prev => !prev);
+        
+        // 선택된 항목 초기화
+        setSelectedPet(null);
+        setSelectedFacility(null);
+        setShowList(false);
+        setShowFacilitiesList(false);
+    };
 
     return (
         <div className="h-screen w-full bg-orange-50/30 relative overflow-hidden">
-            <Header
-                onModeChange={handleModeChange}
-                isLostMode={isLostMode}
-            />
-
-            <div className="h-full pt-14">
-                <div className="relative h-full">
+            <div className="h-full w-full">
+                <div className="relative h-full w-full">
                     <div id="map" className="w-full h-full overflow-visible" />
-
                     <RadiusControl
                         selectedRange={selectedRange}
                         onRangeChange={handleRangeChange}
@@ -264,28 +278,63 @@ const Map = () => {
 
                     <ControlButtons
                         onLocationClick={getCurrentLocation}
-                        onListClick={() => setShowList(!showList)}
+                        onListClick={() => {
+                            if (showFacilities) {
+                                setShowFacilitiesList(!showFacilitiesList);
+                                setSelectedFacility(null);
+                            } else {
+                                setShowList(!showList);
+                                setSelectedPet(null);
+                            }
+                        }}
+                        onFacilitiesToggle={handleFacilitiesToggle}
                     />
+
+                    <WriteButton 
+                            onSelectMissingPost={handleSelectMissingPost}
+                            onSelectReportPost={handleSelectReportPost}
+                        />
+                    
+                    {/* 공통 카드 컴포넌트 */}
+                    {(selectedPet || selectedFacility) && !(showList || showFacilitiesList) && (
+                        <div className={`absolute bottom-16 left-0 right-0 max-h-[70vh] overflow-auto p-4 bg-white rounded-t-3xl shadow-lg border-t-2 border-orange-100 z-50 transition-all duration-300 ease-in-out ${
+                            isCardVisible ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'
+                        }`}>
+                            <CommonCard 
+                                item={selectedPet || selectedFacility} 
+                                type={selectedPet ? 'pet' : 'facility'}
+                                onClose={() => {
+                                    setSelectedPet(null);
+                                    setSelectedFacility(null);
+                                }} 
+                            />
+                        </div>
+                    )}
+                    
+                    {/* 공통 리스트 컴포넌트 */}
+                    {(showList || showFacilitiesList) && (
+                        <div className="absolute bottom-16 left-0 right-0 max-h-[70vh] overflow-auto z-50 bg-white rounded-t-3xl shadow-lg">
+                            <CommonList 
+                                items={showFacilities ? facilities : pets}
+                                type={showFacilities ? 'facility' : 'pet'}
+                                onItemClick={(item) => {
+                                    if (showFacilities) {
+                                        setSelectedFacility(item);
+                                        setShowFacilitiesList(false);
+                                    } else {
+                                        setSelectedPet(item);
+                                        setShowList(false);
+                                    }
+                                }}
+                                onClose={() => {
+                                    setShowList(false);
+                                    setShowFacilitiesList(false);
+                                }}
+                            />
+                        </div>
+                    )}
                 </div>
             </div>
-
-            {selectedPet && !showList && (
-                <div className={`fixed bottom-0 left-0 right-0 p-4 bg-white rounded-t-3xl shadow-lg border-t-2 border-orange-100 z-50 transition-all duration-300 ease-in-out ${isCardVisible ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'
-                    }`}>
-                    <PetCard pet={selectedPet} onClose={() => setSelectedPet(null)} />
-                </div>
-            )}
-
-            {showList && (
-                <PetList
-                    pets={lostPets}
-                    onPetClick={(pet) => {
-                        setSelectedPet(pet);
-                        setShowList(false);
-                    }}
-                    onClose={() => setShowList(false)}
-                />
-            )}
         </div>
     );
 };
