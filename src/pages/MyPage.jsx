@@ -62,7 +62,7 @@ const MyPage = () => {
     const userInfo = userInfoStr ? JSON.parse(userInfoStr) : null;
     // const userInfo = useAuthStore((state) => state.userInfo?.data);
     const [activeTab, setActiveTab] = useState('profile');
-    const [profileImage, setProfileImage] = useState(defaultImage);
+    const [profileImage, setProfileImage] = useState();
     const [nickname, setNickname] = useState('');
     const [isEditing, setIsEditing] = useState(false);
     const [myPets, setMyPets] = useState([]);
@@ -376,22 +376,43 @@ const MyPage = () => {
         }
     };
 
-
+    // 프로필 이미지 변경
     const handleImageUpload = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
-
+    
         const formData = new FormData();
         formData.append('file', file);
-
+    
         try {
-            // const response = await fetch(
-            // );
-
-            // if (response.ok) {
-            //     const data = await response.json();
-            //     setProfileImage(data.profileImageUrl);
-            // }
+            const response = await axios.patch(
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/profile`,
+                formData,
+                {
+                    headers: {
+                        'Content-Type': 'multipart/form-data'
+                    },
+                    withCredentials: true
+                }
+            );
+    
+            if (response.data.statusCode === 200) {
+                // 서버에서 반환된 이미지 URL 사용
+                const updatedImageUrl = response.data.data.profileImage;
+                
+                // 상태 업데이트로 화면에 즉시 반영
+                setProfileImage(updatedImageUrl);
+                
+                // 로컬 스토리지의 사용자 정보 업데이트
+                const userInfoStr = localStorage.getItem('userInfo');
+                if (userInfoStr) {
+                    const userInfo = JSON.parse(userInfoStr);
+                    userInfo.profileImage = updatedImageUrl;
+                    localStorage.setItem('userInfo', JSON.stringify(userInfo));
+                }
+                
+                alert('프로필 이미지가 성공적으로 업데이트되었습니다.');
+            }
         } catch (error) {
             console.error('Image upload error:', error);
             alert('이미지 업로드 중 오류가 발생했습니다.');
@@ -451,11 +472,20 @@ const MyPage = () => {
         const isLoggedIn = localStorage.getItem('isLoggedIn');
 
         if (userInfoStr && isLoggedIn === 'true') {
-            fetchMyPets(); // 이미 정의된 함수 사용
-        }
+            const userInfo = JSON.parse(userInfoStr);
 
-        if (userInfo?.nickname) {
-            setNickname(userInfo.nickname);
+            // 프로필 이미지 상태 올바르게 설정
+            if (userInfo?.profileImage) {
+                setProfileImage(userInfo.profileImage);
+            } else {
+                setProfileImage(defaultImage);
+            }
+
+            if (userInfo?.nickname) {
+                setNickname(userInfo.nickname);
+            }
+
+            fetchMyPets();
         }
     }, []);
 
@@ -498,9 +528,13 @@ const MyPage = () => {
                     <div className="text-center">
                         <div className="relative w-32 h-32 mx-auto mb-4">
                             <img
-                                src={profileImage}
+                                src={profileImage || defaultImage}
                                 alt="Profile"
                                 className="w-full h-full rounded-full object-cover"
+                                onError={(e) => {
+                                    console.error("이미지 로드 실패:", e);
+                                    e.target.src = defaultImage;
+                                }}
                             />
                             <label className="absolute bottom-0 right-0 bg-orange-500 p-2 rounded-full cursor-pointer">
                                 <input

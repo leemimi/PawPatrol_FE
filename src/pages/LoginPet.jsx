@@ -57,7 +57,8 @@ const LoginScreen = () => {
                 if (response) {
                     const loginUserInfo = {
                         email: response.data.data.email,
-                        nickname: response.data.data.nickname
+                        nickname: response.data.data.nickname,
+                        profileImage: response.data.data.profileImage
                     };
 
                     localStorage.setItem('userInfo', JSON.stringify(loginUserInfo));
