@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, MapPin } from 'lucide-react';
+import { X, MapPin } from 'lucide-react'; //조회
 
 const PetList = ({ pets, onPetClick, onClose }) => {
     return (
