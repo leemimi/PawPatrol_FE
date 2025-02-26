@@ -97,7 +97,8 @@ const MyPage = () => {
         registrationNo: '', // 동물등록번호
         healthCondition: '',    // 건강상태
         feature: '',    // 특징
-        image: null // 사진
+        image: null, // 사진
+        imageUrl: '' // 이미지 URL
     });
 
     // 수정용 폼 데이터 추가
@@ -111,7 +112,8 @@ const MyPage = () => {
         registrationNo: '',
         healthCondition: '',
         feature: '',
-        image: null
+        image: null,
+        imageUrl: ''
     });
 
 
@@ -125,7 +127,8 @@ const MyPage = () => {
             size: pet?.size || 'SMALL',
             registrationNo: pet?.registrationNo || '',
             healthCondition: pet?.healthCondition || '',
-            image: null
+            image: null,
+            imageUrl: pet?.imageUrl || ''
         });
         setIsEditOpen(true);
     };
@@ -153,6 +156,7 @@ const MyPage = () => {
             // 이미지 파일이 있는 경우에만 추가
             if (editPetFormData.image) {
                 formData.append('imageFile', editPetFormData.image);
+                formData.append('imageUrl', editPetFormData.imageUrl);
             }
 
             const response = await axios.patch(
@@ -383,6 +387,7 @@ const MyPage = () => {
     
         const formData = new FormData();
         formData.append('file', file);
+        formData.append('imageUrl', profileImage);
     
         try {
             const response = await axios.patch(
