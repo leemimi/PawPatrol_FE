@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Menu } from 'lucide-react';
 
 const Protection = () => {
   const [animals, setAnimals] = useState([]);
@@ -7,6 +8,7 @@ const Protection = () => {
   const [totalElements, setTotalElements] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const observerRef = useRef();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   // 마지막 아이템 참조 콜백
   const lastAnimalRef = useCallback(node => {
@@ -25,7 +27,7 @@ const Protection = () => {
 
   const getStatusText = (status) => {
     switch (status) {
-      case 'TEMP_PROTECT_WAITING':
+      case 'PROTECT_WAITING':
         return '신청가능';
       case 'TEMP_PROTECTING':
         return '임보중';
@@ -90,7 +92,7 @@ const Protection = () => {
   }, [page]);
 
   return (
-    <div className="max-w-lg mx-auto bg-[#FFF5E6] min-h-screen p-3">
+    <div className="max-w-lg mx-auto bg-[#FFF5E6] min-h-screen p-3 relative pb-24">
       <div className="mb-6 bg-white rounded-xl p-4 shadow hover:shadow-md transition-shadow">
         <div className="flex items-center gap-2">
           <span className="text-2xl">🐾</span>
@@ -120,11 +122,11 @@ const Protection = () => {
                 />
               )}
               <div className="absolute top-2 left-2">
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${animal.caseStatus === 'TEMP_PROTECT_WAITING'
-                    ? 'bg-yellow-400 text-white'
-                    : animal.caseStatus === 'PROTECTION_POSSIBLE'
-                      ? 'bg-red-400 text-white'
-                      : 'bg-orange-300 text-white'
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${animal.caseStatus === 'PROTECT_WAITING'
+                  ? 'bg-yellow-400 text-white'
+                  : animal.caseStatus === 'PROTECTION_POSSIBLE'
+                    ? 'bg-red-400 text-white'
+                    : 'bg-orange-300 text-white'
                   }`}>
                   {getStatusText(animal.caseStatus)}
                 </span>
@@ -142,6 +144,49 @@ const Protection = () => {
             </div>
           </div>
         ))}
+      </div>
+
+      {/* 메뉴 버튼과 팝업 */}
+      <div className="fixed bottom-20 right-4 z-50">
+        <button
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          className="bg-white rounded-full p-3 shadow-lg text-orange-400 hover:text-orange-500 transition-colors border-2 border-orange-100"
+        >
+          <Menu size={24} strokeWidth={2.5} />
+        </button>
+
+        {/* 팝업 메뉴 */}
+        {isMenuOpen && (
+          <div className="absolute bottom-16 right-0 w-40 bg-white rounded-lg shadow-lg overflow-hidden">
+            <button
+              className="w-full px-4 py-3 text-sm text-left hover:bg-orange-50 text-gray-700 transition-colors border-b border-gray-100"
+              onClick={() => {
+                setIsMenuOpen(false);
+                // 동물 등록 기능 구현
+              }}
+            >
+              동물 등록하기
+            </button>
+            <button
+              className="w-full px-4 py-3 text-sm text-left hover:bg-orange-50 text-gray-700 transition-colors border-b border-gray-100"
+              onClick={() => {
+                setIsMenuOpen(false);
+                // 등록 목록 기능 구현
+              }}
+            >
+              등록한 동물 목록
+            </button>
+            <button
+              className="w-full px-4 py-3 text-sm text-left hover:bg-orange-50 text-gray-700 transition-colors"
+              onClick={() => {
+                setIsMenuOpen(false);
+                // 신청 목록 기능 구현
+              }}
+            >
+              나의 신청 목록
+            </button>
+          </div>
+        )}
       </div>
 
       {loading && (
