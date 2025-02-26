@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Search, Eye, X, ArrowRight, Check, Dog, Cat } from 'lucide-react';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate hook
+
 
 const WriteButton = ({ onSelectMissingPost, onSelectReportPost }) => {
   const [showPostTypeMenu, setShowPostTypeMenu] = useState(false);
@@ -17,6 +19,8 @@ const WriteButton = ({ onSelectMissingPost, onSelectReportPost }) => {
   const petSelectorRef = useRef(null);
   const animalTypeSelectorRef = useRef(null);
 
+  const navigate = useNavigate(); // Declare navigate function from useNavigate hook
+
   // 제보글 작성 버튼 클릭 핸들러
   const handleReportPostClick = () => {
     setShowPostTypeMenu(false);
@@ -28,12 +32,17 @@ const WriteButton = ({ onSelectMissingPost, onSelectReportPost }) => {
   const handleAnimalTypeSelect = (type) => {
     setSelectedAnimalType(type);
   };
+
+
   
   // 제보글 다음 단계로 진행 핸들러
   const handleReportNextStep = () => {
     if (selectedAnimalType) {
       setShowAnimalTypeSelector(false);
       onSelectReportPost && onSelectReportPost(selectedAnimalType);
+      // '제보글 작성하기' 버튼 클릭 시 리디렉션
+     // Sending selected animal type to the backend when navigating
+     navigate("/find-pet-report", { state: { animalType: selectedAnimalType } });
     }
   };
   
@@ -133,6 +142,8 @@ const WriteButton = ({ onSelectMissingPost, onSelectReportPost }) => {
     fetchMyPets();
     setShowPetSelector(true);
     setSelectedPet(null);
+    // Redirect to lost pet registration page
+    navigate('/lost-pet-registration');
   };
   
   // 반려동물 선택 핸들러
@@ -393,19 +404,20 @@ const WriteButton = ({ onSelectMissingPost, onSelectReportPost }) => {
                 </ul>
                 
                 <div className="mt-6">
-                  <button
-                    onClick={handleNextStep}
-                    disabled={!selectedPet}
-                    className={`w-full py-3 rounded-lg flex items-center justify-center gap-2 ${
-                      selectedPet 
-                        ? 'bg-orange-500 text-white hover:bg-orange-600' 
-                        : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                    }`}
-                  >
-                    <span>실종글 작성하기</span>
-                    <ArrowRight size={16} />
-                  </button>
-                </div>
+  <button
+    onClick={handleNextStep}
+    disabled={!selectedPet}
+    className={`w-full py-3 rounded-lg flex items-center justify-center gap-2 ${
+      selectedPet
+        ? 'bg-orange-500 text-white hover:bg-orange-600'
+        : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+    }`}
+  >
+    <span>제보글 작성하기</span>
+    <ArrowRight size={16} />
+  </button>
+</div>
+
               </>
             )}
           </div>
