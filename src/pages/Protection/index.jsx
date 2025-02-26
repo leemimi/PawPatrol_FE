@@ -52,7 +52,7 @@ const Protection = () => {
   }, [page]);
 
   return (
-    <div className="max-w-lg mx-auto bg-orange-50/30 min-h-screen p-3">
+    <div className="max-w-lg mx-auto bg-[#FFF5E6] min-h-screen p-3">
       <div className="flex flex-col gap-3">
         {loading ? (
           <div>로딩중...</div>
