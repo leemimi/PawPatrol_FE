@@ -4,11 +4,11 @@ import puppyLogo from '../assets/images/pet.png';
 import axios from 'axios';
 
 const LoginScreen = () => {
-    const socialLoginForKakaoUrl = `${import.meta.env.VITE_CORE_API_BASE_URL}/oauth2/authorization/kakao`; 
-    const socialLoginForGoogleUrl = `${import.meta.env.VITE_CORE_API_BASE_URL}/oauth2/authorization/google`; 
-    const socialLoginForNaverUrl = `${import.meta.env.VITE_CORE_API_BASE_URL}/oauth2/authorization/naver`; 
+    const socialLoginForKakaoUrl = `${import.meta.env.VITE_CORE_API_BASE_URL}/oauth2/authorization/kakao`;
+    const socialLoginForGoogleUrl = `${import.meta.env.VITE_CORE_API_BASE_URL}/oauth2/authorization/google`;
+    const socialLoginForNaverUrl = `${import.meta.env.VITE_CORE_API_BASE_URL}/oauth2/authorization/naver`;
     const redirectUrlAfterSocialLogin = `${import.meta.env.VITE_CORE_FRONT_BASE_URL}/oauth2/redirect`;
-    
+
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [rememberMe, setRememberMe] = useState(false);
@@ -18,7 +18,7 @@ const LoginScreen = () => {
     useEffect(() => {
         const savedEmail = localStorage.getItem('savedEmail');
         const isRemembered = localStorage.getItem('rememberMe') === 'true';
-        
+
         if (savedEmail && isRemembered) {
             setEmail(savedEmail);
             setRememberMe(true);
@@ -164,7 +164,12 @@ const LoginScreen = () => {
 
                 {/* Bottom Links */}
                 <div className="flex items-center justify-center space-x-4 text-sm text-gray-600">
-                    <button className="hover:text-orange-500">비밀번호 찾기</button>
+                    <button
+                        className="hover:text-orange-500"
+                        onClick={() => navigate('/forgot-password')}
+                    >
+                        비밀번호 찾기
+                    </button>
                     <span>•</span>
                     <button
                         className="hover:text-orange-500"

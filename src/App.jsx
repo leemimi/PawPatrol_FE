@@ -9,6 +9,7 @@ import Protection from './pages/Protection'
 // import Layout from './layout/Layout.jsx'
 import SocialConnect from './pages/SocialConnectPage'
 import OAuth2RedirectHandler from './components/OAuth2RedirectHandler';
+import ForgotPasswordScreen from './pages/ForgotPasswordScreen';
 import './api/axiosConfig'; // axios 전역 인터셉터 설정, 토큰 만료시 로그아웃 처리
 import { useAuthStore } from './stores/useAuthStore'
 import './index.css';
@@ -24,6 +25,7 @@ const App = () => {
         <Route path="/" element={<Map />} />
         <Route path="/oauth2/redirect" element={<OAuth2RedirectHandler />} />
         <Route path="/protection" element={<Protection />} />
+        <Route path="/forgot-password" element={<ForgotPasswordScreen />} />
       </Route>
     </Routes>
   );
