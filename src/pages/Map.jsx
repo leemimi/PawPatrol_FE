@@ -1,28 +1,96 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { RadiusControl } from '../components/RadiusControl';
-import { PetCard } from '../components/PetCard';
 import { ControlButtons } from '../components/ControlButtons';
 import { useKakaoMap } from '@/hooks/UseKakaoMap';
-import PetList from '../components/PetList';
-import _ from 'lodash';
+import { usePetData } from '../hooks/UsePetData';
+import { useFacilitiesData } from '../hooks/UseFacilitiesData.jsx';
+import { useGeolocation } from '../hooks/UseGeolocation.jsx';
+import { useCustomOverlays } from '../hooks/UseCustomOverlays';
+import { useFacilityOverlays } from '../hooks/UseFacilityOverlays'; 
+import { CommonList } from '../components/CommonList';
+import { CommonCard } from '../components/CommonCard';
+import WriteButton from '../components/WriteButton';
 
 const Map = () => {
     const centerPosition = { lat: 37.498095, lng: 127.027610 };
 
     const [selectedRange, setSelectedRange] = useState(3);
     const [selectedPet, setSelectedPet] = useState(null);
+    const [selectedFacility, setSelectedFacility] = useState(null);
     const [showList, setShowList] = useState(false);
-    const [pets, setPets] = useState([]);
+    const [showFacilitiesList, setShowFacilitiesList] = useState(false);
     const [currentPosition, setCurrentPosition] = useState(centerPosition);
     const [isCardVisible, setIsCardVisible] = useState(false);
     const [isMarkerTransitioning, setIsMarkerTransitioning] = useState(false);
-    const [customOverlays, setCustomOverlays] = useState([]);
+    const [showFacilities, setShowFacilities] = useState(false);
+    
+    // 초기 렌더링 및 데이터 로딩 추적을 위한 ref
+    const initialLoadRef = useRef(false);
+    const modeChangeRef = useRef(false);
     
     const { map, setMarkers, circleRef } = useKakaoMap(currentPosition);
+    
+    // 펫 데이터 관련 훅 사용
+    const { 
+        pets, 
+        fetchPets, 
+        debouncedFetchPets 
+    } = usePetData(currentPosition, selectedRange);
+    
+    // 시설 데이터 관련 훅 사용
+    const { 
+        facilities, 
+        fetchFacilities, 
+        debouncedFetchFacilities 
+    } = useFacilitiesData(currentPosition, selectedRange);
+    
+    // 위치 관련 훅 사용
+    const { getCurrentLocation } = useGeolocation(map, circleRef, (newPosition) => {
+        setCurrentPosition(newPosition);
+        if (showFacilities) {
+            fetchFacilities(newPosition, selectedRange);
+        } else {
+            fetchPets(newPosition, selectedRange);
+        }
+    });
+    
+    // 펫 오버레이 관련 훅 사용
+    const { 
+        customOverlays, 
+        createCustomOverlays, 
+        cleanupOverlays 
+    } = useCustomOverlays({
+        map,
+        selectedRange,
+        selectedPet,
+        onSelectPet: setSelectedPet
+    });
 
+    // 시설 오버레이 관련 훅 사용
+    const { 
+        facilityOverlays, 
+        createFacilityCustomOverlays, 
+        cleanupFacilityOverlays 
+    } = useFacilityOverlays({
+        map,
+        selectedFacility,
+        onSelectFacility: setSelectedFacility
+    });
+
+    const handleSelectMissingPost = () => {
+        console.log('실종글 작성 버튼 클릭됨');
+        // 여기에 실종글 작성 페이지로 이동 또는 모달 표시 로직 추가
+        // 예: 라우팅 또는 상태 관리를 통한 모달 표시
+    };
+
+    const handleSelectReportPost = () => {
+        console.log('제보글 작성 버튼 클릭됨');
+        // 여기에 제보글 작성 페이지로 이동 또는 모달 표시 로직 추가
+        // 예: 라우팅 또는 상태 관리를 통한 모달 표시
+    };
+
+    // 기존 스타일 설정 useEffect
     useEffect(() => {
-        // 전체 문서 및 body 스타일 조정
         document.documentElement.style.height = '100%';
         document.body.style.height = '100%';
         document.body.style.margin = '0';
@@ -38,241 +106,7 @@ const Map = () => {
         };
     }, []);
 
-    // 커스텀 오버레이를 만들고 관리하는 함수
-    const createCustomOverlays = useCallback((pets) => {
-        if (!map) return;
-    
-        // 기존 오버레이 제거
-        customOverlays.forEach(overlay => overlay.setMap(null));
-        
-        // 색상 정의
-        const getStatusColor = (status) => {
-            switch(status) {
-                case 'FINDING':
-                    return '#FFA000'; // 황색
-                case 'SIGHTING':
-                    return '#F44336'; // 적색
-                case 'SHELTER':
-                    return '#4CAF50'; // 녹색
-                default:
-                    return '#757575'; // 회색
-            }
-        };
-        
-        // 상태 텍스트 매핑
-        const getStatusText = (status) => {
-            switch(status) {
-                case 'FINDING':
-                    return '찾는중';
-                case 'SIGHTING':
-                    return '목격';
-                case 'SHELTER':
-                    return '보호중';
-                default:
-                    return '상태 미정';
-            }
-        };
-        
-        // 새 오버레이 생성
-        const newOverlays = pets.map(pet => {
-            // 범위 체크 - 현재 선택된 범위 내에 있는 마커만 생성
-            if (pet.distanceFromCenter > selectedRange) {
-                return null; // 범위를 벗어난 마커는 생성하지 않음
-            }
-            
-            const imageUrl = pet.image || '/api/placeholder/60/60';
-            const position = new window.kakao.maps.LatLng(pet.position.lat, pet.position.lng);
-            const statusColor = getStatusColor(pet.status);
-            const statusText = getStatusText(pet.status);
-            
-            // 선택된 펫인지 확인
-            const isSelected = selectedPet && selectedPet.id === pet.id;
-            
-            // 마커 크기 설정 - 선택된 경우 더 크게
-            const markerSize = isSelected ? 50 : 45;
-            const borderWidth = isSelected ? 4 : 3;
-            const labelFontSize = isSelected ? '12px' : '10px';
-            const labelPadding = isSelected ? '3px 8px' : '2px 6px';
-            const labelMarginTop = isSelected ? '6px' : '4px';
-            
-            // 전체 컨테이너 - 마커와 라벨을 함께 포함
-            const container = document.createElement('div');
-            container.className = 'marker-container';
-            container.style.position = 'absolute';
-            container.style.transform = 'translate(-50%, -50%)'; // 컨테이너 전체를 중앙 정렬
-            container.style.display = 'flex';
-            container.style.flexDirection = 'column';
-            container.style.alignItems = 'center';
-            container.style.cursor = 'pointer';
-            container.style.width = 'auto'; // 너비를 자동으로 조정
-            container.style.zIndex = isSelected ? '11' : '10'; // 선택된 마커를 더 앞에 표시
-            
-            // 마커 이미지 컨테이너 (테두리 역할)
-            const markerBorder = document.createElement('div');
-            markerBorder.style.width = `${markerSize}px`;
-            markerBorder.style.height = `${markerSize}px`;
-            markerBorder.style.borderRadius = '50%';
-            markerBorder.style.border = `${borderWidth}px solid ${statusColor}`;
-            markerBorder.style.boxSizing = 'border-box';
-            markerBorder.style.overflow = 'hidden';
-            markerBorder.style.backgroundColor = 'white';
-            markerBorder.style.boxShadow = isSelected 
-                ? `0 3px 8px rgba(0,0,0,0.4), 0 0 0 2px ${statusColor}30` 
-                : '0 2px 6px rgba(0,0,0,0.3)';
-            markerBorder.style.transition = 'all 0.2s ease-in-out';
-            
-            // 선택 효과 - 밝은 테두리 추가
-            if (isSelected) {
-                const glowEffect = document.createElement('div');
-                glowEffect.style.position = 'absolute';
-                glowEffect.style.top = '-3px';
-                glowEffect.style.left = '-3px';
-                glowEffect.style.width = `${markerSize + 6}px`;
-                glowEffect.style.height = `${markerSize + 6}px`;
-                glowEffect.style.borderRadius = '50%';
-                glowEffect.style.backgroundColor = 'transparent';
-                glowEffect.style.border = `2px solid ${statusColor}80`; // 반투명 테두리
-                glowEffect.style.boxSizing = 'border-box';
-                glowEffect.style.zIndex = '0';
-                
-                container.appendChild(glowEffect);
-            }
-            
-            // 펫 이미지
-            const petImage = document.createElement('div');
-            petImage.style.width = '100%';
-            petImage.style.height = '100%';
-            petImage.style.backgroundImage = `url(${imageUrl})`;
-            petImage.style.backgroundSize = 'cover';
-            petImage.style.backgroundPosition = 'center';
-            petImage.style.borderRadius = '50%';
-            
-            // 상태 표시 라벨
-            const statusLabel = document.createElement('div');
-            statusLabel.style.marginTop = labelMarginTop;
-            statusLabel.style.padding = labelPadding;
-            statusLabel.style.borderRadius = '10px';
-            statusLabel.style.fontSize = labelFontSize;
-            statusLabel.style.fontWeight = 'bold';
-            statusLabel.style.color = 'white';
-            statusLabel.style.backgroundColor = statusColor;
-            statusLabel.style.boxShadow = '0 1px 3px rgba(0,0,0,0.2)';
-            statusLabel.style.whiteSpace = 'nowrap';
-            statusLabel.style.zIndex = '2';
-            statusLabel.style.transition = 'all 0.2s ease-in-out';
-            statusLabel.textContent = statusText;
-            
-            // 구성 요소 조립
-            markerBorder.appendChild(petImage);
-            container.appendChild(markerBorder);
-            container.appendChild(statusLabel);
-            
-            // 커스텀 오버레이 생성
-            const overlay = new window.kakao.maps.CustomOverlay({
-                position: position,
-                content: container,
-                map: map,
-                zIndex: isSelected ? 11 : 10
-            });
-            
-            // 클릭 이벤트 추가
-            container.onclick = () => {
-                setSelectedPet(pet);
-            };
-            
-            return overlay;
-        }).filter(overlay => overlay !== null); // null 값 필터링
-        
-        setCustomOverlays(newOverlays);
-    }, [map, customOverlays, selectedRange, selectedPet]);
-
-    // 통합 API 호출 함수
-    const fetchData = async (position, range) => {
-        const apiUrl = 'http://localhost:8090/api/v1/lost-foundposts/map';
-
-        try {
-            const response = await axios.get(apiUrl, {
-                params: {
-                    latitude: position.lat,
-                    longitude: position.lng,
-                    radius: range * 1000
-                },
-                credentials: 'include',
-            });
-
-            if (response.data.resultCode === "200") {
-                const transformedData = response.data.data.map(post => {
-                    const isLostPost = post.lostTime !== null; // lostTime이 있으면 LOST, 아니면 FOUND
-                    
-                    // 이미지 URL은 images 배열의 첫 번째 항목의 path에서 가져옴
-                    const imageUrl = post.images && post.images.length > 0 
-                        ? post.images[0].path 
-                        : '/api/placeholder/160/160';
-                    
-                    return {
-                        id: post.id,
-                        content: post.content,
-                        status: post.status,
-                        image: imageUrl,
-                        time: isLostPost 
-                            ? post.lostTime 
-                            : (post.findTime ? new Date(post.findTime).toLocaleString() : ''),
-                        location: post.location,
-                        position: {
-                            lat: post.latitude,
-                            lng: post.longitude
-                        },
-                        pet: post.pet, 
-                        postType: isLostPost ? 'LOST' : 'FOUND',
-                        author: post.author 
-                    };
-                });
-                
-                setPets(transformedData);
-                createCustomOverlays(transformedData);
-            }
-        } catch (error) {
-            console.error('Failed to fetch pets:', error);
-        }
-    };
-
-    // 드래그용 디바운스 함수
-    const debouncedFetchForDrag = useCallback(
-        _.debounce((position, range) => {
-            fetchData(position, range);
-        }, 500),
-        []
-    );
-
-    const getCurrentLocation = useCallback(() => {
-        if (!navigator.geolocation) {
-            console.error('Geolocation is not supported by this browser.');
-            return;
-        }
-
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                const pos = {
-                    lat: position.coords.latitude,
-                    lng: position.coords.longitude
-                };
-                setCurrentPosition(pos);
-
-                if (map) {
-                    const moveLatLon = new window.kakao.maps.LatLng(pos.lat, pos.lng);
-                    map.setCenter(moveLatLon);
-                    if (circleRef.current) {
-                        circleRef.current.setPosition(moveLatLon);
-                    }
-                    fetchData(pos, selectedRange);
-                }
-            },
-            (error) => {
-                console.error('Geolocation failed:', error);
-            }
-        );
-    }, [map, circleRef, selectedRange]);
-
+    // 원형 반경 위치 설정 useEffect
     useEffect(() => {
         if (map && circleRef.current) {
             const moveLatLon = new window.kakao.maps.LatLng(currentPosition.lat, currentPosition.lng);
@@ -281,6 +115,7 @@ const Map = () => {
         }
     }, [currentPosition, map, circleRef]);
 
+    // 반경 변경 핸들러
     const handleRangeChange = useCallback((newRange) => {
         setIsMarkerTransitioning(true);
         setSelectedRange(newRange);
@@ -300,14 +135,21 @@ const Map = () => {
                 } else {
                     circleRef.current.setRadius(targetRadius);
                     setIsMarkerTransitioning(false);
-                    fetchData(currentPosition, newRange);
+                    
+                    // 현재 모드에 따라 다른 데이터 페치
+                    if (showFacilities) {
+                        fetchFacilities(currentPosition, newRange);
+                    } else {
+                        fetchPets(currentPosition, newRange);
+                    }
                 }
             };
 
             animate();
         }
-    }, [circleRef, currentPosition]);
+    }, [circleRef, currentPosition, fetchPets, fetchFacilities, showFacilities]);
 
+    // 맵 드래그 종료 이벤트 useEffect
     useEffect(() => {
         if (map) {
             const handleDragEnd = () => {
@@ -317,7 +159,13 @@ const Map = () => {
                     lng: center.getLng()
                 };
                 setCurrentPosition(newPosition);
-                debouncedFetchForDrag(newPosition, selectedRange);
+                
+                // 현재 모드에 따라 다른 데이터 페치
+                if (showFacilities) {
+                    debouncedFetchFacilities(newPosition, selectedRange);
+                } else {
+                    debouncedFetchPets(newPosition, selectedRange);
+                }
             };
 
             window.kakao.maps.event.addListener(map, 'dragend', handleDragEnd);
@@ -325,29 +173,97 @@ const Map = () => {
                 window.kakao.maps.event.removeListener(map, 'dragend', handleDragEnd);
             };
         }
-    }, [map, selectedRange, debouncedFetchForDrag]);
+    }, [map, selectedRange, debouncedFetchPets, debouncedFetchFacilities, showFacilities]);
 
+    // 선택된 항목에 따른 카드 가시성 useEffect
     useEffect(() => {
-        if (selectedPet) {
+        if (selectedPet || selectedFacility) {
             setTimeout(() => setIsCardVisible(true), 50);
         } else {
             setIsCardVisible(false);
         }
-    }, [selectedPet]);
+    }, [selectedPet, selectedFacility]);
 
-    // 초기 데이터 로딩
+    // showFacilities 변경 시 모드 변경 플래그 설정
     useEffect(() => {
-        if (map) {
-            fetchData(currentPosition, selectedRange);
+        modeChangeRef.current = true;
+    }, [showFacilities]);
+
+    // 펫 데이터 변경 시 오버레이 업데이트
+    useEffect(() => {
+        if (map && !showFacilities && pets.length > 0) {
+            createCustomOverlays(pets);
         }
-    }, [map, currentPosition, selectedRange]);
+    }, [map, pets, showFacilities, createCustomOverlays]);
 
-    // 컴포넌트 언마운트 시 오버레이 정리
+    // 시설 데이터 변경 시 오버레이 업데이트
     useEffect(() => {
-        return () => {
-            customOverlays.forEach(overlay => overlay.setMap(null));
-        };
-    }, [customOverlays]);
+        if (map && showFacilities && facilities.length > 0) {
+            createFacilityCustomOverlays(facilities);
+        }
+    }, [map, facilities, showFacilities, createFacilityCustomOverlays]);
+    
+    // 선택된 시설이 변경될 때도 오버레이 업데이트
+    useEffect(() => {
+        if (map && showFacilities && facilities.length > 0 && selectedFacility) {
+            createFacilityCustomOverlays(facilities);
+        }
+    }, [map, selectedFacility, facilities, showFacilities, createFacilityCustomOverlays]);
+
+    // 초기 데이터 로딩 useEffect
+    useEffect(() => {
+        if (map && !initialLoadRef.current) {
+            initialLoadRef.current = true;
+            if (showFacilities) {
+                fetchFacilities(currentPosition, selectedRange);
+            } else {
+                fetchPets(currentPosition, selectedRange);
+            }
+        }
+    }, [map, currentPosition, selectedRange, showFacilities, fetchPets, fetchFacilities]);
+
+    // 모드 변경 시 오버레이 및 데이터 관리
+    useEffect(() => {
+        if (map && modeChangeRef.current) {
+            modeChangeRef.current = false;
+            
+            if (showFacilities) {
+                cleanupOverlays();
+                fetchFacilities(currentPosition, selectedRange);
+            } else {
+                cleanupFacilityOverlays();
+                fetchPets(currentPosition, selectedRange);
+            }
+        }
+    }, [
+        map, 
+        showFacilities, 
+        currentPosition, 
+        selectedRange, 
+        fetchFacilities, 
+        fetchPets, 
+        cleanupOverlays, 
+        cleanupFacilityOverlays
+    ]);
+
+    // // 컴포넌트 언마운트 시 오버레이 정리
+    // useEffect(() => {
+    //     return () => {
+    //         cleanupOverlays();
+    //         cleanupFacilityOverlays();
+    //     };
+    // }, [cleanupOverlays, cleanupFacilityOverlays]);
+
+    // 시설/펫 토글 핸들러
+    const handleFacilitiesToggle = () => {
+        setShowFacilities(prev => !prev);
+        
+        // 선택된 항목 초기화
+        setSelectedPet(null);
+        setSelectedFacility(null);
+        setShowList(false);
+        setShowFacilitiesList(false);
+    };
 
     return (
         <div className="h-screen w-full bg-orange-50/30 relative overflow-hidden">
@@ -362,28 +278,58 @@ const Map = () => {
 
                     <ControlButtons
                         onLocationClick={getCurrentLocation}
-                        onListClick={() => setShowList(!showList)}
+                        onListClick={() => {
+                            if (showFacilities) {
+                                setShowFacilitiesList(!showFacilitiesList);
+                                setSelectedFacility(null);
+                            } else {
+                                setShowList(!showList);
+                                setSelectedPet(null);
+                            }
+                        }}
+                        onFacilitiesToggle={handleFacilitiesToggle}
                     />
+
+                    <WriteButton 
+                            onSelectMissingPost={handleSelectMissingPost}
+                            onSelectReportPost={handleSelectReportPost}
+                        />
                     
-                    {/* PetCard 컴포넌트를 footer 위로 표시 */}
-                    {selectedPet && !showList && (
+                    {/* 공통 카드 컴포넌트 */}
+                    {(selectedPet || selectedFacility) && !(showList || showFacilitiesList) && (
                         <div className={`absolute bottom-16 left-0 right-0 max-h-[70vh] overflow-auto p-4 bg-white rounded-t-3xl shadow-lg border-t-2 border-orange-100 z-50 transition-all duration-300 ease-in-out ${
                             isCardVisible ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'
                         }`}>
-                            <PetCard pet={selectedPet} onClose={() => setSelectedPet(null)} />
+                            <CommonCard 
+                                item={selectedPet || selectedFacility} 
+                                type={selectedPet ? 'pet' : 'facility'}
+                                onClose={() => {
+                                    setSelectedPet(null);
+                                    setSelectedFacility(null);
+                                }} 
+                            />
                         </div>
                     )}
                     
-                    {/* PetList 컴포넌트를 footer 위로 표시 */}
-                    {showList && (
+                    {/* 공통 리스트 컴포넌트 */}
+                    {(showList || showFacilitiesList) && (
                         <div className="absolute bottom-16 left-0 right-0 max-h-[70vh] overflow-auto z-50 bg-white rounded-t-3xl shadow-lg">
-                            <PetList 
-                                pets={pets}
-                                onPetClick={(pet) => {
-                                    setSelectedPet(pet);
-                                    setShowList(false);
+                            <CommonList 
+                                items={showFacilities ? facilities : pets}
+                                type={showFacilities ? 'facility' : 'pet'}
+                                onItemClick={(item) => {
+                                    if (showFacilities) {
+                                        setSelectedFacility(item);
+                                        setShowFacilitiesList(false);
+                                    } else {
+                                        setSelectedPet(item);
+                                        setShowList(false);
+                                    }
                                 }}
-                                onClose={() => setShowList(false)}
+                                onClose={() => {
+                                    setShowList(false);
+                                    setShowFacilitiesList(false);
+                                }}
                             />
                         </div>
                     )}
