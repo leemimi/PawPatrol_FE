@@ -48,7 +48,7 @@ const ReportPostForm = ({ formType = "standalone" }) => {
         window.kakao.maps.load(() => {
           const mapContainer = document.getElementById("kakaoMap");
           const mapOption = {
-            center: new window.kakao.maps.LatLng(37.5665, 126.978), // 기본 서울 중심 좌표
+            center: new window.kakao.maps.LatLng(37.497939, 127.027587), // 기본 서울 중심 좌표
             level: 3, // 줌 레벨
           };
           const map = new window.kakao.maps.Map(mapContainer, mapOption);
@@ -128,7 +128,7 @@ const ReportPostForm = ({ formType = "standalone" }) => {
       );
       alert("발견 신고가 성공적으로 등록되었습니다.");
       console.log(response.data);
-      navigate("/community");
+      navigate("/");
     } catch (error) {
       console.error("게시글 등록 중 오류 발생:", error);
       alert("게시글 등록에 실패했습니다.");

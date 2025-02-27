@@ -141,7 +141,7 @@ const renderImages = () => {
   };
 
   const handleGoTocommunity = () => {
-    navigate('/community');
+    navigate('/');
     setIsActionMenuVisible(false);
   };
 
@@ -295,9 +295,7 @@ const renderImages = () => {
         </div>
 
         <form onSubmit={handleSubmitComment} className="mt-4 flex items-center gap-2">
-          <select value={commentType} onChange={(e) => setCommentType(e.target.value)} className="border p-1">
-            <option value="find">신고글 댓글</option>
-          </select>
+          
           <input 
             type="text" 
             value={newComment} 

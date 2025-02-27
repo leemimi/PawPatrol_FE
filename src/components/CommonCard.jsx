@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 
 export const CommonCard = ({ item, type, onClose }) => {
     const navigate = useNavigate();
+    console.log('item.animalType:', item.animalType);
+console.log('item.pet.animalType:', item.pet.animalType);
 
     // 반려동물 상태 텍스트 변환
     const getStatusText = (status) => {
@@ -15,6 +17,17 @@ export const CommonCard = ({ item, type, onClose }) => {
             default: return status;
         }
     };
+
+    // 동물 타입 텍스트 변환
+    const getAnimalTypeText = (animalType) => {
+        if (!animalType) return ''; // If animalType is null or undefined, return empty string
+        switch (animalType) {
+            case 'DOG': return '강아지';
+            case 'CAT': return '고양이';
+            default: return animalType; // Return the animal type or empty string if it's invalid
+        }
+    };
+    
 
     // 상세 페이지로 이동하는 함수
     const handleDetailNavigation = (e) => {
@@ -45,14 +58,17 @@ export const CommonCard = ({ item, type, onClose }) => {
         const location = item?.location || '위치 정보 없음';
         const time = item?.time || '';
         const content = item?.content || '';
-
-        // 동물 정보 (있을 경우)
+        
         const petInfo = item?.pet ? (
             <h3 className="text-lg font-bold text-orange-900 mb-1">
-                {item.pet.animalType || ''} / {item.pet.name || item.pet.breed || ''}
+                {getAnimalTypeText(item.animalType)}  / {getAnimalTypeText(item.pet.animalType)}
+                / {item.pet.name || item.pet.breed || ''} 
                 {item.pet.gender ? ` / ${item.pet.gender}` : ''}
             </h3>
         ) : null;
+        
+        
+
 
         return (
             <div className="flex flex-col items-start gap-4 bg-white p-4 rounded-lg border border-orange-200">
