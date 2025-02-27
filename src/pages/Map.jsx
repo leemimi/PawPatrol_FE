@@ -13,9 +13,9 @@ import { PetCard } from '../components/PetCard';
 import WriteButton from '../components/WriteButton';
 
 const Map = () => {
-    const centerPosition = { lat: 37.56681460756078, lng: 126.98179903757568 };
+    const centerPosition = { lat: 37.497939, lng: 127.027587 };
 
-    const [selectedRange, setSelectedRange] = useState(100);
+    const [selectedRange, setSelectedRange] = useState(10);
     const [selectedPet, setSelectedPet] = useState(null);
     const [selectedFacility, setSelectedFacility] = useState(null);
     const [showList, setShowList] = useState(false);

@@ -54,7 +54,7 @@ const LostPostForm = () => {
           window.kakao.maps.load(() => {
             const mapContainer = document.getElementById("kakaoMap");
             const mapOption = {
-              center: new window.kakao.maps.LatLng(37.5665, 126.978), // 기본 서울 중심 좌표
+              center: new window.kakao.maps.LatLng(37.497939, 127.027587), // 기본 서울 중심 좌표
               level: 3, // 줌 레벨
             };
             const map = new window.kakao.maps.Map(mapContainer, mapOption);
@@ -327,7 +327,7 @@ const LostPostForm = () => {
               onChange={handleChange}
               className="w-full p-2 text-orange-900 border rounded-md"
             >
-              <option value="SIGHTED">목격</option>
+              
               <option value="FINDING">실종 신고</option>
             </select>
           </div>
