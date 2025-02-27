@@ -9,12 +9,13 @@ import { useCustomOverlays } from '../hooks/UseCustomOverlays';
 import { useFacilityOverlays } from '../hooks/UseFacilityOverlays'; 
 import { CommonList } from '../components/CommonList';
 import { CommonCard } from '../components/CommonCard';
+import { PetCard } from '../components/PetCard';
 import WriteButton from '../components/WriteButton';
 
 const Map = () => {
-    const centerPosition = { lat: 37.498095, lng: 127.027610 };
+    const centerPosition = { lat: 37.56681460756078, lng: 126.98179903757568 };
 
-    const [selectedRange, setSelectedRange] = useState(3);
+    const [selectedRange, setSelectedRange] = useState(100);
     const [selectedPet, setSelectedPet] = useState(null);
     const [selectedFacility, setSelectedFacility] = useState(null);
     const [showList, setShowList] = useState(false);

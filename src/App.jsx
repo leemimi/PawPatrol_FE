@@ -10,6 +10,7 @@ import Protection from './pages/Protection'
 import SocialConnect from './pages/SocialConnectPage'
 import LostPostForm from './pages/LostPostForm'
 import OAuth2RedirectHandler from './components/OAuth2RedirectHandler';
+import ForgotPasswordScreen from './pages/ForgotPasswordScreen';
 import LostPetListPages from './pages/LostPetListPages'
 import ReportPostForm from './pages/ReportPostForm'
 import PetPostDetail from './pages/PetPostDetail'
@@ -17,6 +18,7 @@ import Lostmypetfix from './pages/Lostmypetfix'
 import './api/axiosConfig'; // axios 전역 인터셉터 설정, 토큰 만료시 로그아웃 처리
 import { useAuthStore } from './stores/useAuthStore'
 import './index.css';
+
 
 const App = () => {
   return (
@@ -29,11 +31,13 @@ const App = () => {
         <Route path="/" element={<Map />} />
         <Route path="/oauth2/redirect" element={<OAuth2RedirectHandler />} />
         <Route path="/protection" element={<Protection />} />
+        <Route path="/forgot-password" element={<ForgotPasswordScreen />} />
         <Route path="/lost-pet-registration" element={<LostPostForm/>} />
         <Route path="/find-pet-report" element={<ReportPostForm />} />
         <Route path="/community" element={<LostPetListPages/>} />
         <Route path="/PetPostDetail/:postId" element={<PetPostDetail />} />
         <Route path="/lostmypetfix/:postId" element={<Lostmypetfix/>} />
+ 
       </Route>
     </Routes>
   );
