@@ -907,7 +907,7 @@ const MyPage = () => {
                                         <h3 className="text-xl font-bold">{pet.name}</h3>
                                         <div className="text-gray-600">
                                             <p>품종: {pet.breed}</p>
-                                            <p>특징: {pet.characteristics}</p>
+                                            <p>특징: {pet.feature}</p>
                                             <p>크기: {pet.size}</p>
                                             <p>동물등록번호: {pet.registrationNo}</p>
                                         </div>
