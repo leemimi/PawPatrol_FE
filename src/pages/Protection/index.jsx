@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Menu } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const Protection = () => {
   const [animals, setAnimals] = useState([]);
@@ -9,6 +10,7 @@ const Protection = () => {
   const [hasMore, setHasMore] = useState(true);
   const observerRef = useRef();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const navigate = useNavigate();
 
   // 마지막 아이템 참조 콜백
   const lastAnimalRef = useCallback(node => {
@@ -55,16 +57,14 @@ const Protection = () => {
 
         if (data.resultCode === "200") {
           const newAnimals = data.data.content;
-          console.log(`페이지 ${page}에서 ${newAnimals.length}개 데이터 로드됨`);
+          console.log('받아온 데이터:', newAnimals[0]); // 데이터 구조 확인용 로그
 
-          // 새 데이터가 없으면 더 이상 로드하지 않음
           if (newAnimals.length === 0) {
             setHasMore(false);
             console.log('더 이상 로드할 데이터가 없습니다');
             return;
           }
 
-          // 첫 페이지면 동물 데이터 초기화, 아니면 추가
           if (page === 0) {
             setAnimals(newAnimals);
           } else {
@@ -91,6 +91,10 @@ const Protection = () => {
     fetchAnimals();
   }, [page]);
 
+  const handleAnimalClick = (animal) => {
+    navigate(`/protection/${animal.animalCaseId}`);
+  };
+
   return (
     <div className="max-w-lg mx-auto bg-[#FFF5E6] min-h-screen p-3 relative pb-24">
       <div className="mb-6 bg-white rounded-xl p-4 shadow hover:shadow-md transition-shadow">
@@ -108,10 +112,10 @@ const Protection = () => {
       <div className="grid grid-cols-2 gap-3">
         {animals.map((animal, index) => (
           <div
-            key={animal.id || index}
-            // 배열의 마지막 아이템에만 ref 설정
+            key={animal.animalCaseId || index}
             ref={index === animals.length - 1 ? lastAnimalRef : null}
-            className="bg-white rounded-xl overflow-hidden shadow hover:shadow-md transition-shadow"
+            className="bg-white rounded-xl overflow-hidden shadow hover:shadow-md transition-shadow cursor-pointer"
+            onClick={() => handleAnimalClick(animal)}
           >
             <div className="relative h-40">
               {animal.imageUrl && (
@@ -162,7 +166,7 @@ const Protection = () => {
               className="w-full px-4 py-3 text-sm text-left hover:bg-orange-50 text-gray-700 transition-colors border-b border-gray-100"
               onClick={() => {
                 setIsMenuOpen(false);
-                // 동물 등록 기능 구현
+                navigate('/register-animal'); // 동물 등록 페이지로 이동
               }}
             >
               동물 등록하기
@@ -171,7 +175,7 @@ const Protection = () => {
               className="w-full px-4 py-3 text-sm text-left hover:bg-orange-50 text-gray-700 transition-colors border-b border-gray-100"
               onClick={() => {
                 setIsMenuOpen(false);
-                // 등록 목록 기능 구현
+                navigate('/my-register-animals'); // 등록한 동물 목록 페이지로 이동
               }}
             >
               등록한 동물 목록
@@ -180,7 +184,7 @@ const Protection = () => {
               className="w-full px-4 py-3 text-sm text-left hover:bg-orange-50 text-gray-700 transition-colors"
               onClick={() => {
                 setIsMenuOpen(false);
-                // 신청 목록 기능 구현
+                navigate('/my-applications'); // 나의 신청 목록 페이지로 이동
               }}
             >
               나의 신청 목록

@@ -6,6 +6,9 @@ import MyPage from './pages/MyPage'
 import SignUp from './pages/SignUpPage'
 import LoginPet from './pages/LoginPet'
 import Protection from './pages/Protection'
+import ProtectionDetail from './pages/ProtectionDetail'
+import MyApplications from './pages/MyApplications'
+import MyRegisterAnimals from './pages/MyRegisterAnimals'
 // import Layout from './layout/Layout.jsx'
 import SocialConnect from './pages/SocialConnectPage'
 import OAuth2RedirectHandler from './components/OAuth2RedirectHandler';
@@ -24,6 +27,9 @@ const App = () => {
         <Route path="/" element={<Map />} />
         <Route path="/oauth2/redirect" element={<OAuth2RedirectHandler />} />
         <Route path="/protection" element={<Protection />} />
+        <Route path="/protection/:id" element={<ProtectionDetail />} />
+        <Route path="/my-applications" element={<MyApplications />} />
+        <Route path="/my-register-animals" element={<MyRegisterAnimals />} />
       </Route>
     </Routes>
   );
