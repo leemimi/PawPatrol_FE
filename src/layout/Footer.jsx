@@ -16,25 +16,22 @@ const Footer = () => {
     // API를 통한 인증 상태 확인
     const checkAuthStatus = async () => {
         try {
-            const isLoggedIn = localStorage.getItem('isLoggedIn');
-
-            if (!isLoggedIn) {
-                setIsAuthenticated(false);
-                return;
-            }
-
             // API 요청으로 토큰 유효성 검증
-            await axios.get(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/auth/me`, {
-                withCredentials: true // 쿠키 포함 요청
+            const response = await axios.get(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/auth/me`, {
+                withCredentials: true
             });
 
-            // 요청이 성공하면 인증된 상태
-            setIsAuthenticated(true);
-            localStorage.setItem('isLoggedIn', 'true');
-            return true;
-
+            // 응답이 성공적이고 사용자 데이터가 있는 경우에만 인증 상태로 설정
+            if (response.data.data.email) {
+                setIsAuthenticated(true);
+                localStorage.setItem('isLoggedIn', 'true');
+                return true;
+            } else {
+                setIsAuthenticated(false);
+                localStorage.removeItem('isLoggedIn');
+                return false;
+            }
         } catch (error) {
-            // 401 에러 등이 발생하면 인증되지 않은 상태
             console.error('인증 확인 중 오류 발생:', error);
             setIsAuthenticated(false);
             localStorage.removeItem('isLoggedIn');
@@ -43,19 +40,15 @@ const Footer = () => {
     };
 
     const handleMyPageClick = async () => {
-        try {
-            // 클릭 시점에 최신 인증 상태 확인
-            const isAuth = await checkAuthStatus();
-
-            // 업데이트된 인증 상태에 따라 페이지 이동
-            if (isAuth) {
-                navigate('/mypage');
-            } else {
-                navigate('/login-pet');
-            }
-        } catch (error) {
-            console.error('인증 확인 중 오류 발생:', error);
-            navigate('/login-pet'); // 오류 발생 시 로그인 페이지로 이동
+        const isAuth = await checkAuthStatus();
+        
+        if (isAuth) {
+            navigate('/mypage');
+        } else {
+            // 로컬 스토리지 정리 및 사용자에게 알림
+            localStorage.removeItem('isLoggedIn');
+            // alert('로그인 세션이 만료되었습니다. 다시 로그인해주세요.');
+            navigate('/login-pet');
         }
     };
 

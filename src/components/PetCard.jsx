@@ -1,7 +1,10 @@
 import React from 'react';
-import { MapPin, X } from 'lucide-react';
+import { MapPin, X } from 'lucide-react'; //여기서 상세 조회되도록 
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
 
 export const PetCard = ({ pet, onClose }) => {
+      // Initialize useNavigate hook
+      const navigate = useNavigate();
     // 데이터 디버깅을 위한 콘솔 로그
     console.log('PetCard received:', pet);
     
@@ -25,6 +28,14 @@ export const PetCard = ({ pet, onClose }) => {
     const location = pet?.location || '위치 정보 없음';
     const time = pet?.time || '';
     const content = pet?.content || '';
+
+     // Handle image click to navigate to PetPostDetail
+     const handleImageClick = () => {
+        console.log('Pet ID:', pet?.id); // Add this to check if pet.id is available
+        if (pet?.id) {
+            navigate(`/PetPostDetail/${pet.id}`);
+        }
+    };
     
     // 동물 정보 (있을 경우)
     const petInfo = pet?.pet ? (
@@ -38,7 +49,12 @@ export const PetCard = ({ pet, onClose }) => {
         <div className="flex flex-col items-start gap-4">
             <div className="flex items-start gap-4 w-full">
                 <div className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-orange-100">
-                    <img src={petImage} alt="" className="w-full h-full object-cover" />
+                <img 
+                        src={petImage} 
+                        alt="" 
+                        className="w-full h-full object-cover cursor-pointer" // Add cursor-pointer for better UX
+                        onClick={handleImageClick} // Handle image click
+                    />
                 </div>
                 <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
@@ -46,6 +62,7 @@ export const PetCard = ({ pet, onClose }) => {
                             statusText === '찾는중' ? 'bg-orange-100 text-orange-500' : 
                             statusText === '목격' ? 'bg-red-100 text-red-500' :
                             'bg-green-100 text-green-500'
+                            
                         }`}>
                             {statusText}
                         </span>
