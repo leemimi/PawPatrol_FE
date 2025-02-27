@@ -19,6 +19,7 @@ import './api/axiosConfig'; // axios 전역 인터셉터 설정, 토큰 만료�
 import { useAuthStore } from './stores/useAuthStore'
 import './index.css';
 
+
 const App = () => {
   return (
     <Routes>
@@ -36,6 +37,7 @@ const App = () => {
         <Route path="/community" element={<LostPetListPages/>} />
         <Route path="/PetPostDetail/:postId" element={<PetPostDetail />} />
         <Route path="/lostmypetfix/:postId" element={<Lostmypetfix/>} />
+ 
       </Route>
     </Routes>
   );

@@ -10,7 +10,7 @@ export const useCustomOverlays = ({ map, selectedRange, selectedPet, onSelectPet
         switch(status) {
             case 'FINDING':
                 return '#FFA000'; // 황색
-            case 'SIGHTING':
+            case 'SIGHTED':
                 return '#F44336'; // 적색
             case 'SHELTER':
                 return '#4CAF50'; // 녹색
@@ -23,7 +23,7 @@ export const useCustomOverlays = ({ map, selectedRange, selectedPet, onSelectPet
         switch(status) {
             case 'FINDING':
                 return '찾는중';
-            case 'SIGHTING':
+            case 'SIGHTED':
                 return '목격';
             case 'SHELTER':
                 return '보호중';
