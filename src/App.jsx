@@ -18,7 +18,7 @@ import Lostmypetfix from './pages/Lostmypetfix'
 import './api/axiosConfig'; // axios 전역 인터셉터 설정, 토큰 만료시 로그아웃 처리
 import { useAuthStore } from './stores/useAuthStore'
 import './index.css';
-import Test from './pages/Test'
+
 
 const App = () => {
   return (
@@ -37,7 +37,7 @@ const App = () => {
         <Route path="/community" element={<LostPetListPages/>} />
         <Route path="/PetPostDetail/:postId" element={<PetPostDetail />} />
         <Route path="/lostmypetfix/:postId" element={<Lostmypetfix/>} />
-        <Route path="/Test" element={<Test/>} />
+ 
       </Route>
     </Routes>
   );
