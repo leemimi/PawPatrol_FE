@@ -47,7 +47,7 @@ const Footer = () => {
         } else {
             // 로컬 스토리지 정리 및 사용자에게 알림
             localStorage.removeItem('isLoggedIn');
-            alert('로그인 세션이 만료되었습니다. 다시 로그인해주세요.');
+            // alert('로그인 세션이 만료되었습니다. 다시 로그인해주세요.');
             navigate('/login-pet');
         }
     };
