@@ -384,11 +384,11 @@ const MyPage = () => {
     const handleImageUpload = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
-    
+
         const formData = new FormData();
         formData.append('file', file);
         formData.append('imageUrl', profileImage);
-    
+
         try {
             const response = await axios.patch(
                 `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/profile`,
@@ -400,14 +400,14 @@ const MyPage = () => {
                     withCredentials: true
                 }
             );
-    
+
             if (response.data.statusCode === 200) {
                 // 서버에서 반환된 이미지 URL 사용
                 const updatedImageUrl = response.data.data.profileImage;
-                
+
                 // 상태 업데이트로 화면에 즉시 반영
                 setProfileImage(updatedImageUrl);
-                
+
                 // 로컬 스토리지의 사용자 정보 업데이트
                 const userInfoStr = localStorage.getItem('userInfo');
                 if (userInfoStr) {
@@ -415,7 +415,7 @@ const MyPage = () => {
                     userInfo.profileImage = updatedImageUrl;
                     localStorage.setItem('userInfo', JSON.stringify(userInfo));
                 }
-                
+
                 alert('프로필 이미지가 성공적으로 업데이트되었습니다.');
             }
         } catch (error) {
@@ -423,6 +423,31 @@ const MyPage = () => {
             alert('이미지 업로드 중 오류가 발생했습니다.');
         }
     };
+
+    // 프로필 이미지 초기화
+    const handleProfileImageReset = async () => {
+        const formData = new FormData();
+        formData.append('imageUrl', profileImage);
+        try {
+            const response = await axios.patch(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/profile/images`, 
+                formData,
+                {withCredentials: true}
+            )
+
+            setProfileImage(defaultImage);
+            // 로컬 스토리지 업데이트
+            const userInfoStr = localStorage.getItem('userInfo');
+            if (userInfoStr) {
+                const userInfo = JSON.parse(userInfoStr);
+                userInfo.profileImage = defaultImage;
+                localStorage.setItem('userInfo', JSON.stringify(userInfo));
+            }
+
+        } catch (error) {
+            console.error('Image reset error:', error);
+            alert('프로필 이미지 초기화 중 오류가 발생했습니다.');
+        }
+    }
 
     // 내 반려동물 리스트 가져오기
     const fetchMyPets = async () => {
@@ -562,6 +587,29 @@ const MyPage = () => {
                                     />
                                 </svg>
                             </label>
+                            {profileImage && !profileImage.includes("default.png") && (
+                                <button
+                                    onClick={() => {
+                                        handleProfileImageReset();
+                                    }}
+                                    className="absolute top-0 right-0 bg-red-500 p-2 rounded-full cursor-pointer"
+                                    title="이미지 초기화"
+                                >
+                                    <svg
+                                        className="w-4 h-4 text-white"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth="2"
+                                            d="M6 18L18 6M6 6l12 12"
+                                        />
+                                    </svg>
+                                </button>
+                            )}
                         </div>
 
                         {isEditing ? (
