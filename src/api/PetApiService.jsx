@@ -3,7 +3,7 @@ import axios from 'axios'; // axios를 import합니다.
 export const PetApiService = {
   // 위치 기반 펫 데이터 조회
   async fetchPetsByLocation(position, range) {
-    const apiUrl = `http://localhost:8090/api/v1/lost-foundposts/map?latitude=${position.lat}&longitude=${position.lng}&radius=${range}`;
+    const apiUrl = `http://localhost:8090/api/v1/lost-foundposts/map?latitude=${position.lat}&longitude=${position.lng}&radius=${range*1000}`;
 
     try {
       const response = await axios.get(apiUrl, {
@@ -32,9 +32,9 @@ export const PetApiService = {
               lng: post.longitude
             },
             pet: {
-              animalType: post.pet?.animalType || '알 수 없음', // Safely handle undefined
-              breed: post.pet?.breed || '알 수 없음', // Safely handle undefined
-              size: post.pet?.size || '알 수 없음', // Safely handle undefined
+              animalType: post.pet?.animalType || '', // Safely handle undefined
+              breed: post.pet?.breed || '', // Safely handle undefined
+              size: post.pet?.size || '', // Safely handle undefined
               healthCondition: post.pet?.healthCondition || '정보 없음', // Safely handle undefined
               feature: post.pet?.feature || '특징 없음', // Safely handle undefined
               estimatedAge: post.pet?.estimatedAge || '정보 없음', // Safely handle undefined
@@ -44,7 +44,8 @@ export const PetApiService = {
             author: {
               nickname: post.author?.nickname || '익명', // Safely handle undefined
               profileImageUrl: post.author?.profileImageUrl || '/api/placeholder/160/160' // Safely handle undefined
-            }
+            },
+            animalType: post.animalType
           };
         });
       }

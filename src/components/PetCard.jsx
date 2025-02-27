@@ -19,20 +19,25 @@ export const PetCard = ({ pet, onClose, isAnimalList = false, position, range })
         const fetchPetsData = async () => {
             setLoading(true);
             try {
+                // PetApiService에서 petId가 null인 경우도 포함되도록 필터링 로직 추가
                 const data = await PetApiService.fetchPetsByLocation(position, range);
-                console.log('Fetched Pet Data:', data);
-                setPetData(data);
+                // 필터링된 데이터에서 petId가 null인 경우를 처리할 수도 있습니다.
+                const filteredData = data.filter(item => item.pet?.id !== null || item.pet === null);
+                console.log('Filtered Pet Data:', filteredData);
+                setPetData(filteredData);
             } catch (error) {
                 console.error('Error fetching pet data:', error);
             } finally {
                 setLoading(false);
             }
         };
-
+    
         if (position && range) {
             fetchPetsData();
         }
     }, [position, range]);
+    
+    
 
     const defaultPet = {
         animalType: '알 수 없음',
@@ -92,7 +97,21 @@ export const PetCard = ({ pet, onClose, isAnimalList = false, position, range })
             }
         };
 
+        const getanimalytpeText = (animalType) => {
+            switch (animalType) {
+                case 'DOG': return '강아지';
+                case 'CAT': return '고양이';
+                case null : return pet.pet.animalType ;
+                default: return animalType;
+            }
+        };
+
         const displayStatusText = getStatusText(pet?.status || defaultPet.status);
+        // animalType을 petData로부터 가져오도록 수정
+        // animalType을 getanimalytpeText로 변환
+        const animalType = getanimalytpeText(pet?.animalType || defaultPet.animalType);
+
+    const breed = pet?.pet?.breed || defaultPet.breed;
 
         // JSX 바로 앞에 로그를 추가
         console.log('PetCard 일반 모드 렌더링 직전');
@@ -120,12 +139,7 @@ export const PetCard = ({ pet, onClose, isAnimalList = false, position, range })
                             <span className="text-sm text-gray-500">{time}</span>
                         </div>
                         
-                        {pet?.pet && (
-                            <h3 className="text-lg font-bold text-orange-900 mb-1">
-                                {pet.pet.animalType || defaultPet.animalType} / {pet.pet.breed || defaultPet.breed}
-                                {pet.pet.gender ? ` / ${pet.pet.gender}` : ''}
-                            </h3>
-                        )}
+                        
                         
                         <div className="mt-2">
                             {location && (
@@ -195,75 +209,38 @@ export const PetCard = ({ pet, onClose, isAnimalList = false, position, range })
             ) : (
                 petData.map((animal, index) => {
                     console.log(`Animal ${index}:`, animal);
-                    console.log(`Animal ${index} foundId:`, animal.foundId);
-                    console.log(`Animal ${index} id:`, animal.id);
                     
                     return (
                         <div key={index} className="bg-white rounded-lg shadow-md overflow-hidden border border-orange-200 relative">
-                            <div
-                                className="relative h-48 cursor-pointer"
-                                onClick={() => {
-                                    // 단일 함수로 동일하게 처리
-                                    let postId = null;
-                                    if (animal.foundId !== undefined) {
-                                        postId = animal.foundId;
-                                    } else if (animal.id !== undefined) {
-                                        postId = animal.id;
-                                    }
-                                    
-                                    if (postId) {
-                                        console.log('목록에서 상세페이지로 이동:', postId);
-                                        navigate(`/PetPostDetail/${postId}`);
-                                    } else {
-                                        console.error('유효한 ID가 없습니다:', animal);
-                                    }
-                                }}
-                            >
-                                <img
-                                    src={animal.image || defaultPet.imageUrl}
-                                    alt={animal.breed || '동물 이미지'}
-                                    className="w-full h-full object-cover"
-                                />
-                            </div>
-                            <div className="p-4">
-                                <h3
-                                    className="font-bold text-lg text-orange-900 cursor-pointer hover:text-orange-700 transition-colors mb-3"
-                                    onClick={() => {
-                                        let postId = animal.foundId || animal.id;
-                                        if (postId) navigate(`/PetPostDetail/${postId}`);
-                                    }}
-                                >
-                                    {animal.content || '제목 없음'}
-                                </h3>
-                                <div className="flex items-center justify-between">
-                                    <p className="text-sm text-gray-500">
-                                        {animal.pet?.breed || animal.breed || '품종 정보 없음'}
-                                    </p>
-                                    
-                                    {/* 직접 인라인 함수로 처리 */}
-                                    <button
-                                        onClick={() => {
-                                            let postId = animal.foundId || animal.id;
-                                            if (postId) {
-                                                console.log('버튼 클릭, 이동:', postId);
-                                                navigate(`/PetPostDetail/${postId}`);
-                                            }
-                                        }}
-                                        className="inline-flex items-center px-3 py-1.5 bg-orange-500 text-white text-sm font-medium rounded-md hover:bg-orange-600 transition-colors shadow-md"
-                                        style={{position: 'relative', zIndex: 50}}
-                                    >
-                                        <ExternalLink size={14} className="mr-1" />
-                                        상세 조회
-                                    </button>
-                                </div>
-                                
-                                {/* 디버깅용 ID 정보 표시 */}
-                                <p className="text-xs text-gray-400 mt-2">
-                                    {animal.foundId ? `foundId: ${animal.foundId}` : '(foundId 없음)'} | 
-                                    {animal.id ? ` id: ${animal.id}` : ' (id 없음)'}
-                                </p>
-                            </div>
+                        <div className="relative h-48 cursor-pointer" onClick={() => goToDetailPage(animal)}>
+                            <img
+                                src={animal.pet?.imageUrl || defaultPet.imageUrl}
+                                alt={animal.pet?.breed || '동물 이미지'}
+                                className="w-full h-full object-cover"
+                            />
                         </div>
+                        <div className="p-4">
+                            <h3 className="font-bold text-lg text-orange-900 cursor-pointer hover:text-orange-700 transition-colors mb-3">
+                                {animal.content || '제목 없음'}
+                            </h3>
+                            <div className="flex items-center justify-between">
+                                <p className="text-sm text-gray-500">
+                                    {animal.pet?.breed || '품종 정보 없음'}
+                                </p>
+                                <button
+                                    onClick={() => goToDetailPage(animal)}
+                                    className="inline-flex items-center px-3 py-1.5 bg-orange-500 text-white text-sm font-medium rounded-md hover:bg-orange-600 transition-colors shadow-md"
+                                >
+                                    <ExternalLink size={14} className="mr-1" />
+                                    상세 조회
+                                </button>
+                            </div>
+                            <p className="text-xs text-gray-400 mt-2">
+                                {animal.foundId ? `foundId: ${animal.foundId}` : '(foundId 없음)'} | 
+                                {animal.id ? ` id: ${animal.id}` : ' (id 없음)'}
+                            </p>
+                        </div>
+                    </div>
                     );
                 })
             )}
