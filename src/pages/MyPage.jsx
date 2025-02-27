@@ -3,6 +3,7 @@ import { useAuthStore } from '../stores/useAuthStore';
 import defaultImage from '../assets/images/default.png';
 import PetRegisterModal from '../components/PetRegisterModal.jsx';
 import PetTypeSelectModal from '../components/PetTypeSelectModal';
+import PetEditModal from '../components/PetEditModal.jsx';
 import { replace, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
@@ -51,13 +52,17 @@ const dummyWitnesses = [
 ];
 
 const MyPage = () => {
+    const [isEditOpen, setIsEditOpen] = useState(false);
+    const [selectedPet, setSelectedPet] = useState(null);
+    const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+    const [petToDelete, setPetToDelete] = useState(null);
     const [isPasswordEditing, setIsPasswordEditing] = useState(false);
     const [isPhoneEditing, setIsPhoneEditing] = useState(false);
     const userInfoStr = localStorage.getItem('userInfo');
     const userInfo = userInfoStr ? JSON.parse(userInfoStr) : null;
     // const userInfo = useAuthStore((state) => state.userInfo?.data);
     const [activeTab, setActiveTab] = useState('profile');
-    const [profileImage, setProfileImage] = useState(defaultImage);
+    const [profileImage, setProfileImage] = useState();
     const [nickname, setNickname] = useState('');
     const [isEditing, setIsEditing] = useState(false);
     const [myPets, setMyPets] = useState([]);
@@ -69,6 +74,8 @@ const MyPage = () => {
         reports: dummyReports,
         witnesses: dummyWitnesses
     });
+
+
     const [personalInfo, setPersonalInfo] = useState({
         password: '',
         newPassword: '',
@@ -78,6 +85,8 @@ const MyPage = () => {
         isPhoneVerified: false,
         verificationCode: ''
     });
+
+    // 반려동물 등록용 폼 데이터 추가
     const [petFormData, setPetFormData] = useState({
         animalType: '',  // 고양이 or 강아지
         name: '',   // 이름
@@ -88,16 +97,125 @@ const MyPage = () => {
         registrationNo: '', // 동물등록번호
         healthCondition: '',    // 건강상태
         feature: '',    // 특징
-        image: null // 사진
+        image: null, // 사진
+        imageUrl: '' // 이미지 URL
     });
+
+    // 수정용 폼 데이터 추가
+    const [editPetFormData, setEditPetFormData] = useState({
+        animalType: '',
+        name: '',
+        breed: '',
+        gender: 'M',
+        size: 'SMALL',
+        estimatedAge: '',
+        registrationNo: '',
+        healthCondition: '',
+        feature: '',
+        image: null,
+        imageUrl: ''
+    });
+
+
+    // 반려동물 수정 핸들러
+    const handleEditPet = (pet) => {
+        setSelectedPet(pet);
+        setEditPetFormData({
+            id: pet?.id,
+            estimatedAge: pet?.estimatedAge || '',
+            feature: pet?.feature || pet?.characteristics || '',
+            size: pet?.size || 'SMALL',
+            registrationNo: pet?.registrationNo || '',
+            healthCondition: pet?.healthCondition || '',
+            image: null,
+            imageUrl: pet?.imageUrl || ''
+        });
+        setIsEditOpen(true);
+    };
+
+    // 반려동물 수정 제출 핸들러
+    const handleEditSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            const formData = new FormData();
+
+            // id 추가
+            formData.append('id', editPetFormData.id);
+
+            // 필수 필드 추가
+            formData.append('estimatedAge', editPetFormData.estimatedAge);
+            formData.append('feature', editPetFormData.feature);
+            formData.append('healthCondition', editPetFormData.healthCondition);
+            formData.append('registrationNo', editPetFormData.registrationNo);
+
+            // size 추가 (Enum 타입)
+            if (editPetFormData.size) {
+                formData.append('size', editPetFormData.size);
+            }
+
+            // 이미지 파일이 있는 경우에만 추가
+            if (editPetFormData.image) {
+                formData.append('imageFile', editPetFormData.image);
+                formData.append('imageUrl', editPetFormData.imageUrl);
+            }
+
+            const response = await axios.patch(
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/pets`,
+                formData,
+                {
+                    withCredentials: true,
+                    headers: {
+                        'Content-Type': 'multipart/form-data'
+                    }
+                }
+            );
+
+            if (response.data.statusCode === 200) {
+                alert('반려동물 정보가 성공적으로 수정되었습니다.');
+                setIsEditOpen(false);
+                await fetchMyPets(); // 반려동물 목록 새로고침
+            }
+        } catch (error) {
+            console.error('Error updating pet:', error);
+            alert('반려동물 정보 수정 중 오류가 발생했습니다.');
+        }
+    };
+
+    // 반려동물 삭제 확인 모달 열기
+    const handleDeleteConfirm = (pet) => {
+        setPetToDelete(pet);
+        setIsDeleteConfirmOpen(true);
+    };
+
+    // 반려동물 삭제 실행
+    const handleDeletePet = async () => {
+        try {
+            const response = await axios.delete(
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/pets/${petToDelete.id}`,
+                {
+                    withCredentials: true,
+                    data: { id: petToDelete.id }
+                }
+            );
+
+            if (response.data.statusCode === 200) {
+                alert('반려동물이 성공적으로 삭제되었습니다.');
+                setIsDeleteConfirmOpen(false);
+                setPetToDelete(null);
+                await fetchMyPets(); // 반려동물 목록 새로고침
+            }
+        } catch (error) {
+            console.error('Error deleting pet:', error);
+            alert('반려동물 삭제 중 오류가 발생했습니다.');
+        }
+    };
 
     // 닉네임 변경
     const handleUpdateProfile = async () => {
         try {
             const response = await axios.patch(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/profile`, {
                 nickname: nickname,
-                withCredentials: true
-            })
+            }, { withCredentials: true })
 
             if (response.data.statusCode === 200) {
                 // 로컬 스토리지의 사용자 정보 업데이트
@@ -124,11 +242,11 @@ const MyPage = () => {
             alert('새 비밀번호가 일치하지 않습니다.');
             return;
         }
-    
+
         try {
             // 비밀번호 변경 API 호출
             const response = await axios.patch(
-                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/profile`, 
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/profile`,
                 {
                     currentPassword: personalInfo.currentPassword,
                     newPassword: personalInfo.newPassword,
@@ -141,7 +259,7 @@ const MyPage = () => {
                     }
                 }
             );
-    
+
             if (response.data.statusCode === 200) {
                 // 성공 시 처리
                 alert('비밀번호가 성공적으로 변경되었습니다.');
@@ -174,6 +292,7 @@ const MyPage = () => {
         }
     };
 
+    // 반려동물 등록
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
@@ -192,7 +311,7 @@ const MyPage = () => {
             }
 
             const response = await axios.post(
-                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/pets/register`, 
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/pets`,
                 formData,  // FormData를 직접 전달
                 {
                     withCredentials: true,
@@ -261,40 +380,44 @@ const MyPage = () => {
         }
     };
 
-    // 핸들러 함수 추가
-    const handleUpdatePersonalInfo = async (e) => {
-        e.preventDefault();
-        if (personalInfo.newPassword !== personalInfo.confirmPassword) {
-            alert('새 비밀번호가 일치하지 않습니다.');
-            return;
-        }
-        // API 호출 로직 구현
-    };
-
-    const handlePhoneVerification = async () => {
-        // 전화번호 인증 요청 API 호출
-    };
-
-    const handleVerificationCodeCheck = async () => {
-        // 인증번호 확인 API 호출
-    };
-
-
+    // 프로필 이미지 변경
     const handleImageUpload = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
-
+    
         const formData = new FormData();
         formData.append('file', file);
-
+        formData.append('imageUrl', profileImage);
+    
         try {
-            // const response = await fetch(
-            // );
-
-            // if (response.ok) {
-            //     const data = await response.json();
-            //     setProfileImage(data.profileImageUrl);
-            // }
+            const response = await axios.patch(
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/profile`,
+                formData,
+                {
+                    headers: {
+                        'Content-Type': 'multipart/form-data'
+                    },
+                    withCredentials: true
+                }
+            );
+    
+            if (response.data.statusCode === 200) {
+                // 서버에서 반환된 이미지 URL 사용
+                const updatedImageUrl = response.data.data.profileImage;
+                
+                // 상태 업데이트로 화면에 즉시 반영
+                setProfileImage(updatedImageUrl);
+                
+                // 로컬 스토리지의 사용자 정보 업데이트
+                const userInfoStr = localStorage.getItem('userInfo');
+                if (userInfoStr) {
+                    const userInfo = JSON.parse(userInfoStr);
+                    userInfo.profileImage = updatedImageUrl;
+                    localStorage.setItem('userInfo', JSON.stringify(userInfo));
+                }
+                
+                alert('프로필 이미지가 성공적으로 업데이트되었습니다.');
+            }
         } catch (error) {
             console.error('Image upload error:', error);
             alert('이미지 업로드 중 오류가 발생했습니다.');
@@ -354,11 +477,20 @@ const MyPage = () => {
         const isLoggedIn = localStorage.getItem('isLoggedIn');
 
         if (userInfoStr && isLoggedIn === 'true') {
-            fetchMyPets(); // 이미 정의된 함수 사용
-        }
+            const userInfo = JSON.parse(userInfoStr);
 
-        if (userInfo?.nickname) {
-            setNickname(userInfo.nickname);
+            // 프로필 이미지 상태 올바르게 설정
+            if (userInfo?.profileImage) {
+                setProfileImage(userInfo.profileImage);
+            } else {
+                setProfileImage(defaultImage);
+            }
+
+            if (userInfo?.nickname) {
+                setNickname(userInfo.nickname);
+            }
+
+            fetchMyPets();
         }
     }, []);
 
@@ -401,9 +533,13 @@ const MyPage = () => {
                     <div className="text-center">
                         <div className="relative w-32 h-32 mx-auto mb-4">
                             <img
-                                src={profileImage}
+                                src={profileImage || defaultImage}
                                 alt="Profile"
                                 className="w-full h-full rounded-full object-cover"
+                                onError={(e) => {
+                                    console.error("이미지 로드 실패:", e);
+                                    e.target.src = defaultImage;
+                                }}
                             />
                             <label className="absolute bottom-0 right-0 bg-orange-500 p-2 rounded-full cursor-pointer">
                                 <input
@@ -636,7 +772,21 @@ const MyPage = () => {
                                             <p>품종: {pet.breed}</p>
                                             <p>특징: {pet.characteristics}</p>
                                             <p>크기: {pet.size}</p>
-                                            <p>동물등록번호: {pet.registrationNumber}</p>
+                                            <p>동물등록번호: {pet.registrationNo}</p>
+                                        </div>
+                                        <div className="flex justify-end space-x-2 mt-4">
+                                            <button
+                                                onClick={() => handleEditPet(pet)}
+                                                className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                                            >
+                                                수정
+                                            </button>
+                                            <button
+                                                onClick={() => handleDeleteConfirm(pet)}
+                                                className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                                            >
+                                                삭제
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -657,6 +807,41 @@ const MyPage = () => {
                             petFormData={petFormData}
                             setPetFormData={setPetFormData}
                         />
+
+                        <PetEditModal
+                            isOpen={isEditOpen}
+                            onClose={() => setIsEditOpen(false)}
+                            onSubmit={handleEditSubmit}
+                            petFormData={editPetFormData}
+                            setPetFormData={setEditPetFormData}
+                            pet={selectedPet}
+                        />
+
+                        {/* 삭제 확인 모달 */}
+                        {isDeleteConfirmOpen && (
+                            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                                <div className="bg-white p-6 rounded-lg w-full max-w-md">
+                                    <h3 className="text-xl font-bold mb-4">반려동물 삭제</h3>
+                                    <p className="mb-6">
+                                        정말로 {petToDelete?.name}을(를) 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+                                    </p>
+                                    <div className="flex justify-end space-x-2">
+                                        <button
+                                            onClick={() => setIsDeleteConfirmOpen(false)}
+                                            className="px-4 py-2 bg-gray-200 rounded"
+                                        >
+                                            취소
+                                        </button>
+                                        <button
+                                            onClick={handleDeletePet}
+                                            className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                                        >
+                                            삭제
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
 

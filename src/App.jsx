@@ -10,6 +10,7 @@ import Protection from './pages/Protection'
 import SocialConnect from './pages/SocialConnectPage'
 import LostPostForm from './pages/LostPostForm'
 import OAuth2RedirectHandler from './components/OAuth2RedirectHandler';
+import ForgotPasswordScreen from './pages/ForgotPasswordScreen';
 import LostPetListPages from './pages/LostPetListPages'
 import ReportPostForm from './pages/ReportPostForm'
 import PetPostDetail from './pages/PetPostDetail'
@@ -29,6 +30,7 @@ const App = () => {
         <Route path="/" element={<Map />} />
         <Route path="/oauth2/redirect" element={<OAuth2RedirectHandler />} />
         <Route path="/protection" element={<Protection />} />
+        <Route path="/forgot-password" element={<ForgotPasswordScreen />} />
         <Route path="/lost-pet-registration" element={<LostPostForm/>} />
         <Route path="/find-pet-report" element={<ReportPostForm />} />
         <Route path="/community" element={<LostPetListPages/>} />

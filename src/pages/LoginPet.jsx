@@ -1,19 +1,41 @@
-import React, { useState } from 'react';
-import { replace, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import puppyLogo from '../assets/images/pet.png';
 import axios from 'axios';
 
 const LoginScreen = () => {
-    const socialLoginForKakaoUrl = `${import.meta.env.VITE_CORE_API_BASE_URL}/oauth2/authorization/kakao`; // 카카오 로그인 요청 URL
-    const socialLoginForGoogleUrl = `${import.meta.env.VITE_CORE_API_BASE_URL}/oauth2/authorization/google`; // 구글 로그인 요청 URL
-    const socialLoginForNaverUrl = `${import.meta.env.VITE_CORE_API_BASE_URL}/oauth2/authorization/naver`; // 네이버 로그인 요청 URL
-    const redirectUrlAfterSocialLogin = `${import.meta.env.VITE_CORE_FRONT_BASE_URL}/oauth2/redirect`;   // 소셜 로그인 후 리다이렉트 URL
+    const socialLoginForKakaoUrl = `${import.meta.env.VITE_CORE_API_BASE_URL}/oauth2/authorization/kakao`;
+    const socialLoginForGoogleUrl = `${import.meta.env.VITE_CORE_API_BASE_URL}/oauth2/authorization/google`;
+    const socialLoginForNaverUrl = `${import.meta.env.VITE_CORE_API_BASE_URL}/oauth2/authorization/naver`;
+    const redirectUrlAfterSocialLogin = `${import.meta.env.VITE_CORE_FRONT_BASE_URL}/oauth2/redirect`;
+
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [rememberMe, setRememberMe] = useState(false);
     const navigate = useNavigate();
+
+    // 컴포넌트 마운트 시 로컬 스토리지에서 저장된 이메일 확인
+    useEffect(() => {
+        const savedEmail = localStorage.getItem('savedEmail');
+        const isRemembered = localStorage.getItem('rememberMe') === 'true';
+
+        if (savedEmail && isRemembered) {
+            setEmail(savedEmail);
+            setRememberMe(true);
+        }
+    }, []);
 
     const handleLogin = async (e) => {
         e.preventDefault();
+
+        // 아이디 저장 처리
+        if (rememberMe) {
+            localStorage.setItem('savedEmail', email);
+            localStorage.setItem('rememberMe', 'true');
+        } else {
+            localStorage.removeItem('savedEmail');
+            localStorage.setItem('rememberMe', 'false');
+        }
 
         const request = {
             email: email,
@@ -27,22 +49,21 @@ const LoginScreen = () => {
             )
 
             if (login_response.data.statusCode === 200 || login_response.data.statusCode === "200") {
-                const response = await axios.get(   // 로그인 유저 정보(내 정보) 가져오기 api, 로그인 상태로 전환하는데 씀
+                const response = await axios.get(
                     `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/auth/me`,
                     { withCredentials: true }
                 )
 
-                // 로그인 성공시
                 if (response) {
                     const loginUserInfo = {
                         email: response.data.data.email,
-                        nickname: response.data.data.nickname
+                        nickname: response.data.data.nickname,
+                        profileImage: response.data.data.profileImage
                     };
 
                     localStorage.setItem('userInfo', JSON.stringify(loginUserInfo));
                     localStorage.setItem('isLoggedIn', 'true');
 
-                    // 메인 페이지로 이동
                     navigate('/', { replace: true });
                 }
             }
@@ -54,7 +75,6 @@ const LoginScreen = () => {
     const handleClickSignUp = () => {
         navigate('/sign-up');
     };
-
 
     return (
         <div className="min-h-screen bg-orange-50 flex flex-col items-center justify-center p-4">
@@ -93,6 +113,18 @@ const LoginScreen = () => {
                             onChange={(e) => setPassword(e.target.value)}
                             className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:border-orange-500"
                         />
+                    </div>
+                    <div className="flex items-center">
+                        <input
+                            type="checkbox"
+                            id="rememberMe"
+                            checked={rememberMe}
+                            onChange={(e) => setRememberMe(e.target.checked)}
+                            className="h-4 w-4 text-orange-500 focus:ring-orange-500 border-gray-300 rounded"
+                        />
+                        <label htmlFor="rememberMe" className="ml-2 block text-sm text-gray-600">
+                            아이디 저장
+                        </label>
                     </div>
                     <button
                         type="submit"
@@ -133,7 +165,12 @@ const LoginScreen = () => {
 
                 {/* Bottom Links */}
                 <div className="flex items-center justify-center space-x-4 text-sm text-gray-600">
-                    <button className="hover:text-orange-500">비밀번호 찾기</button>
+                    <button
+                        className="hover:text-orange-500"
+                        onClick={() => navigate('/forgot-password')}
+                    >
+                        비밀번호 찾기
+                    </button>
                     <span>•</span>
                     <button
                         className="hover:text-orange-500"
