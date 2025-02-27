@@ -71,8 +71,8 @@ const MyPage = () => {
     const [isTypeSelectOpen, setIsTypeSelectOpen] = useState(false);
     const [isRegisterOpen, setIsRegisterOpen] = useState(false);
     const [myPosts, setMyPosts] = useState({
-        reports: dummyReports,
-        witnesses: dummyWitnesses
+        reports: [],
+        witnesses: []
     });
 
 
@@ -384,11 +384,11 @@ const MyPage = () => {
     const handleImageUpload = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
-    
+
         const formData = new FormData();
         formData.append('file', file);
         formData.append('imageUrl', profileImage);
-    
+
         try {
             const response = await axios.patch(
                 `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/profile`,
@@ -400,14 +400,14 @@ const MyPage = () => {
                     withCredentials: true
                 }
             );
-    
+
             if (response.data.statusCode === 200) {
                 // 서버에서 반환된 이미지 URL 사용
                 const updatedImageUrl = response.data.data.profileImage;
-                
+
                 // 상태 업데이트로 화면에 즉시 반영
                 setProfileImage(updatedImageUrl);
-                
+
                 // 로컬 스토리지의 사용자 정보 업데이트
                 const userInfoStr = localStorage.getItem('userInfo');
                 if (userInfoStr) {
@@ -415,7 +415,7 @@ const MyPage = () => {
                     userInfo.profileImage = updatedImageUrl;
                     localStorage.setItem('userInfo', JSON.stringify(userInfo));
                 }
-                
+
                 alert('프로필 이미지가 성공적으로 업데이트되었습니다.');
             }
         } catch (error) {
@@ -423,6 +423,31 @@ const MyPage = () => {
             alert('이미지 업로드 중 오류가 발생했습니다.');
         }
     };
+
+    // 프로필 이미지 초기화
+    const handleProfileImageReset = async () => {
+        const formData = new FormData();
+        formData.append('imageUrl', profileImage);
+        try {
+            const response = await axios.patch(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/profile/images`,
+                formData,
+                { withCredentials: true }
+            )
+
+            setProfileImage(defaultImage);
+            // 로컬 스토리지 업데이트
+            const userInfoStr = localStorage.getItem('userInfo');
+            if (userInfoStr) {
+                const userInfo = JSON.parse(userInfoStr);
+                userInfo.profileImage = defaultImage;
+                localStorage.setItem('userInfo', JSON.stringify(userInfo));
+            }
+
+        } catch (error) {
+            console.error('Image reset error:', error);
+            alert('프로필 이미지 초기화 중 오류가 발생했습니다.');
+        }
+    }
 
     // 내 반려동물 리스트 가져오기
     const fetchMyPets = async () => {
@@ -441,34 +466,24 @@ const MyPage = () => {
 
     const fetchMyPosts = async () => {
         try {
-            const [reportsRes, witnessesRes] = await Promise.all([
-                // fetch(
-                //     `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/reports/my`,
-                //     {
-                //         headers: {
-                //             Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
-                //         },
-                //     }
-                // ),
-                // fetch(
-                //     `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/witnesses/my`,
-                //     {
-                //         headers: {
-                //             Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
-                //         },
-                //     }
-                // )
-            ]);
+            const response = await axios.get(
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/posts`,
+                { withCredentials: true }
+            );
 
-            // if (reportsRes.ok && witnessesRes.ok) {
-            //     const [reports, witnesses] = await Promise.all([
-            //         reportsRes.json(),
-            //         witnessesRes.json()
-            //     ]);
-            //     setMyPosts({ reports, witnesses });
-            // }
+            if (response.data.statusCode === 200) {
+                const allPosts = response.data.data.content;
+
+                // 상태에 따라 posts 분류
+                const reports = allPosts.filter(post =>
+                    post.status === "FINDING" || post.status === "FOUND");
+                const witnesses = allPosts.filter(post =>
+                    post.status === "SIGHTED" || post.status === "SHELTER" || post.status === "FOSTERING");
+
+                setMyPosts({ reports, witnesses });
+            }
         } catch (error) {
-            console.error('Fetch posts error:', error);
+            console.error('게시글 불러오기 오류:', error);
         }
     };
 
@@ -491,6 +506,7 @@ const MyPage = () => {
             }
 
             fetchMyPets();
+            fetchMyPosts();
         }
     }, []);
 
@@ -562,6 +578,29 @@ const MyPage = () => {
                                     />
                                 </svg>
                             </label>
+                            {profileImage && !profileImage.includes("default.png") && (
+                                <button
+                                    onClick={() => {
+                                        handleProfileImageReset();
+                                    }}
+                                    className="absolute top-0 right-0 bg-red-500 p-2 rounded-full cursor-pointer"
+                                    title="이미지 초기화"
+                                >
+                                    <svg
+                                        className="w-4 h-4 text-white"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth="2"
+                                            d="M6 18L18 6M6 6l12 12"
+                                        />
+                                    </svg>
+                                </button>
+                            )}
                         </div>
 
                         {isEditing ? (
@@ -850,18 +889,39 @@ const MyPage = () => {
                         <div>
                             <h2 className="text-2xl font-bold mb-4">내 실종 신고글</h2>
                             {myPosts.reports.map(post => (
-                                <div key={post.id} className="border p-4 rounded mb-2">
-                                    <h3 className="font-bold">{post.title}</h3>
-                                    <p className="text-gray-600">{new Date(post.createdAt).toLocaleDateString()}</p>
+                                <div key={post.createPostTime} className="border-b border-gray-200 py-4">
+                                    <div className="flex justify-between items-center">
+                                        <div>
+                                            <h3 className="text-lg font-medium">{post.content}</h3>
+                                            <p className="text-sm text-gray-500">
+                                                {new Date(post.createPostTime).toLocaleDateString()}
+                                            </p>
+                                        </div>
+                                        <span className="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs">
+                                            {post.status === "FINDING" ? "찾는 중" :
+                                                post.status === "FOUND" ? "주인 찾기 완료" : ""}
+                                        </span>
+                                    </div>
                                 </div>
                             ))}
                         </div>
                         <div>
                             <h2 className="text-2xl font-bold mb-4">내 실종 제보글</h2>
                             {myPosts.witnesses.map(post => (
-                                <div key={post.id} className="border p-4 rounded mb-2">
-                                    <h3 className="font-bold">{post.title}</h3>
-                                    <p className="text-gray-600">{new Date(post.createdAt).toLocaleDateString()}</p>
+                                <div key={post.createPostTime} className="border-b border-gray-200 py-4">
+                                    <div className="flex justify-between items-center">
+                                        <div>
+                                            <h3 className="text-lg font-medium">{post.content}</h3>
+                                            <p className="text-sm text-gray-500">
+                                                {new Date(post.createPostTime).toLocaleDateString()}
+                                            </p>
+                                        </div>
+                                        <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
+                                            {post.status === "SIGHTED" ? "목격" :
+                                                post.status === "SHELTER" ? "보호소" :
+                                                    post.status === "FOSTERING" ? "임보 중" : ""}
+                                        </span>
+                                    </div>
                                 </div>
                             ))}
                         </div>
