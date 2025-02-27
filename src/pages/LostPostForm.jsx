@@ -20,7 +20,7 @@ const LostPostForm = () => {
     location: "서울시 강남구",
     lostTime: "2025-02-20T10:30:00",
     findTime: null,
-    status: "SIGHTED", // 상태
+    status: "FINDING", // 상태
     petId: null,
     animalType: null
   });
