@@ -6,6 +6,9 @@ import PetTypeSelectModal from '../components/PetTypeSelectModal';
 import PetEditModal from '../components/PetEditModal.jsx';
 import { replace, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import kakaoImage from '../assets/images/kakaotalk_simple_icon2.png';
+import naverImage from '../assets/images/naver_simple_icon.png';
+import googleImage from '../assets/images/google_simple_icon.png';
 
 const MyPage = () => {
     const [isEditOpen, setIsEditOpen] = useState(false);
@@ -37,6 +40,13 @@ const MyPage = () => {
         witnessCurrentPage: 0
     });
 
+    // 소셜 연동 정보 저장
+    const [socialConnections, setSocialConnections] = useState({
+        kakao: false,
+        naver: false,
+        google: false
+    });
+
     const [personalInfo, setPersonalInfo] = useState({
         password: '',
         newPassword: '',
@@ -46,6 +56,22 @@ const MyPage = () => {
         isPhoneVerified: false,
         verificationCode: ''
     });
+
+    // 소셜 연동 정보 가져오기
+    const fetchSocialConnections = async () => {
+        try {
+            const response = await axios.get(
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/socialInfo`,
+                { withCredentials: true }
+            );
+
+            if (response.data.statusCode === 200) {
+                setSocialConnections(response.data.data);
+            }
+        } catch (error) {
+            console.error('소셜 연동 정보 불러오기 오류:', error);
+        }
+    };
 
     // 페이지 변경 핸들러 - 신고글
     const handleReportPageChange = (pageNumber) => {
@@ -542,6 +568,7 @@ const MyPage = () => {
             fetchMyPets();
             fetchMyReportPosts(0);
             fetchMyWitnessPosts(0);
+            fetchSocialConnections();
         }
     }, []);
 
@@ -582,6 +609,7 @@ const MyPage = () => {
 
                 {activeTab === 'profile' && (
                     <div className="text-center">
+                        {/* 프로필 정보 */}
                         <div className="relative w-32 h-32 mx-auto mb-4">
                             <img
                                 src={profileImage || defaultImage}
@@ -672,6 +700,41 @@ const MyPage = () => {
                                 </button>
                             </div>
                         )}
+                        {/* 소셜 계정 연동 정보 */}
+                        <div className="mt-4">
+                            <div className="grid grid-cols-3 gap-2 max-w-xs mx-auto">
+                                <div className="flex flex-col items-center">
+                                    <img src={kakaoImage} alt="카카오" className="w-6 h-6 mb-1" />
+                                    <span className={`mt-1 px-2 py-0.5 rounded-full text-xs ${socialConnections.kakao
+                                        ? 'bg-yellow-100 text-yellow-800'
+                                        : 'bg-gray-100 text-gray-800'
+                                        }`}>
+                                        {socialConnections.kakao ? '연동' : '미연동'}
+                                    </span>
+                                </div>
+
+                                <div className="flex flex-col items-center">
+                                    <img src={naverImage} alt="네이버" className="w-6 h-6 mb-1" />
+                                    <span className={`mt-1 px-2 py-0.5 rounded-full text-xs ${socialConnections.naver
+                                        ? 'bg-green-100 text-green-800'
+                                        : 'bg-gray-100 text-gray-800'
+                                        }`}>
+                                        {socialConnections.naver ? '연동' : '미연동'}
+                                    </span>
+                                </div>
+
+                                <div className="flex flex-col items-center">
+                                    <img src={googleImage} alt="구글" className="w-6 h-6 mb-1" />
+                                    <span className={`mt-1 px-2 py-0.5 rounded-full text-xs ${socialConnections.google
+                                        ? 'bg-red-100 text-red-800'
+                                        : 'bg-gray-100 text-gray-800'
+                                        }`}>
+                                        {socialConnections.google ? '연동' : '미연동'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
 
                         <div className="mt-8 space-y-4">
                             <div className="border-t pt-4">
