@@ -23,6 +23,9 @@ const PetPostDetail = ({ onClose }) => {
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [showOptions, setShowOptions] = useState(false);
   const [commentType, setCommentType] = useState('lost'); // 'lost' or 'find'
+  const [currentUserId, setCurrentUserId] = useState(null);
+  const [isAuthor, setIsAuthor] = useState(false);
+
 
   useEffect(() => {
     if (!postId) return; // If no postId, do nothing.
@@ -39,6 +42,38 @@ const PetPostDetail = ({ onClose }) => {
       .then(response => setComments(response.data.data || []))
       .catch(error => console.error("Error fetching comments:", error));
   }, [postId]);
+
+  useEffect(() => {
+    if (!postId) return;
+
+    // 게시글 데이터 가져오기
+    axios.get(`http://localhost:8090/api/v1/lost-foundposts/${postId}`)
+      .then(response => {
+        setPost(response.data.data);
+      })
+      .catch(error => console.error("Error fetching post data:", error));
+
+    // 로그인한 사용자 정보 가져오기
+    const userInfo = JSON.parse(localStorage.getItem('userInfo')) || {};
+  
+    if (userInfo.email) {
+      axios.get(`http://localhost:8090/api/v1/auth/me`, { withCredentials: true })
+        .then(response => {
+          if (response.data?.data) {
+            const userId = response.data.data.id;
+            setCurrentUserId(userId);
+          }
+        })
+        .catch(error => console.error("Error fetching current user data:", error));
+    }
+  }, [postId]);
+
+  // 게시글 데이터가 변경될 때 작성자인지 확인
+  useEffect(() => {
+    if (post && currentUserId !== null) {
+      setIsAuthor(Number(post.userId) === Number(currentUserId));
+    }
+  }, [post, currentUserId]);
 
   const handleSubmitComment = async (e) => {
     e.preventDefault();
@@ -158,25 +193,18 @@ const renderImages = () => {
         </button>
         <h1 className="text-lg font-bold">게시글</h1>
         <div className="relative">
-          <button 
-            onClick={() => setShowOptions(!showOptions)}
-            className="p-2"
-          >
-            <MoreVertical size={24} />
-          </button>
+          {isAuthor && (
+            <button onClick={() => setShowOptions(!showOptions)} className="p-2">
+              <MoreVertical size={24} />
+            </button>
+          )}
           
           {showOptions && (
             <div className="absolute right-0 top-full mt-2 bg-white border rounded-lg shadow-lg py-2 w-32">
-              <button
-                onClick={() => handleEdit(post.foundId)}
-                className="w-full px-4 py-2 text-left hover:bg-gray-100"
-              >
+              <button onClick={handleEdit} className="w-full px-4 py-2 text-left hover:bg-gray-100">
                 수정하기
               </button>
-              <button
-                onClick={() =>handleDelete(post.foundId)}
-                className="w-full px-4 py-2 text-left text-red-500 hover:bg-gray-100"
-              >
+              <button onClick={handleDelete} className="w-full px-4 py-2 text-left text-red-500 hover:bg-gray-100">
                 삭제하기
               </button>
             </div>
