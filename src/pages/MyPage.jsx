@@ -7,50 +7,6 @@ import PetEditModal from '../components/PetEditModal.jsx';
 import { replace, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
-// 실종 신고글 더미 데이터
-const dummyReports = [
-    {
-        id: 1,
-        title: "강아지를 찾습니다 - 서울 강남구",
-        createdAt: "2025-02-15T14:30:00",
-        status: "searching"
-    },
-    {
-        id: 2,
-        title: "푸들 실종 - 부산 해운대구",
-        createdAt: "2025-02-17T09:15:00",
-        status: "searching"
-    },
-    {
-        id: 3,
-        title: "말티즈 찾아요 - 대구 수성구",
-        createdAt: "2025-02-18T16:45:00",
-        status: "found"
-    }
-];
-
-// 실종 제보글 더미 데이터
-const dummyWitnesses = [
-    {
-        id: 1,
-        title: "강아지 목격 - 서울 송파구",
-        createdAt: "2025-02-16T11:20:00",
-        location: "올림픽공원 근처"
-    },
-    {
-        id: 2,
-        title: "비숑 목격 제보 - 인천 연수구",
-        createdAt: "2025-02-17T15:40:00",
-        location: "송도 센트럴파크"
-    },
-    {
-        id: 3,
-        title: "진도믹스 발견 - 경기도 성남시",
-        createdAt: "2025-02-19T10:30:00",
-        location: "분당 중앙공원"
-    }
-];
-
 const MyPage = () => {
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [selectedPet, setSelectedPet] = useState(null);
@@ -70,11 +26,16 @@ const MyPage = () => {
     const navigate = useNavigate();
     const [isTypeSelectOpen, setIsTypeSelectOpen] = useState(false);
     const [isRegisterOpen, setIsRegisterOpen] = useState(false);
+    const [currentPage, setCurrentPage] = useState(0);
+    const [totalPages, setTotalPages] = useState(0);
     const [myPosts, setMyPosts] = useState({
         reports: [],
-        witnesses: []
+        witnesses: [],
+        reportsTotalPages: 0,
+        witnessTotalPages: 0,
+        reportsCurrentPage: 0,
+        witnessCurrentPage: 0
     });
-
 
     const [personalInfo, setPersonalInfo] = useState({
         password: '',
@@ -85,6 +46,62 @@ const MyPage = () => {
         isPhoneVerified: false,
         verificationCode: ''
     });
+
+    // 페이지 변경 핸들러 - 신고글
+    const handleReportPageChange = (pageNumber) => {
+        setMyPosts(prev => ({ ...prev, reportsCurrentPage: pageNumber }));
+        fetchMyReportPosts(pageNumber);
+    };
+
+    // 페이지 변경 핸들러 - 제보글
+    const handleWitnessPageChange = (pageNumber) => {
+        setMyPosts(prev => ({ ...prev, witnessCurrentPage: pageNumber }));
+        fetchMyWitnessPosts(pageNumber);
+    };
+
+    // 이전 페이지로 이동
+    const goToPreviousPage = () => {
+        if (currentPage > 0) {
+            handlePageChange(currentPage - 1);
+        }
+    };
+
+    // 다음 페이지로 이동
+    const goToNextPage = () => {
+        if (currentPage < totalPages - 1) {
+            handlePageChange(currentPage + 1);
+        }
+    };
+
+    // 페이지 번호 렌더링 함수
+    const renderPageNumbers = () => {
+        const pageNumbers = [];
+        const maxPageButtons = 5; // 한 번에 표시할 페이지 버튼 수
+
+        let startPage = Math.max(0, currentPage - Math.floor(maxPageButtons / 2));
+        let endPage = Math.min(totalPages - 1, startPage + maxPageButtons - 1);
+
+        // 시작 페이지 조정
+        if (endPage - startPage + 1 < maxPageButtons) {
+            startPage = Math.max(0, endPage - maxPageButtons + 1);
+        }
+
+        for (let i = startPage; i <= endPage; i++) {
+            pageNumbers.push(
+                <button
+                    key={i}
+                    onClick={() => handlePageChange(i)}
+                    className={`px-3 py-1 mx-1 border rounded ${currentPage === i ? 'bg-blue-500 text-white' : 'hover:bg-gray-100'
+                        }`}
+                >
+                    {i + 1}
+                </button>
+            );
+        }
+
+        return pageNumbers;
+    };
+
 
     // 반려동물 등록용 폼 데이터 추가
     const [petFormData, setPetFormData] = useState({
@@ -464,26 +481,43 @@ const MyPage = () => {
         }
     };
 
-    const fetchMyPosts = async () => {
+    // 내 신고글 불러오기
+    const fetchMyReportPosts = async (page = 0) => {
         try {
             const response = await axios.get(
-                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/posts`,
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/posts/reports?page=${page}&size=5`,
                 { withCredentials: true }
             );
 
             if (response.data.statusCode === 200) {
-                const allPosts = response.data.data.content;
-
-                // 상태에 따라 posts 분류
-                const reports = allPosts.filter(post =>
-                    post.status === "FINDING" || post.status === "FOUND");
-                const witnesses = allPosts.filter(post =>
-                    post.status === "SIGHTED" || post.status === "SHELTER" || post.status === "FOSTERING");
-
-                setMyPosts({ reports, witnesses });
+                setMyPosts(prev => ({
+                    ...prev,
+                    reports: response.data.data.content,
+                    reportsTotalPages: response.data.data.totalPages
+                }));
             }
         } catch (error) {
-            console.error('게시글 불러오기 오류:', error);
+            console.error('신고글 불러오기 오류:', error);
+        }
+    };
+
+    // 내 제보글 불러오기
+    const fetchMyWitnessPosts = async (page = 0) => {
+        try {
+            const response = await axios.get(
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/posts/witnesses?page=${page}&size=5`,
+                { withCredentials: true }
+            );
+
+            if (response.data.statusCode === 200) {
+                setMyPosts(prev => ({
+                    ...prev,
+                    witnesses: response.data.data.content,
+                    witnessTotalPages: response.data.data.totalPages
+                }));
+            }
+        } catch (error) {
+            console.error('제보글 불러오기 오류:', error);
         }
     };
 
@@ -506,7 +540,8 @@ const MyPage = () => {
             }
 
             fetchMyPets();
-            fetchMyPosts();
+            fetchMyReportPosts(0);
+            fetchMyWitnessPosts(0);
         }
     }, []);
 
@@ -886,45 +921,163 @@ const MyPage = () => {
 
                 {activeTab === 'posts' && (
                     <div className="space-y-6">
-                        <div>
-                            <h2 className="text-2xl font-bold mb-4">내 실종 신고글</h2>
-                            {myPosts.reports.map(post => (
-                                <div key={post.createPostTime} className="border-b border-gray-200 py-4">
-                                    <div className="flex justify-between items-center">
-                                        <div>
-                                            <h3 className="text-lg font-medium">{post.content}</h3>
-                                            <p className="text-sm text-gray-500">
-                                                {new Date(post.createPostTime).toLocaleDateString()}
-                                            </p>
+                        {/* 실종 신고글 목록 */}
+                        <div className="mb-8">
+                            <h3 className="text-lg font-semibold mb-4">실종 신고글</h3>
+                            <div className="min-h-[450px]"> {/* 최소 높이 설정 */}
+                                {myPosts.reports.length > 0 ? (
+                                    myPosts.reports.map(post => (
+                                        <div key={post.createPostTime} className="border-b border-gray-200 py-4">
+                                            <div className="flex justify-between items-center">
+                                                <div>
+                                                    <h3 className="text-lg font-medium">{post.content}</h3>
+                                                    <p className="text-sm text-gray-500">
+                                                        {new Date(post.createPostTime).toLocaleDateString()}
+                                                    </p>
+                                                </div>
+                                                <span className="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs">
+                                                    {post.status === "FINDING" ? "찾는 중" :
+                                                        post.status === "FOUND" ? "주인 찾기 완료" : ""}
+                                                </span>
+                                            </div>
                                         </div>
-                                        <span className="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs">
-                                            {post.status === "FINDING" ? "찾는 중" :
-                                                post.status === "FOUND" ? "주인 찾기 완료" : ""}
-                                        </span>
+                                    ))
+                                ) : (
+                                    <div className="flex items-center justify-center h-[200px] text-gray-500">
+                                        등록된 실종 신고글이 없습니다.
                                     </div>
-                                </div>
-                            ))}
+                                )}
+                            </div>
                         </div>
-                        <div>
-                            <h2 className="text-2xl font-bold mb-4">내 실종 제보글</h2>
-                            {myPosts.witnesses.map(post => (
-                                <div key={post.createPostTime} className="border-b border-gray-200 py-4">
-                                    <div className="flex justify-between items-center">
-                                        <div>
-                                            <h3 className="text-lg font-medium">{post.content}</h3>
-                                            <p className="text-sm text-gray-500">
-                                                {new Date(post.createPostTime).toLocaleDateString()}
-                                            </p>
+                        {/* 실종 신고글 페이지네이션 */}
+                        {myPosts.reportsTotalPages > 1 && (
+                            <div className="flex justify-center mt-6">
+                                <button
+                                    onClick={() => handleReportPageChange(myPosts.reportsCurrentPage - 1)}
+                                    disabled={myPosts.reportsCurrentPage === 0}
+                                    className={`px-3 py-1 border rounded mx-1 ${myPosts.reportsCurrentPage === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100'
+                                        }`}
+                                >
+                                    이전
+                                </button>
+
+                                {/* 페이지 번호 버튼들 */}
+                                {Array.from({ length: myPosts.reportsTotalPages }, (_, i) => {
+                                    // 현재 페이지 주변의 페이지만 표시
+                                    if (
+                                        i === 0 || // 첫 페이지
+                                        i === myPosts.reportsTotalPages - 1 || // 마지막 페이지
+                                        Math.abs(i - myPosts.reportsCurrentPage) <= 1 // 현재 페이지 주변
+                                    ) {
+                                        return (
+                                            <button
+                                                key={i}
+                                                onClick={() => handleReportPageChange(i)}
+                                                className={`px-3 py-1 border rounded mx-1 ${myPosts.reportsCurrentPage === i ? 'bg-blue-500 text-white' : 'hover:bg-gray-100'
+                                                    }`}
+                                            >
+                                                {i + 1}
+                                            </button>
+                                        );
+                                    } else if (
+                                        i === myPosts.reportsCurrentPage - 2 ||
+                                        i === myPosts.reportsCurrentPage + 2
+                                    ) {
+                                        // 생략 부호 표시
+                                        return <span key={i} className="px-2">...</span>;
+                                    }
+                                    return null;
+                                })}
+
+                                <button
+                                    onClick={() => handleReportPageChange(myPosts.reportsCurrentPage + 1)}
+                                    disabled={myPosts.reportsCurrentPage === myPosts.reportsTotalPages - 1}
+                                    className={`px-3 py-1 border rounded mx-1 ${myPosts.reportsCurrentPage === myPosts.reportsTotalPages - 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100'
+                                        }`}
+                                >
+                                    다음
+                                </button>
+                            </div>
+                        )}
+                        {/* 실종 제보글 목록 */}
+                        <div className="mb-8">
+                            <h3 className="text-lg font-semibold mb-4">실종 제보글</h3>
+                            <div className="min-h-[450px]"> {/* 최소 높이 설정 */}
+                                {myPosts.witnesses.length > 0 ? (
+                                    myPosts.witnesses.map(post => (
+                                        <div key={post.createPostTime} className="border-b border-gray-200 py-4">
+                                            <div className="flex justify-between items-center">
+                                                <div>
+                                                    <h3 className="text-lg font-medium">{post.content}</h3>
+                                                    <p className="text-sm text-gray-500">
+                                                        {new Date(post.createPostTime).toLocaleDateString()}
+                                                    </p>
+                                                </div>
+                                                <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
+                                                    {post.status === "SIGHTED" ? "목격" :
+                                                        post.status === "SHELTER" ? "보호소" :
+                                                            post.status === "FOSTERING" ? "임보 중" : ""}
+                                                </span>
+                                            </div>
                                         </div>
-                                        <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
-                                            {post.status === "SIGHTED" ? "목격" :
-                                                post.status === "SHELTER" ? "보호소" :
-                                                    post.status === "FOSTERING" ? "임보 중" : ""}
-                                        </span>
+                                    ))
+                                ) : (
+                                    <div className="flex items-center justify-center h-[200px] text-gray-500">
+                                        등록된 실종 제보글이 없습니다.
                                     </div>
-                                </div>
-                            ))}
+                                )}
+                            </div>
                         </div>
+                        {/* 실종 제보글 페이지네이션 */}
+                        {myPosts.witnessTotalPages > 1 && (
+                            <div className="flex justify-center mt-6">
+                                <button
+                                    onClick={() => handleWitnessPageChange(myPosts.witnessCurrentPage - 1)}
+                                    disabled={myPosts.witnessCurrentPage === 0}
+                                    className={`px-3 py-1 border rounded mx-1 ${myPosts.witnessCurrentPage === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100'
+                                        }`}
+                                >
+                                    이전
+                                </button>
+
+                                {/* 페이지 번호 버튼들 */}
+                                {Array.from({ length: myPosts.witnessTotalPages }, (_, i) => {
+                                    // 현재 페이지 주변의 페이지만 표시
+                                    if (
+                                        i === 0 || // 첫 페이지
+                                        i === myPosts.witnessTotalPages - 1 || // 마지막 페이지
+                                        Math.abs(i - myPosts.witnessCurrentPage) <= 1 // 현재 페이지 주변
+                                    ) {
+                                        return (
+                                            <button
+                                                key={i}
+                                                onClick={() => handleWitnessPageChange(i)}
+                                                className={`px-3 py-1 border rounded mx-1 ${myPosts.witnessCurrentPage === i ? 'bg-blue-500 text-white' : 'hover:bg-gray-100'
+                                                    }`}
+                                            >
+                                                {i + 1}
+                                            </button>
+                                        );
+                                    } else if (
+                                        i === myPosts.witnessCurrentPage - 2 ||
+                                        i === myPosts.witnessCurrentPage + 2
+                                    ) {
+                                        // 생략 부호 표시
+                                        return <span key={i} className="px-2">...</span>;
+                                    }
+                                    return null;
+                                })}
+
+                                <button
+                                    onClick={() => handleWitnessPageChange(myPosts.witnessCurrentPage + 1)}
+                                    disabled={myPosts.witnessCurrentPage === myPosts.witnessTotalPages - 1}
+                                    className={`px-3 py-1 border rounded mx-1 ${myPosts.witnessCurrentPage === myPosts.witnessTotalPages - 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100'
+                                        }`}
+                                >
+                                    다음
+                                </button>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
