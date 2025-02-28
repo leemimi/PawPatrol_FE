@@ -14,7 +14,7 @@ console.log('item.pet.animalType:', item.pet.animalType);
 
 
 
-    // 반려동물 상태 텍스트 변환
+    // 반려동물 상태 텍스트 변환 수정 
     const getStatusText = (status) => {
         switch(status) {
             case 'FINDING': return '찾는중';
