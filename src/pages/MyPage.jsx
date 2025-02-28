@@ -40,6 +40,29 @@ const MyPage = () => {
         witnessCurrentPage: 0
     });
 
+    // 소셜 계정 연동 해제 함수
+    const handleUnlinkSocialAccount = async (providerType) => {
+        try {
+            const response = await axios.delete(
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/social/${providerType.toLowerCase()}`,
+                // { providerType: providerType }, // "KAKAO", "GOOGLE", "NAVER" 중 하나를 전송
+                {
+                    withCredentials: true
+                }
+            );
+
+            if (response.data.statusCode === 200) {
+                alert(`${providerType} 계정 연동이 해제되었습니다.`);
+                // 소셜 연동 정보 다시 불러오기
+                fetchSocialConnections();
+            }
+        } catch (error) {
+            console.error(`${providerType} 연동 해제 오류:`, error);
+            alert('소셜 계정 연동 해제 중 오류가 발생했습니다.');
+        }
+    };
+
+
     // 소셜 연동 정보 저장
     const [socialConnections, setSocialConnections] = useState({
         kakao: false,
@@ -61,7 +84,7 @@ const MyPage = () => {
     const fetchSocialConnections = async () => {
         try {
             const response = await axios.get(
-                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/socialInfo`,
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/social`,
                 { withCredentials: true }
             );
 
@@ -565,6 +588,7 @@ const MyPage = () => {
                 setNickname(userInfo.nickname);
             }
 
+            window.scrollTo(0, 0);
             fetchMyPets();
             fetchMyReportPosts(0);
             fetchMyWitnessPosts(0);
@@ -705,35 +729,69 @@ const MyPage = () => {
                             <div className="grid grid-cols-3 gap-2 max-w-xs mx-auto">
                                 <div className="flex flex-col items-center">
                                     <img src={kakaoImage} alt="카카오" className="w-6 h-6 mb-1" />
-                                    <span className={`mt-1 px-2 py-0.5 rounded-full text-xs ${socialConnections.kakao
-                                        ? 'bg-yellow-100 text-yellow-800'
-                                        : 'bg-gray-100 text-gray-800'
-                                        }`}>
-                                        {socialConnections.kakao ? '연동' : '미연동'}
-                                    </span>
+                                    {socialConnections.kakao ? (
+                                        <>
+                                            <span className="mt-1 px-2 py-0.5 rounded-full text-xs bg-yellow-100 text-yellow-800">
+                                                연동
+                                            </span>
+                                            <button
+                                                onClick={() => handleUnlinkSocialAccount('KAKAO')}
+                                                className="mt-1 text-xs text-red-600 hover:text-red-800"
+                                            >
+                                                해제
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <span className="mt-1 px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-800">
+                                            미연동
+                                        </span>
+                                    )}
                                 </div>
 
                                 <div className="flex flex-col items-center">
                                     <img src={naverImage} alt="네이버" className="w-6 h-6 mb-1" />
-                                    <span className={`mt-1 px-2 py-0.5 rounded-full text-xs ${socialConnections.naver
-                                        ? 'bg-green-100 text-green-800'
-                                        : 'bg-gray-100 text-gray-800'
-                                        }`}>
-                                        {socialConnections.naver ? '연동' : '미연동'}
-                                    </span>
+                                    {socialConnections.naver ? (
+                                        <>
+                                            <span className="mt-1 px-2 py-0.5 rounded-full text-xs bg-green-100 text-green-800">
+                                                연동
+                                            </span>
+                                            <button
+                                                onClick={() => handleUnlinkSocialAccount('NAVER')}
+                                                className="mt-1 text-xs text-red-600 hover:text-red-800"
+                                            >
+                                                해제
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <span className="mt-1 px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-800">
+                                            미연동
+                                        </span>
+                                    )}
                                 </div>
 
                                 <div className="flex flex-col items-center">
                                     <img src={googleImage} alt="구글" className="w-6 h-6 mb-1" />
-                                    <span className={`mt-1 px-2 py-0.5 rounded-full text-xs ${socialConnections.google
-                                        ? 'bg-red-100 text-red-800'
-                                        : 'bg-gray-100 text-gray-800'
-                                        }`}>
-                                        {socialConnections.google ? '연동' : '미연동'}
-                                    </span>
+                                    {socialConnections.google ? (
+                                        <>
+                                            <span className="mt-1 px-2 py-0.5 rounded-full text-xs bg-red-100 text-red-800">
+                                                연동
+                                            </span>
+                                            <button
+                                                onClick={() => handleUnlinkSocialAccount('GOOGLE')}
+                                                className="mt-1 text-xs text-red-600 hover:text-red-800"
+                                            >
+                                                해제
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <span className="mt-1 px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-800">
+                                            미연동
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                         </div>
+
 
 
                         <div className="mt-8 space-y-4">
