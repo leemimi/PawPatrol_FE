@@ -86,6 +86,11 @@ const Protection = () => {
     }
   };
 
+  // 페이지 로드 시 스크롤을 최상단으로 이동
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   // 페이지가 변경될 때만 데이터 가져오기
   useEffect(() => {
     fetchAnimals();
@@ -163,7 +168,7 @@ const Protection = () => {
         {isMenuOpen && (
           <div className="absolute bottom-16 right-0 w-40 bg-white rounded-lg shadow-lg overflow-hidden">
             <button
-              className="w-full px-4 py-3 text-sm text-left hover:bg-orange-50 text-gray-700 transition-colors border-b border-gray-100"
+              className="w-full px-4 py-3 text-sm font-bold text-orange-400 text-left hover:bg-orange-50 text-gray-700 transition-colors border-b border-gray-100"
               onClick={() => {
                 setIsMenuOpen(false);
                 navigate('/register-animal'); // 동물 등록 페이지로 이동
@@ -172,7 +177,7 @@ const Protection = () => {
               동물 등록하기
             </button>
             <button
-              className="w-full px-4 py-3 text-sm text-left hover:bg-orange-50 text-gray-700 transition-colors border-b border-gray-100"
+              className="w-full px-4 py-3 text-sm font-bold text-orange-400  text-left hover:bg-orange-50 text-gray-700 transition-colors border-b border-gray-100"
               onClick={() => {
                 setIsMenuOpen(false);
                 navigate('/my-register-animals'); // 등록한 동물 목록 페이지로 이동
@@ -181,7 +186,7 @@ const Protection = () => {
               내 동물 목록
             </button>
             <button
-              className="w-full px-4 py-3 text-sm text-left hover:bg-orange-50 text-gray-700 transition-colors"
+              className="w-full px-4 py-3 text-sm font-bold text-orange-400  text-left hover:bg-orange-50 text-gray-700 transition-colors"
               onClick={() => {
                 setIsMenuOpen(false);
                 navigate('/my-applications'); // 나의 신청 목록 페이지로 이동

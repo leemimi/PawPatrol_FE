@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { ChevronLeft, MapPin, Pencil, Camera, X, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -78,6 +78,11 @@ const RegisterAnimalForm = () => {
             alert("동물 등록에 실패했습니다." + (error.response?.data?.message || ""));
         }
     };
+
+    // 페이지 로드 시 스크롤을 최상단으로 이동
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, []);
 
     return (
         <div className="min-h-screen bg-orange-50">

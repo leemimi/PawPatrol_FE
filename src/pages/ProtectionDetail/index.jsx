@@ -14,6 +14,11 @@ const AnimalDetail = () => {
     const [applicationType, setApplicationType] = useState('');
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
+    // 페이지 로드 시 스크롤을 최상단으로 이동
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, []);
+
     useEffect(() => {
         const fetchAnimalDetail = async () => {
             try {

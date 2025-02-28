@@ -144,6 +144,11 @@ const EditAnimalForm = () => {
         }
     };
 
+    // 페이지 로드 시 스크롤을 최상단으로 이동
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, []);
+
     if (loading) {
         return (
             <div className="min-h-screen bg-orange-50 flex justify-center items-center">

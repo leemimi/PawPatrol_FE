@@ -1,42 +1,107 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, X, Check } from 'lucide-react';
 
 const MyRegisteredAnimals = () => {
     const [animals, setAnimals] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [page, setPage] = useState(0);
+    const [hasMore, setHasMore] = useState(true);
+    const observerRef = useRef();
     const navigate = useNavigate();
     const [selectedAnimal, setSelectedAnimal] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [totalCount, setTotalCount] = useState(0);
+    const [waitingCount, setWaitingCount] = useState(0);
+    const [protectingCount, setProtectingCount] = useState(0);
 
+    // 페이지 로드 시 스크롤을 최상단으로 이동
     useEffect(() => {
-        const fetchMyRegisteredAnimals = async () => {
-            try {
-                setLoading(true);
-                const response = await fetch('/api/v1/protections/my-cases', {
-                    method: 'GET',
-                    credentials: 'include',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
-                });
+        window.scrollTo(0, 0);
+    }, []);
 
-                if (response.ok) {
-                    const data = await response.json();
-                    console.log('내가 등록한 동물 데이터:', data);
-                    if (data.resultCode === "200") {
-                        setAnimals(data.data.content || data.data);
+    // 마지막 아이템 참조 콜백
+    const lastAnimalRef = useCallback(node => {
+        if (loading) return;
+        if (observerRef.current) observerRef.current.disconnect();
+
+        observerRef.current = new IntersectionObserver(entries => {
+            if (entries[0].isIntersecting && hasMore) {
+                console.log(`마지막 아이템에 도달했습니다. 페이지 ${page + 1} 로드 시작`);
+                setPage(prevPage => prevPage + 1);
+            }
+        });
+
+        if (node) observerRef.current.observe(node);
+    }, [loading, hasMore]);
+
+    // 동물 목록 가져오기
+    const fetchMyRegisteredAnimals = async () => {
+        try {
+            setLoading(true);
+            const response = await fetch(`/api/v1/protections/my-cases?page=${page}&size=10`, {
+                method: 'GET',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                console.log('내가 등록한 동물 데이터:', data);
+                if (data.resultCode === "200") {
+                    const newAnimals = data.data.content || [];
+
+                    // 데이터가 없으면 더 이상 불러올 항목이 없음
+                    if (newAnimals.length === 0) {
+                        setHasMore(false);
+                        console.log('더 이상 로드할 데이터가 없습니다');
+                        return;
+                    }
+
+                    // 첫 페이지면 새로 설정, 아니면 기존 데이터에 추가
+                    if (page === 0) {
+                        setAnimals(newAnimals);
+                    } else {
+                        setAnimals(prev => [...prev, ...newAnimals]);
+                    }
+
+                    // 더 로드할 데이터가 있는지 확인
+                    const isLastPage = data.data.last || newAnimals.length < 10;
+                    setHasMore(!isLastPage);
+
+                    // 전체 데이터 수 업데이트
+                    setTotalCount(data.data.totalElements || 0);
+
+                    // 상태별 데이터 수 계산
+                    if (page === 0) {
+                        calculateStatusCounts(newAnimals);
+                    } else {
+                        calculateStatusCounts([...animals, ...newAnimals]);
                     }
                 }
-            } catch (error) {
-                console.error('데이터 로드 오류:', error);
-            } finally {
-                setLoading(false);
             }
-        };
+        } catch (error) {
+            console.error('데이터 로드 오류:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
+    // 상태별 동물 수 계산
+    const calculateStatusCounts = (animalData) => {
+        const waiting = animalData.filter(animal => animal.caseStatus === 'PROTECT_WAITING').length;
+        const protecting = animalData.filter(animal => animal.caseStatus === 'TEMP_PROTECTING').length;
+
+        setWaitingCount(waiting);
+        setProtectingCount(protecting);
+    };
+
+    // 페이지가 변경될 때마다 데이터 가져오기
+    useEffect(() => {
         fetchMyRegisteredAnimals();
-    }, []);
+    }, [page]);
 
     const getStatusText = (status) => {
         switch (status) {
@@ -85,22 +150,10 @@ const MyRegisteredAnimals = () => {
                 if (data.resultCode === "200") {
                     alert('신청이 승인되었습니다.');
 
-                    // 승인 후 동물 목록 다시 불러오기
-                    const updatedResponse = await fetch('/api/v1/protections/my-cases', {
-                        method: 'GET',
-                        credentials: 'include',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        }
-                    });
-
-                    if (updatedResponse.ok) {
-                        const updatedData = await updatedResponse.json();
-                        if (updatedData.resultCode === "200") {
-                            setAnimals(updatedData.data.content || updatedData.data);
-                        }
-                    }
-
+                    // 승인 후 첫 페이지부터 다시 데이터 로드
+                    setPage(0);
+                    setAnimals([]);
+                    setHasMore(true);
                     setIsModalOpen(false); // 모달 닫기
                 } else {
                     alert('승인 중 오류가 발생했습니다: ' + data.message);
@@ -136,22 +189,10 @@ const MyRegisteredAnimals = () => {
                 if (data.resultCode === "200") {
                     alert('신청이 거절되었습니다.');
 
-                    // 거절 후 동물 목록 다시 불러오기
-                    const updatedResponse = await fetch('/api/v1/protections/my-cases', {
-                        method: 'GET',
-                        credentials: 'include',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        }
-                    });
-
-                    if (updatedResponse.ok) {
-                        const updatedData = await updatedResponse.json();
-                        if (updatedData.resultCode === "200") {
-                            setAnimals(updatedData.data.content || updatedData.data);
-                        }
-                    }
-
+                    // 거절 후 첫 페이지부터 다시 데이터 로드
+                    setPage(0);
+                    setAnimals([]);
+                    setHasMore(true);
                     setIsModalOpen(false); // 모달 닫기
                 } else {
                     alert('거절 중 오류가 발생했습니다: ' + data.message);
@@ -185,15 +226,48 @@ const MyRegisteredAnimals = () => {
             </header>
 
             <main className="pt-20 pb-20 px-4">
-                {loading ? (
+                {/* 상단 알림 카드 */}
+                <div className="mb-6 bg-white rounded-xl p-4 shadow hover:shadow-md transition-shadow">
+                    <div className="flex items-center gap-2">
+                        <span className="text-2xl">🐾</span>
+                        <div>
+                            <p className="text-sm text-gray-600 mt-1">
+                                총 <span className="text-orange-500 font-semibold">{totalCount}</span>마리의
+                                <span className="text-orange-400 font-semibold"> 소중한 친구들</span>을 보호하고 있어요!
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* 상태 카운트 카드 */}
+                <div className="bg-white rounded-xl p-4 mb-4 shadow-sm">
+                    <div className="flex justify-between">
+                        <div className="flex-1 text-center">
+                            <div className="bg-yellow-50 rounded-lg p-2">
+                                <span className="text-sm text-gray-500">신청가능</span>
+                                <p className="text-lg font-semibold text-yellow-500">{waitingCount}</p>
+                            </div>
+                        </div>
+                        <div className="w-4"></div> {/* 간격용 */}
+                        <div className="flex-1 text-center">
+                            <div className="bg-red-50 rounded-lg p-2">
+                                <span className="text-sm text-gray-500">임보중</span>
+                                <p className="text-lg font-semibold text-red-500">{protectingCount}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {loading && page === 0 ? (
                     <div className="flex justify-center items-center h-64">
                         <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-orange-500"></div>
                     </div>
                 ) : animals.length > 0 ? (
                     <div className="space-y-3">
-                        {animals.map((animal) => (
+                        {animals.map((animal, index) => (
                             <div
                                 key={animal.animalCaseId}
+                                ref={index === animals.length - 1 ? lastAnimalRef : null}
                                 className="bg-white rounded-xl overflow-hidden shadow hover:shadow-md transition-shadow cursor-pointer"
                                 onClick={() => navigate(`/protection/${animal.animalCaseId}`)}
                             >
@@ -241,6 +315,21 @@ const MyRegisteredAnimals = () => {
                                 </div>
                             </div>
                         ))}
+
+                        {/* 로딩 인디케이터 (첫 페이지 로딩이 아닌 경우) */}
+                        {loading && page > 0 && (
+                            <div className="text-center py-4">
+                                <div className="inline-block animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-orange-500"></div>
+                                <span className="ml-2 text-gray-500">불러오는 중...</span>
+                            </div>
+                        )}
+
+                        {/* 더 이상 데이터가 없는 경우 */}
+                        {!hasMore && animals.length > 0 && (
+                            <div className="text-center py-4">
+                                <span className="text-gray-500">모든 동물을 불러왔습니다.</span>
+                            </div>
+                        )}
                     </div>
                 ) : (
                     <div className="flex flex-col items-center justify-center h-64 p-4">
