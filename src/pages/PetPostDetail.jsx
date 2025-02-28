@@ -168,13 +168,22 @@ const handleDelete = async (postId) => {
 
 // Handle image rendering
 const renderImages = () => {
-  if (post && post.images && post.images.length > 0) {
-    return post.images.map((image, index) => (
-      <img key={index} src={image.imageUrl} alt={`Post Image ${index + 1}`} className="w-full h-auto my-4" />
-    ));
+  if (post?.images?.length > 0) {
+    return post.images.map((image, index) => {
+      const imageUrl = image?.path || '/api/placeholder/160/160';
+      return (
+        <img 
+          key={index} 
+          src={imageUrl} 
+          alt={`Post Image ${index + 1}`} 
+          className="w-full h-full object-cover" 
+        />
+      );
+    });
   }
   return null;
 };
+
 
 
   const handleUpdate = () => {
