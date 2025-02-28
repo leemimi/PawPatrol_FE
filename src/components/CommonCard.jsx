@@ -18,7 +18,7 @@ console.log('item.pet.animalType:', item.pet.animalType);
     const getStatusText = (status) => {
         switch(status) {
             case 'FINDING': return '찾는중';
-            case 'SIGHTING': return '목격';
+            case 'FOSTERING': return '임보 중';
             case 'SIGHTED': return '목격';  // API 응답에 따라 SIGHTING 또는 SIGHTED로 올 수 있음
             case 'SHELTER': return '보호중';
             default: return status;
