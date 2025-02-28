@@ -139,9 +139,16 @@ const PetPostDetail = ({ onClose }) => {
     }
   };
 
-  const handleEdit = (postId) => {
-    navigate(`/lostmypetfix/${postId}`);
-};
+  const handleEdit = () => {
+    if (postId) {
+      navigate(`/lostmypetfix/${postId}`);
+    } else {
+      console.error("postId is not available.");
+      // Optionally, redirect to a fallback page
+      navigate('/error');  // Example of a fallback
+    }
+  };
+  
 
 const handleDelete = async (postId) => {
   if (window.confirm('정말로 삭제하시겠습니까?')) {
