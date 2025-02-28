@@ -18,73 +18,83 @@ const Lostmypetfix = () => {
     latitude: 37.5665,
     longitude: 126.978,
   });
+  console.log(postId); // Check the value of postId
 
   useEffect(() => {
-      const script = document.createElement('script');
-      script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${import.meta.env.VITE_KAKAO_MAP_API_KEY}&libraries=services&autoload=true`;
-    
-      script.onerror = () => {
-        console.error("Failed to load Kakao Maps API.");
-      };
-    
-      script.onload = () => {
-        if (window.kakao && window.kakao.maps) {
-          window.kakao.maps.load(() => {
-            const mapContainer = document.getElementById('kakaoMap');
-            const mapOption = {
-              center: new window.kakao.maps.LatLng(37.5665, 126.978),
-              level: 3,
-            };
-            const map = new window.kakao.maps.Map(mapContainer, mapOption);
-    
-            const marker = new window.kakao.maps.Marker({
-              map: map,
-            });
-    
-            window.kakao.maps.event.addListener(map, 'click', function (mouseEvent) {
-              const lat = mouseEvent.latLng.getLat();
-              const lng = mouseEvent.latLng.getLng();
-              marker.setPosition(mouseEvent.latLng);
-    
-              const geocoder = new window.kakao.maps.services.Geocoder();
-    
-              geocoder.coord2Address(lng, lat, function (result, status) {
-                if (status === window.kakao.maps.services.Status.OK) {
-                  const address = result[0].address.address_name;
-                  setFormData(prevState => ({
-                    ...prevState,
-                    latitude: lat,
-                    longitude: lng,
-                    location: address,
-                  }));
-                  console.log("Latitude:", lat, "Longitude:", lng, "Location:", address); // Debug
-                }
+        const script = document.createElement("script");
+        script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${import.meta.env.VITE_KAKAO_MAP_API_KEY}&autoload=true`;
+      
+        script.onerror = () => {
+          console.error("Failed to load Kakao Maps API.");
+        };
+      
+        script.onload = () => {
+          if (window.kakao && window.kakao.maps) {
+            window.kakao.maps.load(() => {
+              const mapContainer = document.getElementById("kakaoMap");
+              const mapOption = {
+                center: new window.kakao.maps.LatLng(37.497939, 127.027587), // 기본 서울 중심 좌표
+                level: 3, // 줌 레벨
+              };
+              const map = new window.kakao.maps.Map(mapContainer, mapOption);
+      
+              // 마커 초기화
+              const marker = new window.kakao.maps.Marker({
+                map: map,
+                position: map.getCenter(), // 초기 위치 설정 (지도 중심)
+              });
+      
+              // 지도 클릭 시 마커 위치 갱신
+              window.kakao.maps.event.addListener(map, "click", function (mouseEvent) {
+                const lat = mouseEvent.latLng.getLat();
+                const lng = mouseEvent.latLng.getLng();
+      
+                // 클릭된 위치로 마커 이동
+                marker.setPosition(mouseEvent.latLng);
+      
+                // formData 상태 업데이트 (주소 없이 위도, 경도만 저장)
+                setFormData((prevState) => ({
+                  ...prevState,
+                  latitude: lat,
+                  longitude: lng,
+                }));
+      
+                console.log("Latitude:", lat, "Longitude:", lng);
               });
             });
-          });
-        } else {
-          console.error('Kakao Maps is not available.');
-        }
-      };
-    
-      document.body.appendChild(script);
-    
-      return () => {
-        document.body.removeChild(script);
-      };
-    }, []);
+          } else {
+            console.error("Kakao Maps is not available.");
+          }
+        };
+      
+        document.body.appendChild(script);
+      
+        return () => {
+          document.body.removeChild(script);
+        };
+      }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleImageUpload = (e) => {
-    const files = Array.from(e.target.files);
-    setImages(files);
-    const newPreviewUrls = files.map((file) => URL.createObjectURL(file));
-    setPreviewUrls(newPreviewUrls);
-  };
+  // Update the handleImageUpload function
+const handleImageUpload = (e) => {
+  const files = Array.from(e.target.files);
+  
+  // Combine new files with existing ones (up to 5)
+  const combinedImages = [...images, ...files].slice(0, 5);
+  setImages(combinedImages);
+  
+  // Create and combine preview URLs for all images
+  const newPreviewUrls = files.map((file) => URL.createObjectURL(file));
+  const combinedPreviewUrls = [...previewUrls, ...newPreviewUrls].slice(0, 5);
+  setPreviewUrls(combinedPreviewUrls);
+  
+  // Reset the file input to allow selecting the same file again
+  e.target.value = null;
+};
 
   const removeImage = (index) => {
     setImages(images.filter((_, i) => i !== index));
@@ -93,27 +103,28 @@ const Lostmypetfix = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
     const metadataJson = JSON.stringify(formData);
     const formDataToSend = new FormData();
     formDataToSend.append("metadata", metadataJson);
     images.forEach((image) => formDataToSend.append("images", image));
-
+  
+    // Ensure postId is correctly being passed as a string or number
+    const postUrl = `http://localhost:8090/api/v1/lost-foundposts/${postId}`;
+  
     try {
-      const response = await axios.put(
-        `http://localhost:8090/api/v1/lost-foundposts/${postId}`,  // Correctly use template literal with backticks
-        formDataToSend,
-        {
-          headers: { "Content-Type": "multipart/form-data" }
-        }
-      );
+      const response = await axios.put(postUrl, formDataToSend, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
       alert("실종 신고가 성공적으로 수정되었습니다.");
       console.log(response.data);
-      navigate(-1);  // Navigate back after success
+      navigate(-1); // Navigate back after success
     } catch (error) {
       console.error("게시글 수정 중 오류 발생:", error);
       alert("게시글 수정에 실패했습니다.");
     }
   };
+  
 
   return (
     <div className="min-h-screen bg-orange-50">
@@ -165,13 +176,13 @@ const Lostmypetfix = () => {
               )}
             </div>
             <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleImageUpload}
-              multiple
-              accept="image/*"
-              className="hidden"
-            />
+  type="file"
+  ref={fileInputRef}
+  onChange={handleImageUpload}
+  multiple
+  accept="image/*"
+  className="hidden"
+/>
           </div>
 
           {/* Location & Map */}

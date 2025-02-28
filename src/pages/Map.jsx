@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react'; 
+import React, { useState, useEffect, useCallback, useRef } from 'react';  
 import { RadiusControl } from '../components/RadiusControl';
 import { ControlButtons } from '../components/ControlButtons';
 import { useKakaoMap } from '@/hooks/UseKakaoMap';
@@ -11,8 +11,14 @@ import { CommonList } from '../components/CommonList';
 import { CommonCard } from '../components/CommonCard';
 import { PetCard } from '../components/PetCard';
 import WriteButton from '../components/WriteButton';
+import NotificationButton from '../components/NotificationButton';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
+
+// window.global 설정
+if (typeof global === 'undefined') {
+  window.global = window;
+}
 
 const Map = () => {
     const centerPosition = { lat: 37.497939, lng: 127.027587 };
@@ -30,6 +36,7 @@ const Map = () => {
     // 알림 관련 상태
     const [notification, setNotification] = useState(null);
     const [showNotification, setShowNotification] = useState(false);
+    const [notifications, setNotifications] = useState([]);
     const stompClientRef = useRef(null);
     
     // 초기 렌더링 및 데이터 로딩 추적을 위한 ref
@@ -108,8 +115,25 @@ const Map = () => {
     
                 // 구독: 실종/발견 게시글
                 client.subscribe('/topic/lost-found-posts', function (message) {
-                    const lostFoundPost = JSON.parse(message.body);
-                    displayNotification(lostFoundPost); // 알림 표시
+                    try {
+                        const lostFoundPost = JSON.parse(message.body);
+                        console.log("New notification received:", lostFoundPost);
+                        
+                        // 알림에 타임스탬프와 읽음 상태 추가
+                        const newNotification = {
+                            ...lostFoundPost,
+                            timestamp: Date.now(),
+                            read: false
+                        };
+                        
+                        // 알림 상태 업데이트 (최근 알림이 맨 위로)
+                        setNotifications(prev => [newNotification, ...prev]);
+                        
+                        // 알림 표시
+                        displayNotification(newNotification);
+                    } catch (error) {
+                        console.error("Error parsing message:", error);
+                    }
                 });
     
                 // 사용자 위치 기반 구독 등록
@@ -118,7 +142,8 @@ const Map = () => {
                         userId: getUserId(),
                         latitude: currentPosition.lat,
                         longitude: currentPosition.lng,
-                        radius: selectedRange * 1000
+                        radius: selectedRange * 1000,
+                        includeMyPosts: true // 내 게시글도 포함
                     };
                     client.publish({
                         destination: '/app/location/subscribe',
@@ -127,8 +152,25 @@ const Map = () => {
     
                     // 개인화된 알림 구독
                     client.subscribe('/user/queue/notifications', function(message) {
-                        const notificationData = JSON.parse(message.body);
-                        displayNotification(notificationData); // 알림 표시
+                        try {
+                            const notificationData = JSON.parse(message.body);
+                            console.log("Personalized notification received:", notificationData);
+                            
+                            // 알림에 타임스탬프와 읽음 상태 추가
+                            const newNotification = {
+                                ...notificationData,
+                                timestamp: Date.now(),
+                                read: false
+                            };
+                            
+                            // 알림 상태 업데이트 (최근 알림이 맨 위로)
+                            setNotifications(prev => [newNotification, ...prev]);
+                            
+                            // 알림 표시
+                            displayNotification(newNotification);
+                        } catch (error) {
+                            console.error("Error parsing notification:", error);
+                        }
                     });
                 }
             };
@@ -161,10 +203,42 @@ const Map = () => {
         setNotification(data);
         setShowNotification(true);
         
-        //알림 자동 닫기
+        // 알림 자동 닫기
         setTimeout(() => {
             setShowNotification(false);
-        }, 1000000);
+        }, 5000); // 5초 후 자동으로 닫힘
+    };
+
+    // 알림 처리 핸들러
+    const handleViewNotification = (notification) => {
+        // 알림을 읽음 상태로 변경
+        setNotifications(prev => 
+            prev.map(notif => 
+                notif.id === notification.id ? { ...notif, read: true } : notif
+            )
+        );
+        
+        // 해당 위치로 지도 이동
+        if (notification.latitude && notification.longitude && map) {
+            const position = new window.kakao.maps.LatLng(
+                notification.latitude, 
+                notification.longitude
+            );
+            map.setCenter(position);
+            
+            // 현재 위치 업데이트
+            setCurrentPosition({
+                lat: notification.latitude,
+                lng: notification.longitude
+            });
+        }
+    };
+
+    // 알림 삭제 핸들러
+    const handleClearNotification = (notification) => {
+        setNotifications(prev => 
+            prev.filter(notif => notif.id !== notification.id)
+        );
     };
 
     const handleSelectMissingPost = () => {
@@ -239,7 +313,8 @@ const Map = () => {
                             userId: getUserId(),
                             latitude: currentPosition.lat,
                             longitude: currentPosition.lng,
-                            radius: newRange * 1000 // 미터 단위로 변환
+                            radius: newRange * 1000, // 미터 단위로 변환
+                            includeMyPosts: true
                         };
                         
                         stompClientRef.current.publish({
@@ -278,7 +353,8 @@ const Map = () => {
                         userId: getUserId(),
                         latitude: newPosition.lat,
                         longitude: newPosition.lng,
-                        radius: selectedRange * 1000 // 미터 단위로 변환
+                        radius: selectedRange * 1000, // 미터 단위로 변환
+                        includeMyPosts: true
                     };
                     
                     stompClientRef.current.publish({
@@ -385,9 +461,12 @@ const Map = () => {
     // 알림 클릭 핸들러 (해당 게시글로 이동)
     const handleNotificationClick = () => {
         if (notification && notification.postId) {
-            // 알림에 해당하는 게시글로 이동하는 로직
-            // 예: 게시글 상세 페이지로 이동
-            // navigate(`/post/${notification.postId}`);
+            // 알림을 읽음 상태로 변경
+            setNotifications(prev => 
+                prev.map(notif => 
+                    notif.id === notification.id ? { ...notif, read: true } : notif
+                )
+            );
             
             // 또는 게시글이 있는 위치로 맵 이동
             if (notification.latitude && notification.longitude && map) {
@@ -413,7 +492,7 @@ const Map = () => {
         <div className="h-screen w-full bg-orange-50/30 relative overflow-hidden">
             {/* 알림 팝업 */}
             {showNotification && notification && (
-                <div className="fixed top-4 right-4 z-50 bg-white rounded-lg shadow-lg max-w-xs w-full p-4 flex flex-col transition-all duration-300 ease-in-out animate-fadeIn">
+                <div className="fixed top-4 right-4 z-50 bg-white rounded-lg shadow-lg max-w-xs w-full p-4 flex flex-col transition-all duration-300 ease-in-out">
                     <div className="flex justify-between items-start mb-2">
                         <h4 className="font-bold text-orange-600 text-sm">
                             {notification.status === 'LOST' ? '실종 신고' : '발견 신고'}
@@ -465,6 +544,13 @@ const Map = () => {
                             }
                         }}
                         onFacilitiesToggle={handleFacilitiesToggle}
+                    />
+                    
+                    {/* 알림 버튼 컴포넌트 - 글쓰기 버튼 위에 배치 */}
+                    <NotificationButton 
+                        notifications={notifications}
+                        onViewNotification={handleViewNotification}
+                        onClearNotification={handleClearNotification}
                     />
 
                     <WriteButton 
