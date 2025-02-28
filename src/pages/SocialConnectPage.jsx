@@ -32,7 +32,7 @@ const SocialConnectPage = () => {
 
         try {
             const response = await axios.post(
-                `http://localhost:8090/api/v2/auth/connect-social`,
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/auth/connect-social`,
                 request,
                 { withCredentials: true }
             );
