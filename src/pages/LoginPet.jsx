@@ -62,8 +62,6 @@ const LoginScreen = () => {
                         role: response.data.data.role
                     };
 
-                    alert(response.data.data.role);
-
                     localStorage.setItem('userInfo', JSON.stringify(loginUserInfo));
                     localStorage.setItem('isLoggedIn', 'true');
 
