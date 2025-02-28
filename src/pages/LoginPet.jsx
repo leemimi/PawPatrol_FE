@@ -69,7 +69,7 @@ const LoginScreen = () => {
                 }
             }
         } catch (error) {
-            alert('로그인 실패');
+            alert(error.response.data.message);
         }
     };
 
