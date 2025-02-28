@@ -15,7 +15,7 @@ console.log('item.pet.animalType:', item.pet.animalType);
 
 
     // 반려동물 상태 텍스트 변환
-    const getStatusText = (status) => {
+    const getStatusText = (status) => { //수정 
         switch(status) {
             case 'FINDING': return '찾는중';
             case 'FOSTERING': return '임보 중';
