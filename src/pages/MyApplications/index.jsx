@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, X } from 'lucide-react';
+import { ChevronLeft, X, Check, Home, Clock } from 'lucide-react';
 
 const MyApplications = () => {
     const [applications, setApplications] = useState([]);
-    const [allApplications, setAllApplications] = useState([]); // 전체 신청 데이터 저장
+    const [allApplications, setAllApplications] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState('PENDING'); // 기본값을 대기중으로 변경
+    const [activeTab, setActiveTab] = useState('PENDING');
     const navigate = useNavigate();
     const [cancelLoading, setCancelLoading] = useState(false);
     const [page, setPage] = useState(0);
@@ -15,6 +15,11 @@ const MyApplications = () => {
     const [pendingCount, setPendingCount] = useState(0);
     const [approvedCount, setApprovedCount] = useState(0);
     const [rejectedCount, setRejectedCount] = useState(0);
+
+    // 페이지 로드 시 스크롤을 최상단으로 이동
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, []);
 
     // 마지막 아이템 참조 콜백
     const lastApplicationRef = useCallback(node => {
@@ -34,7 +39,6 @@ const MyApplications = () => {
     // 탭 변경 시 필터링된 데이터 설정
     const handleTabChange = (tabId) => {
         setActiveTab(tabId);
-        // 탭 변경 시 현재 로드된 전체 데이터에서 필터링만 수행
         filterApplicationsByTab(tabId);
     };
 
@@ -44,7 +48,7 @@ const MyApplications = () => {
 
         const filtered = allApplications.filter(app => app.protectionStatus === tabId);
         setApplications(filtered);
-        setHasMore(false); // 필터링된 데이터는 이미 모두 불러온 상태이므로 더 로드할 필요 없음
+        setHasMore(false);
     };
 
     const fetchMyApplications = async () => {
@@ -64,38 +68,31 @@ const MyApplications = () => {
                 if (data.resultCode === "200") {
                     const newApplications = data.data.content || [];
 
-                    // 데이터가 없으면 더 이상 불러올 항목이 없음
                     if (newApplications.length === 0) {
                         setHasMore(false);
                         console.log('더 이상 로드할 데이터가 없습니다');
                         return;
                     }
 
-                    // 전체 데이터 관리
                     if (page === 0) {
                         setAllApplications(newApplications);
                     } else {
                         setAllApplications(prev => [...prev, ...newApplications]);
                     }
 
-                    // 현재 탭에 맞는 필터링된 데이터 설정
                     const updatedAllApplications = page === 0
                         ? newApplications
                         : [...allApplications, ...newApplications];
 
-                    // 각 상태별 항목 수 계산
                     calculateStatusCounts(updatedAllApplications);
 
-                    // 현재 활성 탭에 맞는 데이터만 필터링
                     const filteredApps = updatedAllApplications.filter(
                         app => app.protectionStatus === activeTab
                     );
 
-                    // 필터링된 데이터 설정
                     if (page === 0) {
                         setApplications(filteredApps);
                     } else {
-                        // 이미 필터링된 데이터에 새로운 필터링된 데이터 추가
                         const existingIds = new Set(applications.map(app => app.protectionId));
                         const newFilteredApps = filteredApps.filter(
                             app => !existingIds.has(app.protectionId)
@@ -103,7 +100,6 @@ const MyApplications = () => {
                         setApplications(prev => [...prev, ...newFilteredApps]);
                     }
 
-                    // 더 로드할 데이터가 있는지 확인
                     const isLastPage = data.data.last || newApplications.length < 10;
                     setHasMore(!isLastPage);
                 }
@@ -126,11 +122,6 @@ const MyApplications = () => {
         setRejectedCount(rejected);
     };
 
-    // 페이지 로드 시 스크롤을 최상단으로 이동
-    useEffect(() => {
-        window.scrollTo(0, 0);
-    }, []);
-
     // 페이지가 변경될 때마다 데이터 가져오기
     useEffect(() => {
         fetchMyApplications();
@@ -152,18 +143,37 @@ const MyApplications = () => {
     const getStatusColor = (status) => {
         switch (status) {
             case 'PENDING':
-                return 'bg-yellow-100 text-yellow-600';
+                return 'bg-yellow-100 text-yellow-700 border border-yellow-200';
             case 'APPROVED':
-                return 'bg-green-100 text-green-600';
+                return 'bg-green-100 text-green-700 border border-green-200';
             case 'REJECTED':
-                return 'bg-red-100 text-red-600';
+                return 'bg-red-100 text-red-700 border border-red-200';
             default:
-                return 'bg-gray-100 text-gray-600';
+                return 'bg-gray-100 text-gray-700 border border-gray-200';
+        }
+    };
+
+    // 입양/임시보호 배지 컴포넌트 개선
+    const getProtectionTypeBadge = (type) => {
+        if (type === 'ADOPTION') {
+            return (
+                <div className="flex items-center gap-1 px-2 py-1 bg-blue-100 border border-blue-200 text-blue-900 rounded-full text-xs font-medium">
+                    <Home size={12} />
+                    <span>입양</span>
+                </div>
+            );
+        } else {
+            return (
+                <div className="flex items-center gap-1 px-2 py-1 bg-yellow-100 border border-yellow-200 text-yellow-900 rounded-full text-xs font-medium">
+                    <Clock size={12} />
+                    <span>임시보호</span>
+                </div>
+            );
         }
     };
 
     const handleCancelApplication = async (e, protectionId) => {
-        e.stopPropagation(); // 상위 요소 클릭 이벤트 전파 방지
+        e.stopPropagation();
 
         if (window.confirm('신청을 취소하시겠습니까?')) {
             try {
@@ -180,7 +190,6 @@ const MyApplications = () => {
                     const data = await response.json();
                     if (data.resultCode === "200") {
                         alert('신청이 취소되었습니다.');
-                        // 데이터 다시 불러오기 (첫 페이지부터)
                         setPage(0);
                         setApplications([]);
                         setAllApplications([]);
@@ -198,6 +207,11 @@ const MyApplications = () => {
                 setCancelLoading(false);
             }
         }
+    };
+
+    // 배경색 결정 (보호 유형에 따라)
+    const getCardBackgroundColor = (type) => {
+        return type === 'ADOPTION' ? 'bg-blue-50' : 'bg-gray-100';
     };
 
     return (
@@ -250,7 +264,7 @@ const MyApplications = () => {
                             <div
                                 key={application.protectionId}
                                 ref={index === applications.length - 1 ? lastApplicationRef : null}
-                                className="bg-white rounded-xl overflow-hidden shadow hover:shadow-md transition-shadow cursor-pointer"
+                                className={`${getCardBackgroundColor(application.protectionType)} rounded-xl overflow-hidden shadow hover:shadow-md transition-shadow cursor-pointer border border-gray-100`}
                                 onClick={() => navigate(`/protection/${application.animalCaseId}`)}
                             >
                                 <div className="flex p-3">
@@ -268,42 +282,49 @@ const MyApplications = () => {
                                     {/* 정보 */}
                                     <div className="flex-1 flex flex-col justify-between">
                                         <div>
-                                            <div className="flex justify-between items-start">
-                                                <h3 className="text-sm font-medium text-gray-800 line-clamp-1">
-                                                    {application.animalName || "이름 없음"}
-                                                </h3>
+                                            <div className="flex justify-between items-center mb-2">
                                                 <div className="flex items-center gap-2">
-                                                    {application.protectionStatus === 'PENDING' && (
-                                                        <button
-                                                            className="flex items-center gap-1 px-2 py-1 bg-red-500 text-white text-xs rounded-full hover:bg-red-600 transition-colors"
-                                                            onClick={(e) => handleCancelApplication(e, application.protectionId)}
-                                                            disabled={cancelLoading}
-                                                        >
-                                                            <X size={12} />
-                                                            취소
-                                                        </button>
-                                                    )}
-                                                    <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(application.protectionStatus)}`}>
-                                                        {getStatusText(application.protectionStatus)}
-                                                    </span>
+                                                    {/* 보호 유형 배지를 이름 옆으로 이동 */}
+                                                    {getProtectionTypeBadge(application.protectionType)}
+                                                    <h3 className="text-sm font-medium text-gray-800 line-clamp-1">
+                                                        {application.animalName || "이름 없음"}
+                                                    </h3>
                                                 </div>
+                                                <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(application.protectionStatus)}`}>
+                                                    {getStatusText(application.protectionStatus)}
+                                                </span>
                                             </div>
-                                            <p className="text-xs text-gray-500 mt-1 line-clamp-2">
+
+                                            <p className="text-xs text-gray-600 mt-1 mb-2 bg-white p-2 rounded border border-gray-100 line-clamp-2">
                                                 {application.reason || "사유 없음"}
                                             </p>
+
                                             {application.rejectReason && (
-                                                <p className="text-xs text-red-500 mt-1 line-clamp-2">
+                                                <p className="text-xs text-red-600 mt-1 mb-2 bg-red-50 p-2 rounded border border-red-100 line-clamp-2">
                                                     거절 사유: {application.rejectReason}
                                                 </p>
                                             )}
                                         </div>
-                                        <div className="flex justify-between items-center mt-2">
-                                            <span className="text-xs text-orange-500">
+
+                                        <div className="flex justify-between items-center mt-1">
+                                            <span className="text-xs text-gray-500">
                                                 신청자: {application.applicantName || "이름 없음"}
                                             </span>
-                                            <span className="text-xs text-gray-400">
-                                                {new Date(application.createdAt).toLocaleDateString()}
-                                            </span>
+                                            <div className="flex items-center gap-2">
+                                                {application.protectionStatus === 'PENDING' && (
+                                                    <button
+                                                        className="flex items-center gap-1 px-2 py-1 bg-red-500 text-white text-xs rounded-md hover:bg-red-600 transition-colors"
+                                                        onClick={(e) => handleCancelApplication(e, application.protectionId)}
+                                                        disabled={cancelLoading}
+                                                    >
+                                                        <X size={12} />
+                                                        취소
+                                                    </button>
+                                                )}
+                                                <span className="text-xs text-gray-400">
+                                                    {new Date(application.createdAt).toLocaleDateString()}
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
