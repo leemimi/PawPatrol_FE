@@ -6,6 +6,11 @@ import MyPage from './pages/MyPage'
 import SignUp from './pages/SignUpPage'
 import LoginPet from './pages/LoginPet'
 import Protection from './pages/Protection'
+import ProtectionDetail from './pages/ProtectionDetail'
+import MyApplications from './pages/MyApplications'
+import MyRegisterAnimals from './pages/MyRegisterAnimals'
+import RegisterAnimalForm from './pages/RegisterAnimalForm'
+import EditAnimalForm from './pages/EditAnimalForm'
 // import Layout from './layout/Layout.jsx'
 import SocialConnect from './pages/SocialConnectPage'
 import LostPostForm from './pages/LostPostForm'
@@ -31,13 +36,17 @@ const App = () => {
         <Route path="/" element={<Map />} />
         <Route path="/oauth2/redirect" element={<OAuth2RedirectHandler />} />
         <Route path="/protection" element={<Protection />} />
+        <Route path="/protection/:id" element={<ProtectionDetail />} />
+        <Route path="/my-applications" element={<MyApplications />} />
+        <Route path="/my-register-animals" element={<MyRegisterAnimals />} />
+        <Route path="/register-animal" element={<RegisterAnimalForm />} />
+        <Route path="/edit-animal/:id" element={<EditAnimalForm />} />
         <Route path="/forgot-password" element={<ForgotPasswordScreen />} />
-        <Route path="/lost-pet-registration" element={<LostPostForm/>} />
+        <Route path="/lost-pet-registration" element={<LostPostForm />} />
         <Route path="/find-pet-report" element={<ReportPostForm />} />
-        <Route path="/community" element={<LostPetListPages/>} />
+        <Route path="/community" element={<LostPetListPages />} />
         <Route path="/PetPostDetail/:postId" element={<PetPostDetail />} />
-        <Route path="/lostmypetfix/:postId" element={<Lostmypetfix/>} />
- 
+        <Route path="/lostmypetfix/:postId" element={<Lostmypetfix />} />
       </Route>
     </Routes>
   );

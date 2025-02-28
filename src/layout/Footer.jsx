@@ -67,7 +67,7 @@ const Footer = () => {
                     className="flex flex-col items-center gap-1 p-2 text-orange-400 hover:text-orange-500 transition-colors"
                 >
                     <Users size={20} strokeWidth={2.5} />
-                    <span className="text-xs font-medium">커뮤니티</span>
+                    <span className="text-xs font-medium">새로운 가족</span>
                 </button>
                 <button
                     onClick={handleMyPageClick}
