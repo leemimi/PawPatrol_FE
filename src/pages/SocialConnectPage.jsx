@@ -42,7 +42,7 @@ const SocialConnectPage = () => {
 
                 localStorage.removeItem('userInfo');
                 localStorage.removeItem('isLoggedIn');
-                
+
                 const login_response = await axios.post(
                     `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/auth/login`,
                     request
@@ -58,7 +58,8 @@ const SocialConnectPage = () => {
                         const loginUserInfo = {
                             email: response.data.data.email,
                             nickname: response.data.data.nickname,
-                            profileImage: response.data.data.profileImage
+                            profileImage: response.data.data.profileImage,
+                            role: response.data.data.role
                         };
 
                         localStorage.setItem('userInfo', JSON.stringify(loginUserInfo));
