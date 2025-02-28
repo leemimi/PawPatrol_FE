@@ -7,6 +7,13 @@ export const CommonCard = ({ item, type, onClose }) => {
     console.log('item.animalType:', item.animalType);
 console.log('item.pet.animalType:', item.pet.animalType);
 
+
+
+
+
+
+
+
     // 반려동물 상태 텍스트 변환
     const getStatusText = (status) => {
         switch(status) {
@@ -67,7 +74,16 @@ console.log('item.pet.animalType:', item.pet.animalType);
             </h3>
         ) : null;
         
-        
+        // 이미지 경로 처리
+        const imageUrl = item?.image || '/api/placeholder/160/160';
+
+
+
+
+
+
+
+
 
 
         return (
@@ -77,7 +93,9 @@ console.log('item.pet.animalType:', item.pet.animalType);
                         className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-orange-100 cursor-pointer"
                         onClick={handleDetailNavigation}
                     >
-                        <img src={petImage} alt="" className="w-full h-full object-cover" />
+                        {/* 이미지 URL 적용 */}
+                        <img src={imageUrl} alt="pet" className="w-full h-full object-cover" />
+
                     </div>
                     <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
