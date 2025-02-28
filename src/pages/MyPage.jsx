@@ -40,6 +40,35 @@ const MyPage = () => {
         witnessCurrentPage: 0
     });
 
+    // 회원 탈퇴
+    const handleWithdrawMember = async () => {
+        // 사용자에게 확인 요청
+        const isConfirmed = window.confirm("정말로 회원 탈퇴하시겠습니까? 이 작업은 되돌릴 수 없습니다.");
+
+        if (!isConfirmed) return;
+
+        try {
+            const response = await axios.patch(
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/withdraw`,
+                {},
+                { withCredentials: true }
+            );
+
+            if (response.data.statusCode === 200) {
+                alert('회원 탈퇴가 완료되었습니다.');
+                // 로컬 스토리지 정보 삭제
+                localStorage.removeItem('accessToken');
+                localStorage.removeItem('userInfo');
+                localStorage.removeItem('isLoggedIn');
+                // 로그인 페이지로 이동
+                navigate('/login-pet', { replace: true });
+            }
+        } catch (error) {
+            console.error('회원 탈퇴 오류:', error);
+            alert('회원 탈퇴 처리 중 오류가 발생했습니다.');
+        }
+    };
+
     // 소셜 계정 연동 해제 함수
     const handleUnlinkSocialAccount = async (providerType) => {
         try {
@@ -937,6 +966,20 @@ const MyPage = () => {
                                         </div>
                                     )}
                                 </div>
+                                {activeTab === 'profile' && (
+                                    <div className="mt-8 border-t pt-6">
+                                        <h3 className="text-lg font-semibold text-red-600 mb-2">계정 삭제</h3>
+                                        <p className="text-sm text-gray-500 mb-4">
+                                            계정을 삭제하면 모든 데이터가 영구적으로 제거됩니다. 이 작업은 되돌릴 수 없습니다.
+                                        </p>
+                                        <button
+                                            onClick={handleWithdrawMember}
+                                            className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                                        >
+                                            회원 탈퇴
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
