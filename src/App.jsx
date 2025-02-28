@@ -9,6 +9,7 @@ import Protection from './pages/Protection'
 import ProtectionDetail from './pages/ProtectionDetail'
 import MyApplications from './pages/MyApplications'
 import MyRegisterAnimals from './pages/MyRegisterAnimals'
+import RegisterAnimalForm from './pages/RegisterAnimalForm'
 // import Layout from './layout/Layout.jsx'
 import SocialConnect from './pages/SocialConnectPage'
 import LostPostForm from './pages/LostPostForm'
@@ -36,6 +37,7 @@ const App = () => {
         <Route path="/protection/:id" element={<ProtectionDetail />} />
         <Route path="/my-applications" element={<MyApplications />} />
         <Route path="/my-register-animals" element={<MyRegisterAnimals />} />
+        <Route path="/register-animal" element={<RegisterAnimalForm />} />
         <Route path="/forgot-password" element={<ForgotPasswordScreen />} />
         <Route path="/lost-pet-registration" element={<LostPostForm />} />
         <Route path="/find-pet-report" element={<ReportPostForm />} />

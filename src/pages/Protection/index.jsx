@@ -120,7 +120,7 @@ const Protection = () => {
             <div className="relative h-40">
               {animal.imageUrl && (
                 <img
-                  src={`https://kr.object.ncloudstorage.com/paw-patrol/protection/${animal.imageUrl}`}
+                  src={animal.imageUrl}
                   alt={animal.title}
                   className="w-full h-full object-cover"
                 />
@@ -128,7 +128,7 @@ const Protection = () => {
               <div className="absolute top-2 left-2">
                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${animal.caseStatus === 'PROTECT_WAITING'
                   ? 'bg-yellow-400 text-white'
-                  : animal.caseStatus === 'PROTECTION_POSSIBLE'
+                  : animal.caseStatus === 'TEMP_PROTECTING'
                     ? 'bg-red-400 text-white'
                     : 'bg-orange-300 text-white'
                   }`}>
@@ -178,7 +178,7 @@ const Protection = () => {
                 navigate('/my-register-animals'); // 등록한 동물 목록 페이지로 이동
               }}
             >
-              등록한 동물 목록
+              내 동물 목록
             </button>
             <button
               className="w-full px-4 py-3 text-sm text-left hover:bg-orange-50 text-gray-700 transition-colors"
