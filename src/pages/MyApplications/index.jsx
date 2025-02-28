@@ -163,7 +163,7 @@ const MyApplications = () => {
                                     <div className="w-24 h-24 rounded-lg overflow-hidden flex-shrink-0 mr-3">
                                         {application.imageUrl && (
                                             <img
-                                                src={`https://kr.object.ncloudstorage.com/paw-patrol/protection/${application.imageUrl}`}
+                                                src={application.imageUrl}
                                                 alt={application.animalName}
                                                 className="w-full h-full object-cover"
                                             />

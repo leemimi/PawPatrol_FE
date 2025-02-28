@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronDown, ChevronUp, ArrowLeft } from 'lucide-react';
+import { ChevronDown, ChevronUp, ArrowLeft, Edit2, Trash2 } from 'lucide-react';
 
 const AnimalDetail = () => {
     const { id } = useParams();
@@ -12,6 +12,7 @@ const AnimalDetail = () => {
     const [applyReason, setApplyReason] = useState('');
     const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
     const [applicationType, setApplicationType] = useState('');
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
     useEffect(() => {
         const fetchAnimalDetail = async () => {
@@ -60,6 +61,49 @@ const AnimalDetail = () => {
         setIsApplyModalOpen(false);
         setApplyReason('');
         setApplicationType('');
+    };
+
+    const handleEditClick = () => {
+        navigate(`/edit-animal/${id}`);
+    };
+
+    const handleDeleteClick = () => {
+        setIsDeleteModalOpen(true);
+    };
+
+    const handleCancelDelete = () => {
+        setIsDeleteModalOpen(false);
+    };
+
+    const handleConfirmDelete = async () => {
+        try {
+            setIsSubmitting(true);
+            const response = await fetch(`/api/v1/protections/${id}`, {
+                method: 'PATCH',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.resultCode === "200") {
+                    alert('삭제되었습니다.');
+                    navigate('/protection');
+                } else {
+                    alert('삭제 중 오류가 발생했습니다: ' + data.message);
+                }
+            } else {
+                alert('삭제 중 오류가 발생했습니다.');
+            }
+        } catch (error) {
+            console.error('삭제 오류:', error);
+            alert('삭제 중 오류가 발생했습니다.');
+        } finally {
+            setIsSubmitting(false);
+            setIsDeleteModalOpen(false);
+        }
     };
 
     const handleSubmitApply = async () => {
@@ -193,12 +237,34 @@ const AnimalDetail = () => {
                         {/* 헤더 섹션 */}
                         <div className="p-4 flex justify-between items-center border-b border-gray-100">
                             <h2 className="text-lg font-bold text-orange-900">기본 정보</h2>
-                            <span className={`px-3 py-1 rounded-full text-sm font-medium ${animalData.animalCaseDetail.caseStatus === 'PROTECT_WAITING'
-                                ? 'bg-yellow-400 text-white'
-                                : 'bg-orange-300 text-white'
-                                }`}>
-                                {animalData.animalCaseDetail.caseStatus === 'PROTECT_WAITING' ? '신청가능' : '임보중'}
-                            </span>
+                            <div className="flex items-center">
+                                <span className={`px-3 py-1 rounded-full text-sm font-medium mr-2 ${animalData.animalCaseDetail.caseStatus === 'PROTECT_WAITING'
+                                    ? 'bg-yellow-400 text-white'
+                                    : 'bg-orange-300 text-white'
+                                    }`}>
+                                    {animalData.animalCaseDetail.caseStatus === 'PROTECT_WAITING' ? '신청가능' : '임보중'}
+                                </span>
+
+                                {/* 수정/삭제 버튼 - 내가 등록한 경우에만 표시 */}
+                                {animalData.isOwner && (
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={handleEditClick}
+                                            className="p-1 text-blue-500 hover:text-blue-600 transition-colors"
+                                            title="수정"
+                                        >
+                                            <Edit2 size={18} />
+                                        </button>
+                                        <button
+                                            onClick={handleDeleteClick}
+                                            className="p-1 text-red-500 hover:text-red-600 transition-colors"
+                                            title="삭제"
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
                         {/* 사진 영역 */}
@@ -252,15 +318,19 @@ const AnimalDetail = () => {
                                 </div>
                             </div>
 
-                            {/* 상세 설명 영역 - 있을 때만 표시 */}
-                            {animalData.animalCaseDetail.description && (
+                            {/* 상세 설명 영역 - 제목과 설명이 있을 때만 표시 */}
+                            {(animalData.animalCaseDetail.title || animalData.animalCaseDetail.description) && (
                                 <div className="bg-green-50 rounded-lg p-4">
-                                    <div className="mb-2">
-                                        <span className="text-green-600 text-sm font-medium">상세 설명</span>
-                                    </div>
-                                    <p className="text-gray-700 text-sm whitespace-pre-line">
-                                        {animalData.animalCaseDetail.description}
-                                    </p>
+                                    {animalData.animalCaseDetail.title && (
+                                        <div className="mb-2">
+                                            <h3 className="text-green-700 text-sm font-medium">{animalData.animalCaseDetail.title}</h3>
+                                        </div>
+                                    )}
+                                    {animalData.animalCaseDetail.description && (
+                                        <p className="text-gray-700 text-sm whitespace-pre-line">
+                                            {animalData.animalCaseDetail.description}
+                                        </p>
+                                    )}
                                 </div>
                             )}
 
@@ -417,6 +487,34 @@ const AnimalDetail = () => {
                                     disabled={isSubmitting}
                                 >
                                     {isSubmitting ? '제출 중...' : '신청하기'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* 삭제 확인 모달 */}
+                {isDeleteModalOpen && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                        <div className="bg-white rounded-xl p-5 w-full max-w-md">
+                            <h3 className="text-lg font-medium mb-4">삭제 확인</h3>
+                            <p className="mb-4 text-gray-700">
+                                정말로 이 동물 정보를 삭제하시겠습니까?
+                            </p>
+                            <div className="flex justify-end gap-2">
+                                <button
+                                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium"
+                                    onClick={handleCancelDelete}
+                                    disabled={isSubmitting}
+                                >
+                                    취소
+                                </button>
+                                <button
+                                    className="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-medium"
+                                    onClick={handleConfirmDelete}
+                                    disabled={isSubmitting}
+                                >
+                                    {isSubmitting ? '삭제 중...' : '삭제하기'}
                                 </button>
                             </div>
                         </div>
