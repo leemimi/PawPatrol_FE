@@ -115,6 +115,8 @@ const LostPostForm = () => {
   const handlePetSelect = (pet) => {
     setSelectedPet(pet);
     console.log(pet); // 확인하여 id가 존재하는지 확인
+    console.log(pet.id); // Ensure this is a valid Long or number
+
 
     setFormData(prev => {
       const updatedFormData = {
