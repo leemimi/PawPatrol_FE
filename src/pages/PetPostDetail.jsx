@@ -312,14 +312,19 @@ const renderImages = () => {
         <div className="mt-4">
           <h2 className="font-semibold">댓글</h2>
           {comments.map(comment => (
-            <div key={comment.id} className="border p-2 mt-2 rounded">
-              <p><strong>{comment.nickname}</strong>: {comment.content}</p>
-              <div className="flex gap-2">
-                <button onClick={() => handleEditComment(comment)} className="text-blue-500">수정</button>
-                <button onClick={() => handleDeleteComment(comment.id)} className="text-red-500">삭제</button>
-              </div>
-            </div>
-          ))}
+  <div key={comment.id} className="border p-2 mt-2 rounded">
+    <p><strong>{comment.nickname}</strong>: {comment.content}</p>
+
+    {/* Check if the current user is the author of the comment */}
+    {currentUserId && currentUserId === comment.userId && (
+      <div className="flex gap-2">
+        <button onClick={() => handleEditComment(comment)} className="text-blue-500">수정</button>
+        <button onClick={() => handleDeleteComment(comment.id)} className="text-red-500">삭제</button>
+      </div>
+    )}
+  </div>
+))}
+
         </div>
 
         <form onSubmit={handleSubmitComment} className="mt-4 flex items-center gap-2">
