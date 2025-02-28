@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, X, Check } from 'lucide-react';
+import { ChevronLeft, X, Check, Home, Clock } from 'lucide-react';
+import ApplicationsModal from '../../components/ApplicationsModal';
 
 const MyRegisteredAnimals = () => {
     const [animals, setAnimals] = useState([]);
@@ -124,6 +125,25 @@ const MyRegisteredAnimals = () => {
                 return 'bg-red-400 text-white';
             default:
                 return 'bg-gray-400 text-white';
+        }
+    };
+
+    // 보호 유형에 따른 배지 생성
+    const getProtectionTypeBadge = (type) => {
+        if (type === 'ADOPTION') {
+            return (
+                <div className="flex items-center gap-1 px-2 py-1 bg-indigo-100 text-indigo-600 rounded-full text-xs">
+                    <Home size={12} />
+                    <span>입양</span>
+                </div>
+            );
+        } else {
+            return (
+                <div className="flex items-center gap-1 px-2 py-1 bg-amber-100 text-amber-600 rounded-full text-xs">
+                    <Clock size={12} />
+                    <span>임시보호</span>
+                </div>
+            );
         }
     };
 
@@ -347,55 +367,14 @@ const MyRegisteredAnimals = () => {
             </main>
 
             {/* 신청 목록 모달 */}
-            {isModalOpen && selectedAnimal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-xl p-5 w-full max-w-md">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-lg font-medium">신청 목록</h3>
-                            <button
-                                className="text-gray-500 hover:text-gray-700"
-                                onClick={() => setIsModalOpen(false)}
-                            >
-                                <X size={20} />
-                            </button>
-                        </div>
-
-                        {selectedAnimal.pendingProtections && selectedAnimal.pendingProtections.length > 0 ? (
-                            <div className="space-y-3 max-h-96 overflow-y-auto">
-                                {selectedAnimal.pendingProtections.map((application, index) => (
-                                    <div key={index} className="bg-orange-50 p-3 rounded-lg">
-                                        <div className="flex justify-between">
-                                            <span className="font-medium text-gray-700">{application.applicantName}</span>
-                                            <span className="text-xs text-gray-500">
-                                                {new Date(application.createdAt).toLocaleDateString()}
-                                            </span>
-                                        </div>
-                                        <p className="text-sm text-gray-600 mt-1">{application.reason}</p>
-                                        <div className="flex gap-2 mt-2">
-                                            <button
-                                                className="flex items-center gap-1 px-3 py-1 bg-green-500 text-white text-xs rounded-md hover:bg-green-600 transition-colors"
-                                                onClick={() => handleApproveProtection(application.protectionId)}
-                                            >
-                                                <Check size={14} />
-                                                수락
-                                            </button>
-                                            <button
-                                                className="flex items-center gap-1 px-3 py-1 bg-red-500 text-white text-xs rounded-md hover:bg-red-600 transition-colors"
-                                                onClick={() => handleRejectProtection(application.protectionId)}
-                                            >
-                                                <X size={14} />
-                                                거절
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <p className="text-center text-gray-500 py-4">신청 내역이 없습니다.</p>
-                        )}
-                    </div>
-                </div>
-            )}
+            <ApplicationsModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                applications={selectedAnimal?.pendingProtections || []}
+                onApprove={handleApproveProtection}
+                onReject={handleRejectProtection}
+                title={`대기 중인 신청`}
+            />
         </div>
     );
 };
