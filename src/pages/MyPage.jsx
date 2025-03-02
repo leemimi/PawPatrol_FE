@@ -999,30 +999,52 @@ const MyPage = () => {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {myPets.map(pet => (
-                                <div key={pet.id} className="border rounded-lg shadow-sm overflow-hidden">
-                                    <img
-                                        src={pet.imageUrl}
-                                        alt={pet.name}
-                                        className="w-full h-48 object-cover"
-                                    />
-                                    <div className="p-4 space-y-2">
-                                        <h3 className="text-xl font-bold">{pet.name}</h3>
-                                        <div className="text-gray-600">
-                                            <p>품종: {pet.breed}</p>
-                                            <p>특징: {pet.feature}</p>
-                                            <p>크기: {pet.size}</p>
-                                            <p>동물등록번호: {pet.registrationNo}</p>
+                                <div key={pet.id} className="bg-white border rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200">
+                                    {/* 고정된 비율의 이미지 컨테이너 */}
+                                    <div className="relative w-full pb-[75%]"> {/* 4:3 비율 유지 */}
+                                        <img
+                                            src={pet.imageUrl}
+                                            alt={pet.name}
+                                            className="absolute inset-0 w-full h-full object-cover"
+                                        />
+                                    </div>
+
+                                    <div className="p-4 space-y-3">
+                                        <div className="flex justify-between items-center">
+                                            <h3 className="text-xl font-bold text-gray-800">{pet.name}</h3>
+                                            <span className="text-sm font-medium px-2 py-1 bg-blue-100 text-blue-800 rounded-full">
+                                                {pet.animalType === 'DOG' ? '강아지' : '고양이'}
+                                            </span>
                                         </div>
-                                        <div className="flex justify-end space-x-2 mt-4">
+
+                                        <div className="grid grid-cols-2 gap-2 text-sm text-gray-600">
+                                            <div>
+                                                <span className="font-medium">품종:</span> {pet.breed}
+                                            </div>
+                                            <div>
+                                                <span className="font-medium">크기:</span> {pet.size}
+                                            </div>
+                                        </div>
+
+                                        <div className="text-sm text-gray-600">
+                                            <span className="font-medium">특징:</span>
+                                            <p className="mt-1 line-clamp-2">{pet.feature}</p>
+                                        </div>
+
+                                        <div className="text-xs text-gray-500 mt-2">
+                                            <span className="font-medium">등록번호:</span> {pet.registrationNo}
+                                        </div>
+
+                                        <div className="flex justify-end space-x-2 pt-3 border-t mt-3">
                                             <button
                                                 onClick={() => handleEditPet(pet)}
-                                                className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                                                className="px-3 py-1.5 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors text-sm"
                                             >
                                                 수정
                                             </button>
                                             <button
                                                 onClick={() => handleDeleteConfirm(pet)}
-                                                className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                                                className="px-3 py-1.5 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors text-sm"
                                             >
                                                 삭제
                                             </button>
