@@ -15,6 +15,8 @@ import LostPetListPages from './pages/LostPetListPages'
 import ReportPostForm from './pages/ReportPostForm'
 import PetPostDetail from './pages/PetPostDetail'
 import Lostmypetfix from './pages/Lostmypetfix'
+import Chat from './pages/Chat'
+import ChatList from './pages/ChatList'
 import './api/axiosConfig'; // axios 전역 인터셉터 설정, 토큰 만료시 로그아웃 처리
 import { useAuthStore } from './stores/useAuthStore'
 import './index.css';
@@ -27,6 +29,7 @@ const App = () => {
         <Route path="/sign-up" element={<SignUp />} />
         <Route path="/mypage" element={<MyPage />} />
         <Route path="/connect" element={<SocialConnect />} />
+        <Route path="/chat" element={<Chat />} />
         <Route path="/" element={<Map />} />
         <Route path="/oauth2/redirect" element={<OAuth2RedirectHandler />} />
         <Route path="/protection" element={<Protection />} />
@@ -34,6 +37,7 @@ const App = () => {
         <Route path="/lost-pet-registration" element={<LostPostForm/>} />
         <Route path="/find-pet-report" element={<ReportPostForm />} />
         <Route path="/community" element={<LostPetListPages/>} />
+        <Route path="/chatlist" element={<ChatList />} />
         <Route path="/PetPostDetail/:postId" element={<PetPostDetail />} />
         <Route path="/lostmypetfix/:postId" element={<Lostmypetfix/>} />
       </Route>
