@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronDown, ChevronUp, ArrowLeft, Edit2, Trash2, Home, Clock } from 'lucide-react';
+import { ChevronDown, ChevronUp, ArrowLeft, Edit2, Trash2, Home, Clock, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import ApplicationsModal from '../../components/ApplicationsModal';
 
 const AnimalDetail = () => {
@@ -15,6 +15,10 @@ const AnimalDetail = () => {
     const [applicationType, setApplicationType] = useState('');
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
+
+    // Image gallery state
+    const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [isGalleryOpen, setIsGalleryOpen] = useState(false);
 
     // 페이지 로드 시 스크롤을 최상단으로 이동
     useEffect(() => {
@@ -49,6 +53,27 @@ const AnimalDetail = () => {
 
         fetchAnimalDetail();
     }, [id]);
+
+    const nextImage = () => {
+        if (animalData && animalData.images) {
+            setCurrentImageIndex((prevIndex) =>
+                prevIndex === animalData.images.length - 1 ? 0 : prevIndex + 1
+            );
+        }
+    };
+
+    const prevImage = () => {
+        if (animalData && animalData.images) {
+            setCurrentImageIndex((prevIndex) =>
+                prevIndex === 0 ? animalData.images.length - 1 : prevIndex - 1
+            );
+        }
+    };
+
+    const openGallery = (index) => {
+        setCurrentImageIndex(index);
+        setIsGalleryOpen(true);
+    };
 
     const getSizeText = (size) => {
         switch (size) {
@@ -265,9 +290,15 @@ const AnimalDetail = () => {
                             <div className="flex items-center">
                                 <span className={`px-3 py-1 rounded-full text-sm font-medium mr-2 ${animalData.animalCaseDetail.caseStatus === 'PROTECT_WAITING'
                                     ? 'bg-yellow-400 text-white'
-                                    : 'bg-orange-300 text-white'
+                                    : animalData.animalCaseDetail.caseStatus === 'SHELTER_PROTECTING'
+                                        ? 'bg-blue-400 text-white'
+                                        : 'bg-orange-300 text-white'
                                     }`}>
-                                    {animalData.animalCaseDetail.caseStatus === 'PROTECT_WAITING' ? '신청가능' : '임보중'}
+                                    {animalData.animalCaseDetail.caseStatus === 'PROTECT_WAITING'
+                                        ? '신청가능'
+                                        : animalData.animalCaseDetail.caseStatus === 'SHELTER_PROTECTING'
+                                            ? '보호소 보호중'
+                                            : '임보중'}
                                 </span>
 
                                 {/* 수정/삭제 버튼 - 내가 등록한 경우에만 표시 */}
@@ -292,10 +323,58 @@ const AnimalDetail = () => {
                             </div>
                         </div>
 
-                        {/* 사진 영역 */}
+                        {/* 사진 영역 - 메인 이미지와 갤러리 기능 추가 */}
                         <div className="relative">
-                            <div className="h-80 overflow-hidden">
-                                {animalData.animalCaseDetail.animalInfo.imageUrl && (
+                            <div className="h-80 overflow-hidden relative">
+                                {animalData.images && animalData.images.length > 0 ? (
+                                    <>
+                                        <img
+                                            src={animalData.images[currentImageIndex].path}
+                                            alt={`동물 사진 ${currentImageIndex + 1}`}
+                                            className="w-full h-full object-cover"
+                                            onClick={() => openGallery(currentImageIndex)}
+                                        />
+
+                                        {/* Image navigation */}
+                                        {animalData.images.length > 1 && (
+                                            <>
+                                                <button
+                                                    className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-60 p-1 rounded-full shadow-md hover:bg-opacity-90 transition-all"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        prevImage();
+                                                    }}
+                                                >
+                                                    <ChevronLeft size={24} className="text-gray-800" />
+                                                </button>
+                                                <button
+                                                    className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-60 p-1 rounded-full shadow-md hover:bg-opacity-90 transition-all"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        nextImage();
+                                                    }}
+                                                >
+                                                    <ChevronRight size={24} className="text-gray-800" />
+                                                </button>
+                                                <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1">
+                                                    {animalData.images.map((_, index) => (
+                                                        <button
+                                                            key={index}
+                                                            className={`w-2 h-2 rounded-full transition-all ${index === currentImageIndex
+                                                                    ? 'bg-white scale-125'
+                                                                    : 'bg-white bg-opacity-60'
+                                                                }`}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setCurrentImageIndex(index);
+                                                            }}
+                                                        />
+                                                    ))}
+                                                </div>
+                                            </>
+                                        )}
+                                    </>
+                                ) : animalData.animalCaseDetail.animalInfo.imageUrl && (
                                     <img
                                         src={animalData.animalCaseDetail.animalInfo.imageUrl}
                                         alt="동물 사진"
@@ -303,6 +382,30 @@ const AnimalDetail = () => {
                                     />
                                 )}
                             </div>
+
+                            {/* 썸네일 갤러리 */}
+                            {animalData.images && animalData.images.length > 1 && (
+                                <div className="px-4 py-2 overflow-x-auto bg-gray-50">
+                                    <div className="flex gap-2">
+                                        {animalData.images.map((image, index) => (
+                                            <button
+                                                key={index}
+                                                className={`flex-shrink-0 h-16 w-16 rounded-md overflow-hidden border-2 transition-all ${index === currentImageIndex
+                                                        ? 'border-orange-500 shadow-md scale-105'
+                                                        : 'border-transparent hover:border-orange-300'
+                                                    }`}
+                                                onClick={() => setCurrentImageIndex(index)}
+                                            >
+                                                <img
+                                                    src={image.path}
+                                                    alt={`썸네일 ${index + 1}`}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         {/* 주요 정보 섹션 */}
@@ -353,7 +456,31 @@ const AnimalDetail = () => {
                                     )}
                                     {animalData.animalCaseDetail.description && (
                                         <p className="text-gray-700 text-sm whitespace-pre-line">
-                                            {animalData.animalCaseDetail.description}
+                                            {(() => {
+                                                const desc = animalData.animalCaseDetail.description;
+                                                // YouTube 링크 찾기
+                                                if (desc.includes('영상 링크 :')) {
+                                                    const parts = desc.split('영상 링크 :');
+                                                    const beforeLink = parts[0];
+                                                    const afterLinkParts = parts[1].split(' ');
+                                                    const link = afterLinkParts[1];
+                                                    const remainingText = afterLinkParts.slice(2).join(' ');
+
+                                                    return (
+                                                        <>
+                                                            {beforeLink}영상 링크 : <a
+                                                                href={link}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="text-blue-500 hover:underline"
+                                                            >
+                                                                {link}
+                                                            </a>{remainingText}
+                                                        </>
+                                                    );
+                                                }
+                                                return desc;
+                                            })()}
                                         </p>
                                     )}
                                 </div>
@@ -471,7 +598,6 @@ const AnimalDetail = () => {
                             </div>
                         )}
 
-
                         <ApplicationsModal
                             isOpen={isModalOpen}
                             onClose={() => setIsModalOpen(false)}
@@ -482,7 +608,7 @@ const AnimalDetail = () => {
                         />
 
                         {/* 임시보호/입양 신청 버튼 - 내가 소유자가 아닐 때만 표시 */}
-                        {!animalData.isOwner && animalData.animalCaseDetail.caseStatus === 'PROTECT_WAITING' && (
+                        {!animalData.isOwner && (animalData.animalCaseDetail.caseStatus === 'PROTECT_WAITING' || animalData.animalCaseDetail.caseStatus === 'SHELTER_PROTECTING') && (
                             <div className="p-5 border-t border-gray-100 space-y-3">
                                 <button
                                     className="w-full py-3 flex justify-center items-center gap-2 bg-amber-500 text-white rounded-lg font-medium hover:bg-amber-600 transition-colors"
@@ -585,6 +711,53 @@ const AnimalDetail = () => {
                                     {isSubmitting ? '삭제 중...' : '삭제하기'}
                                 </button>
                             </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* 전체화면 이미지 갤러리 모달 */}
+                {isGalleryOpen && animalData.images && (
+                    <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50">
+                        <button
+                            className="absolute top-4 right-4 text-white p-2 rounded-full bg-black bg-opacity-50 hover:bg-opacity-70 transition-colors"
+                            onClick={() => setIsGalleryOpen(false)}
+                        >
+                            <X size={24} />
+                        </button>
+
+                        <button
+                            className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white p-2 rounded-full bg-black bg-opacity-50 hover:bg-opacity-70 transition-colors"
+                            onClick={prevImage}
+                        >
+                            <ChevronLeft size={32} />
+                        </button>
+
+                        <div className="w-full max-w-3xl max-h-[80vh] flex items-center justify-center">
+                            <img
+                                src={animalData.images[currentImageIndex].path}
+                                alt={`동물 사진 ${currentImageIndex + 1}`}
+                                className="max-w-full max-h-[80vh] object-contain"
+                            />
+                        </div>
+
+                        <button
+                            className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white p-2 rounded-full bg-black bg-opacity-50 hover:bg-opacity-70 transition-colors"
+                            onClick={nextImage}
+                        >
+                            <ChevronRight size={32} />
+                        </button>
+
+                        <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2">
+                            {animalData.images.map((_, index) => (
+                                <button
+                                    key={index}
+                                    className={`w-3 h-3 rounded-full transition-all ${index === currentImageIndex
+                                            ? 'bg-white scale-125'
+                                            : 'bg-white bg-opacity-60 hover:bg-opacity-100'
+                                        }`}
+                                    onClick={() => setCurrentImageIndex(index)}
+                                />
+                            ))}
                         </div>
                     </div>
                 )}

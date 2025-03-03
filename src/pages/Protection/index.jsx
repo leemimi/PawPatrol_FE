@@ -32,7 +32,9 @@ const Protection = () => {
       case 'PROTECT_WAITING':
         return '신청가능';
       case 'TEMP_PROTECTING':
-        return '임보중';
+        return '임시 보호중';
+      case 'SHELTER_PROTECTING':
+        return '보호소 보호중';
       default:
         return status;
     }
@@ -117,7 +119,7 @@ const Protection = () => {
       <div className="grid grid-cols-2 gap-3">
         {animals.map((animal, index) => (
           <div
-            key={animal.animalCaseId || index}
+            key={`animal-${animal.animalCaseId}`}
             ref={index === animals.length - 1 ? lastAnimalRef : null}
             className="bg-white rounded-xl overflow-hidden shadow hover:shadow-md transition-shadow cursor-pointer"
             onClick={() => handleAnimalClick(animal)}
@@ -135,7 +137,7 @@ const Protection = () => {
                   ? 'bg-yellow-400 text-white'
                   : animal.caseStatus === 'TEMP_PROTECTING'
                     ? 'bg-red-400 text-white'
-                    : 'bg-orange-300 text-white'
+                    : 'bg-blue-300 text-white'
                   }`}>
                   {getStatusText(animal.caseStatus)}
                 </span>
