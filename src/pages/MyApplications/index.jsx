@@ -178,8 +178,8 @@ const MyApplications = () => {
         if (window.confirm('신청을 취소하시겠습니까?')) {
             try {
                 setCancelLoading(true);
-                const response = await fetch(`/api/v1/protections/${protectionId}`, {
-                    method: 'DELETE',
+                const response = await fetch(`/api/v1/protections/${protectionId}/cancel`, {
+                    method: 'PATCH',
                     credentials: 'include',
                     headers: {
                         'Content-Type': 'application/json',
