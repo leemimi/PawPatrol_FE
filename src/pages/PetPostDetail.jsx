@@ -198,16 +198,6 @@ const renderImages = () => {
   return null;
 };
 
-  const renderImages = () => {
-    if (post && post.images && post.images.length > 0) {
-      return post.images.map((image, index) => (
-        <img key={index} src={image.imageUrl} alt={`Post Image ${index + 1}`} className="w-full h-auto my-4" />
-      ));
-    }
-    return null;
-  };
-
-
   const handleUpdate = () => {
     setPost({...post, title: newComment});
     setIsEditing(false);

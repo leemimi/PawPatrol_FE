@@ -22,8 +22,5 @@ export default defineConfig({
         changeOrigin: true
       }
     }
-  },
-  define: {
-    global: 'window',
   }
 })
