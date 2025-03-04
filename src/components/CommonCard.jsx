@@ -7,11 +7,18 @@ export const CommonCard = ({ item, type, onClose }) => {
     console.log('item.animalType:', item.animalType);
 console.log('item.pet.animalType:', item.pet.animalType);
 
-    // 반려동물 상태 텍스트 변환
+
+
+
+
+
+
+
+    // 반려동물 상태 텍스트 변환 수정 
     const getStatusText = (status) => {
         switch(status) {
             case 'FINDING': return '찾는중';
-            case 'SIGHTING': return '목격';
+            case 'FOSTERING': return '임보 중';
             case 'SIGHTED': return '목격';  // API 응답에 따라 SIGHTING 또는 SIGHTED로 올 수 있음
             case 'SHELTER': return '보호중';
             default: return status;
@@ -67,7 +74,16 @@ console.log('item.pet.animalType:', item.pet.animalType);
             </h3>
         ) : null;
         
-        
+        // 이미지 경로 처리
+        const imageUrl = item?.image || '/api/placeholder/160/160';
+
+
+
+
+
+
+
+
 
 
         return (
@@ -77,7 +93,9 @@ console.log('item.pet.animalType:', item.pet.animalType);
                         className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-orange-100 cursor-pointer"
                         onClick={handleDetailNavigation}
                     >
-                        <img src={petImage} alt="" className="w-full h-full object-cover" />
+                        {/* 이미지 URL 적용 */}
+                        <img src={imageUrl} alt="pet" className="w-full h-full object-cover" />
+
                     </div>
                     <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">

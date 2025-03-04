@@ -97,9 +97,18 @@ const ReportPostForm = ({ formType = "standalone" }) => {
 
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
-    setImages(files);
+    
+    // Combine new files with existing ones (up to 5)
+    const combinedImages = [...images, ...files].slice(0, 5);
+    setImages(combinedImages);
+    
+    // Create and combine preview URLs for all images
     const newPreviewUrls = files.map((file) => URL.createObjectURL(file));
-    setPreviewUrls(newPreviewUrls);
+    const combinedPreviewUrls = [...previewUrls, ...newPreviewUrls].slice(0, 5);
+    setPreviewUrls(combinedPreviewUrls);
+    
+    // Reset the file input to allow selecting the same file again
+    e.target.value = null;
   };
 
   const removeImage = (index) => {
@@ -211,13 +220,13 @@ const ReportPostForm = ({ formType = "standalone" }) => {
               )}
             </div>
             <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleImageUpload}
-              multiple
-              accept="image/*"
-              className="hidden"
-            />
+  type="file"
+  ref={fileInputRef}
+  onChange={handleImageUpload}
+  multiple
+  accept="image/*"
+  className="hidden"
+/>
           </div>
 
           {/* Title & Content */}
