@@ -1,8 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import DaumPostcode from 'react-daum-postcode';
+
 
 const SignUp = () => {
+    const [openPostcode, setOpenPostcode] = useState(false);
+    const [address, setAddress] = useState('');
     const navigate = useNavigate();
     const [isEmailVerified, setIsEmailVerified] = useState(false);
     const [verificationCode, setVerificationCode] = useState('');
@@ -13,6 +17,28 @@ const SignUp = () => {
         passwordConfirm: '',
         nickname: '',
     });
+
+    // 주소 선택 이벤트
+    const handleComplete = (data) => {
+        // 시군구, 동네까지만 필요한 경우 (예: 경기도 시흥시 은행동)
+        let selectedAddress = '';
+
+        // 도/시 + 시/군/구 + 동/읍/면 조합
+        if (data.sido) selectedAddress += data.sido + ' ';
+        if (data.sigungu) selectedAddress += data.sigungu + ' ';
+        if (data.bname) selectedAddress += data.bname;
+
+        setAddress(selectedAddress);
+        setOpenPostcode(false);
+
+        console.log('선택한 주소:', selectedAddress);
+    };
+
+
+    // 버튼 클릭 이벤트, 주소입력
+    const handleToggle = () => {
+        setOpenPostcode(current => !current);
+    };
 
     // 이메일 인증
     const handleEmailVerification = async () => {
@@ -100,6 +126,7 @@ const SignUp = () => {
                     email: formData.email,
                     password: formData.password,
                     nickname: formData.nickname,
+                    address: address
                 },
                 {
                     headers: {
@@ -120,7 +147,7 @@ const SignUp = () => {
             }
         }
     };
-    
+
     return (
         <div className="min-h-screen bg-orange-50 flex flex-col items-center justify-center p-4">
             <div className="w-full max-w-md">
@@ -207,6 +234,41 @@ const SignUp = () => {
                                 required
                             />
                         </div>
+                        <div className="relative">
+                            <input
+                                type="text"
+                                name="address"
+                                placeholder="주소 검색 (예: 서울 강남구 역삼동)"
+                                value={address}
+                                readOnly
+                                className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:border-orange-500"
+                                required
+                            />
+                            <button
+                                type="button"
+                                onClick={handleToggle}
+                                className="absolute right-3 top-1/2 transform -translate-y-1/2 px-3 py-1 bg-orange-500 text-white rounded-lg text-sm hover:bg-orange-600"
+                            >
+                                검색
+                            </button>
+                        </div>
+                        {/* 우편번호 검색 팝업 */}
+                        {openPostcode && (
+                            <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+                                <div className="bg-white rounded-lg p-4 w-full max-w-md relative">
+                                    <button
+                                        onClick={() => setOpenPostcode(false)}
+                                        className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+                                    >
+                                        ✕
+                                    </button>
+                                    <DaumPostcode
+                                        onComplete={handleComplete}
+                                        style={{ height: '400px' }}
+                                    />
+                                </div>
+                            </div>
+                        )}
                         <div>
                             <input
                                 type="text"

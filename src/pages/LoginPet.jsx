@@ -60,7 +60,8 @@ const LoginScreen = () => {
                         id: response.data.data.id,
                         email: response.data.data.email,
                         nickname: response.data.data.nickname,
-                        profileImage: response.data.data.profileImage
+                        profileImage: response.data.data.profileImage,
+                        role: response.data.data.role
                     };
 
                     localStorage.setItem('userInfo', JSON.stringify(loginUserInfo));
@@ -70,7 +71,7 @@ const LoginScreen = () => {
                 }
             }
         } catch (error) {
-            alert('로그인 실패');
+            alert(error.response.data.message);
         }
     };
 

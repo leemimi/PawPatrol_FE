@@ -48,7 +48,7 @@ const ReportPostForm = ({ formType = "standalone" }) => {
         window.kakao.maps.load(() => {
           const mapContainer = document.getElementById("kakaoMap");
           const mapOption = {
-            center: new window.kakao.maps.LatLng(37.5665, 126.978), // 기본 서울 중심 좌표
+            center: new window.kakao.maps.LatLng(37.497939, 127.027587), // 기본 서울 중심 좌표
             level: 3, // 줌 레벨
           };
           const map = new window.kakao.maps.Map(mapContainer, mapOption);
@@ -97,9 +97,18 @@ const ReportPostForm = ({ formType = "standalone" }) => {
 
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
-    setImages(files);
+    
+    // Combine new files with existing ones (up to 5)
+    const combinedImages = [...images, ...files].slice(0, 5);
+    setImages(combinedImages);
+    
+    // Create and combine preview URLs for all images
     const newPreviewUrls = files.map((file) => URL.createObjectURL(file));
-    setPreviewUrls(newPreviewUrls);
+    const combinedPreviewUrls = [...previewUrls, ...newPreviewUrls].slice(0, 5);
+    setPreviewUrls(combinedPreviewUrls);
+    
+    // Reset the file input to allow selecting the same file again
+    e.target.value = null;
   };
 
   const removeImage = (index) => {
@@ -128,7 +137,7 @@ const ReportPostForm = ({ formType = "standalone" }) => {
       );
       alert("발견 신고가 성공적으로 등록되었습니다.");
       console.log(response.data);
-      navigate("/community");
+      navigate("/");
     } catch (error) {
       console.error("게시글 등록 중 오류 발생:", error);
       alert("게시글 등록에 실패했습니다.");
@@ -211,13 +220,13 @@ const ReportPostForm = ({ formType = "standalone" }) => {
               )}
             </div>
             <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleImageUpload}
-              multiple
-              accept="image/*"
-              className="hidden"
-            />
+  type="file"
+  ref={fileInputRef}
+  onChange={handleImageUpload}
+  multiple
+  accept="image/*"
+  className="hidden"
+/>
           </div>
 
           {/* Title & Content */}

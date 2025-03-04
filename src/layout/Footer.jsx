@@ -43,11 +43,25 @@ const Footer = () => {
         const isAuth = await checkAuthStatus();
         
         if (isAuth) {
-            navigate('/mypage');
+            // 로컬 스토리지에서 사용자 정보 가져오기
+            const userInfoStr = localStorage.getItem('userInfo');
+            if (userInfoStr) {
+                const userInfo = JSON.parse(userInfoStr);
+                
+                // 역할에 따라 다른 페이지로 리다이렉트
+                if (userInfo.role === 'ROLE_ADMIN') {
+                    navigate('/admin-dashboard'); // 관리자 페이지로 이동
+                } else if (userInfo.role === 'ROLE_SHELTER') {
+                    navigate('/shelter-mypage'); // 보호소 전용 마이페이지
+                } else {
+                    navigate('/mypage'); // 일반 사용자 마이페이지
+                }
+            } else {
+                navigate('/mypage'); // 기본 마이페이지
+            }
         } else {
             // 로컬 스토리지 정리 및 사용자에게 알림
             localStorage.removeItem('isLoggedIn');
-            // alert('로그인 세션이 만료되었습니다. 다시 로그인해주세요.');
             navigate('/login-pet');
         }
     };
@@ -67,7 +81,7 @@ const Footer = () => {
                     className="flex flex-col items-center gap-1 p-2 text-orange-400 hover:text-orange-500 transition-colors"
                 >
                     <Users size={20} strokeWidth={2.5} />
-                    <span className="text-xs font-medium">커뮤니티</span>
+                    <span className="text-xs font-medium">새로운 가족</span>
                 </button>
                 <button
                     onClick={handleMyPageClick}

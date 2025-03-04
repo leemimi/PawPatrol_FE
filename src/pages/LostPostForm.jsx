@@ -20,7 +20,7 @@ const LostPostForm = () => {
     location: "서울시 강남구",
     lostTime: "2025-02-20T10:30:00",
     findTime: null,
-    status: "SIGHTED", // 상태
+    status: "FINDING", // 상태
     petId: null,
     animalType: null
   });
@@ -54,7 +54,7 @@ const LostPostForm = () => {
           window.kakao.maps.load(() => {
             const mapContainer = document.getElementById("kakaoMap");
             const mapOption = {
-              center: new window.kakao.maps.LatLng(37.5665, 126.978), // 기본 서울 중심 좌표
+              center: new window.kakao.maps.LatLng(37.497939, 127.027587), // 기본 서울 중심 좌표
               level: 3, // 줌 레벨
             };
             const map = new window.kakao.maps.Map(mapContainer, mapOption);
@@ -102,9 +102,18 @@ const LostPostForm = () => {
 
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
-    setImages(files);
-    const newPreviewUrls = files.map((file) => URL.createObjectURL(file));
-    setPreviewUrls(newPreviewUrls);
+  
+  // Combine new files with existing ones (up to 5)
+  const combinedImages = [...images, ...files].slice(0, 5);
+  setImages(combinedImages);
+  
+  // Create and combine preview URLs for all images
+  const newPreviewUrls = files.map((file) => URL.createObjectURL(file));
+  const combinedPreviewUrls = [...previewUrls, ...newPreviewUrls].slice(0, 5);
+  setPreviewUrls(combinedPreviewUrls);
+  
+  // Reset the file input to allow selecting the same file again
+  e.target.value = null;
   };
 
   const removeImage = (index) => {
@@ -115,6 +124,8 @@ const LostPostForm = () => {
   const handlePetSelect = (pet) => {
     setSelectedPet(pet);
     console.log(pet); // 확인하여 id가 존재하는지 확인
+    console.log(pet.id); // Ensure this is a valid Long or number
+
 
     setFormData(prev => {
       const updatedFormData = {
@@ -266,13 +277,13 @@ const LostPostForm = () => {
               )}
             </div>
             <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleImageUpload}
-              multiple
-              accept="image/*"
-              className="hidden"
-            />
+  type="file"
+  ref={fileInputRef}
+  onChange={handleImageUpload}
+  multiple
+  accept="image/*"
+  className="hidden"
+/>
           </div>
 
           {/* Title & Content */}
@@ -327,7 +338,7 @@ const LostPostForm = () => {
               onChange={handleChange}
               className="w-full p-2 text-orange-900 border rounded-md"
             >
-              <option value="SIGHTED">목격</option>
+              
               <option value="FINDING">실종 신고</option>
             </select>
           </div>
