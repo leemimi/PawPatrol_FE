@@ -190,10 +190,21 @@ const MyApplications = () => {
                     const data = await response.json();
                     if (data.resultCode === "200") {
                         alert('신청이 취소되었습니다.');
-                        setPage(0);
-                        setApplications([]);
-                        setAllApplications([]);
-                        setHasMore(true);
+
+                        // 모든 데이터를 초기화하는 대신, 취소된 신청만 상태에서 제거
+                        const updatedAllApplications = allApplications.filter(
+                            app => app.protectionId !== protectionId
+                        );
+                        setAllApplications(updatedAllApplications);
+
+                        // 현재 보기도 업데이트
+                        const updatedApplications = applications.filter(
+                            app => app.protectionId !== protectionId
+                        );
+                        setApplications(updatedApplications);
+
+                        // 업데이트된 목록으로 상태 카운트 다시 계산
+                        calculateStatusCounts(updatedAllApplications);
                     } else {
                         alert('취소 중 오류가 발생했습니다: ' + data.message);
                     }

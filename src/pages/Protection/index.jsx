@@ -70,7 +70,13 @@ const Protection = () => {
           if (page === 0) {
             setAnimals(newAnimals);
           } else {
-            setAnimals(prev => [...prev, ...newAnimals]);
+            setAnimals(prev => {
+              const existingIds = prev.map(animal => animal.animalCaseId);
+              const uniqueNewAnimals = newAnimals.filter(
+                animal => !existingIds.includes(animal.animalCaseId)
+              );
+              return [...prev, ...uniqueNewAnimals];
+            });
           }
 
           setTotalElements(data.data.totalElements);
