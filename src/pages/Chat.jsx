@@ -65,7 +65,7 @@ const Chat = () => {
       console.log('Setting up WebSocket connection...');
       
       const socketFactory = () => {
-        return new SockJS('http://localhost:8090/ws');
+        return new SockJS(`${import.meta.env.VITE_CORE_API_BASE_URL}/ws`);
       };
       
       client = new Client({
