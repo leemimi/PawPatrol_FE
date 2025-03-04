@@ -32,13 +32,40 @@ const SocialConnectPage = () => {
 
         try {
             const response = await axios.post(
-                `http://localhost:8090/api/v2/auth/connect-social`,
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/auth/connect-social`,
                 request,
                 { withCredentials: true }
             );
 
             if (response.data.statusCode === 200) {
                 alert('소셜 계정 연동이 완료되었습니다.');
+
+                localStorage.removeItem('userInfo');
+                localStorage.removeItem('isLoggedIn');
+
+                const login_response = await axios.post(
+                    `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/auth/login`,
+                    request
+                )
+
+                if (login_response.data.statusCode === 200 || login_response.data.statusCode === "200") {
+                    const response = await axios.get(
+                        `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/auth/me`,
+                        { withCredentials: true }
+                    )
+
+                    if (response) {
+                        const loginUserInfo = {
+                            email: response.data.data.email,
+                            nickname: response.data.data.nickname,
+                            profileImage: response.data.data.profileImage,
+                            role: response.data.data.role
+                        };
+
+                        localStorage.setItem('userInfo', JSON.stringify(loginUserInfo));
+                        localStorage.setItem('isLoggedIn', 'true');
+                    }
+                }
                 navigate('/', { replace: true });
             } else {
                 alert('계정 연동에 실패했습니다.');
