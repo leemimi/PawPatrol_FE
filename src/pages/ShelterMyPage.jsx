@@ -10,7 +10,7 @@ import kakaoImage from '../assets/images/kakaotalk_simple_icon2.png';
 import naverImage from '../assets/images/naver_simple_icon.png';
 import googleImage from '../assets/images/google_simple_icon.png';
 
-const MyPage = () => {
+const ShelterMyPage = () => {
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [selectedPet, setSelectedPet] = useState(null);
     const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
@@ -39,33 +39,20 @@ const MyPage = () => {
         reportsCurrentPage: 0,
         witnessCurrentPage: 0
     });
+    const [shelterAnimals, setShelterAnimals] = useState([]);
 
-    // 회원 탈퇴
-    const handleWithdrawMember = async () => {
-        // 사용자에게 확인 요청
-        const isConfirmed = window.confirm("정말로 회원 탈퇴하시겠습니까? 이 작업은 되돌릴 수 없습니다.");
-
-        if (!isConfirmed) return;
-
+    // 보호 동물 목록 가져오기 (나중에 api 받아서 완성할것)
+    const fetchShelterAnimals = async () => {
         try {
-            const response = await axios.patch(
-                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/withdraw`,
-                {},
+            const response = await axios.get(
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/shelters/animals`,
                 { withCredentials: true }
             );
-
             if (response.data.statusCode === 200) {
-                alert('회원 탈퇴가 완료되었습니다.');
-                // 로컬 스토리지 정보 삭제
-                localStorage.removeItem('accessToken');
-                localStorage.removeItem('userInfo');
-                localStorage.removeItem('isLoggedIn');
-                // 로그인 페이지로 이동
-                navigate('/login-pet', { replace: true });
+                setShelterAnimals(response.data.data);
             }
         } catch (error) {
-            console.error('회원 탈퇴 오류:', error);
-            alert('회원 탈퇴 처리 중 오류가 발생했습니다.');
+            console.error('보호 동물 목록 불러오기 오류:', error);
         }
     };
 
@@ -268,7 +255,7 @@ const MyPage = () => {
             if (response.data.statusCode === 200) {
                 alert('반려동물 정보가 성공적으로 수정되었습니다.');
                 setIsEditOpen(false);
-                await fetchMyPets(); // 반려동물 목록 새로고침
+                await fetchShelterAnimals(); // 보호동물 목록 새로고침
             }
         } catch (error) {
             console.error('Error updating pet:', error);
@@ -297,7 +284,7 @@ const MyPage = () => {
                 alert('반려동물이 성공적으로 삭제되었습니다.');
                 setIsDeleteConfirmOpen(false);
                 setPetToDelete(null);
-                await fetchMyPets(); // 반려동물 목록 새로고침
+                await fetchShelterAnimals(); // 반려동물 목록 새로고침
             }
         } catch (error) {
             console.error('Error deleting pet:', error);
@@ -424,7 +411,7 @@ const MyPage = () => {
 
             // 모달 닫기
             setIsRegisterOpen(false);  // PetRegisterModal 닫기
-            await fetchMyPets();
+            await fetchShelterAnimals();
             setPetFormData({  // 폼 초기화
                 name: '',
                 breed: '',
@@ -544,21 +531,6 @@ const MyPage = () => {
         }
     }
 
-    // 내 반려동물 리스트 가져오기
-    const fetchMyPets = async () => {
-        try {
-            const response = await axios.get(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/pets`, {
-                withCredentials: true
-            });
-
-            if (response.data.statusCode === 200) {
-                setMyPets(response.data.data);
-            }
-        } catch (error) {
-            console.error('Fetch pets error:', error);
-        }
-    };
-
     // 내 신고글 불러오기
     const fetchMyReportPosts = async (page = 0) => {
         try {
@@ -618,10 +590,15 @@ const MyPage = () => {
             }
 
             window.scrollTo(0, 0);
-            fetchMyPets();
+            // fetchShelterAnimals();   나중에 구현하면 주석 해제할 것
             fetchMyReportPosts(0);
             fetchMyWitnessPosts(0);
             fetchSocialConnections();
+
+            // 보호소 계정인 경우 보호 동물 목록 가져오기
+            if (userInfo?.role === 'ROLE_SHELTER') {
+                fetchShelterAnimals();
+            }
         }
     }, []);
 
@@ -629,7 +606,7 @@ const MyPage = () => {
         <div className="min-h-screen bg-[#FFF5E6]">
             <div className="max-w-4xl mx-auto bg-white rounded-lg shadow p-8">
                 <div className="flex justify-between items-center mb-4">
-                    <h1 className="text-2xl font-bold text-orange-500">마이페이지</h1>
+                    <h1 className="text-2xl font-bold text-orange-500">마이페이지 (보호소 계정)</h1>
                     <button
                         onClick={handleLogout}
                         className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
@@ -651,7 +628,7 @@ const MyPage = () => {
                         className={`px-4 py-2 rounded ${activeTab === 'pets' ? 'bg-orange-500 text-white' : 'bg-gray-200'}`}
                         onClick={() => setActiveTab('pets')}
                     >
-                        반려동물 관리
+                        보호동물 관리
                     </button>
                     <button
                         className={`px-4 py-2 rounded ${activeTab === 'posts' ? 'bg-orange-500 text-white' : 'bg-gray-200'}`}
@@ -966,20 +943,6 @@ const MyPage = () => {
                                         </div>
                                     )}
                                 </div>
-                                {activeTab === 'profile' && (
-                                    <div className="mt-8 border-t pt-6">
-                                        <h3 className="text-lg font-semibold text-red-600 mb-2">계정 삭제</h3>
-                                        <p className="text-sm text-gray-500 mb-4">
-                                            계정을 삭제하면 모든 데이터가 영구적으로 제거됩니다. 이 작업은 되돌릴 수 없습니다.
-                                        </p>
-                                        <button
-                                            onClick={handleWithdrawMember}
-                                            className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
-                                        >
-                                            회원 탈퇴
-                                        </button>
-                                    </div>
-                                )}
                             </div>
                         </div>
                     </div>
@@ -988,63 +951,41 @@ const MyPage = () => {
                 {activeTab === 'pets' && (
                     <div className="space-y-6">
                         <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-2xl font-bold">내 반려동물 목록</h2>
+                            <h2 className="text-2xl font-bold">보호동물 목록</h2>
                             <button
                                 onClick={handlePetRegistrationClick}
                                 className="px-4 py-2 bg-orange-500 text-white rounded hover:bg-[#FB8C00]"
                             >
-                                반려동물 등록
+                                동물 등록
                             </button>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {myPets.map(pet => (
-                                <div key={pet.id} className="bg-white border rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200">
-                                    {/* 고정된 비율의 이미지 컨테이너 */}
-                                    <div className="relative w-full pb-[75%]"> {/* 4:3 비율 유지 */}
-                                        <img
-                                            src={pet.imageUrl}
-                                            alt={pet.name}
-                                            className="absolute inset-0 w-full h-full object-cover"
-                                        />
-                                    </div>
-
-                                    <div className="p-4 space-y-3">
-                                        <div className="flex justify-between items-center">
-                                            <h3 className="text-xl font-bold text-gray-800">{pet.name}</h3>
-                                            <span className="text-sm font-medium px-2 py-1 bg-blue-100 text-blue-800 rounded-full">
-                                                {pet.animalType === 'DOG' ? '강아지' : '고양이'}
-                                            </span>
+                                <div key={pet.id} className="border rounded-lg shadow-sm overflow-hidden">
+                                    <img
+                                        src={pet.imageUrl}
+                                        alt={pet.name}
+                                        className="w-full h-48 object-cover"
+                                    />
+                                    <div className="p-4 space-y-2">
+                                        <h3 className="text-xl font-bold">{pet.name}</h3>
+                                        <div className="text-gray-600">
+                                            <p>품종: {pet.breed}</p>
+                                            <p>특징: {pet.feature}</p>
+                                            <p>크기: {pet.size}</p>
+                                            <p>동물등록번호: {pet.registrationNo}</p>
                                         </div>
-
-                                        <div className="grid grid-cols-2 gap-2 text-sm text-gray-600">
-                                            <div>
-                                                <span className="font-medium">품종:</span> {pet.breed}
-                                            </div>
-                                            <div>
-                                                <span className="font-medium">크기:</span> {pet.size}
-                                            </div>
-                                        </div>
-
-                                        <div className="text-sm text-gray-600">
-                                            <span className="font-medium">특징:</span>
-                                            <p className="mt-1 line-clamp-2">{pet.feature}</p>
-                                        </div>
-
-                                        <div className="text-xs text-gray-500 mt-2">
-                                            <span className="font-medium">등록번호:</span> {pet.registrationNo}
-                                        </div>
-
-                                        <div className="flex justify-end space-x-2 pt-3 border-t mt-3">
+                                        <div className="flex justify-end space-x-2 mt-4">
                                             <button
                                                 onClick={() => handleEditPet(pet)}
-                                                className="px-3 py-1.5 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors text-sm"
+                                                className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
                                             >
                                                 수정
                                             </button>
                                             <button
                                                 onClick={() => handleDeleteConfirm(pet)}
-                                                className="px-3 py-1.5 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors text-sm"
+                                                className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
                                             >
                                                 삭제
                                             </button>
@@ -1270,6 +1211,6 @@ const MyPage = () => {
             </div>
         </div>
     );
-};
+}
 
-export default MyPage;
+export default ShelterMyPage;
