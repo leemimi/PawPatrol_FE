@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom'; // useNavigate & useParams import
-import axios from 'axios'; // axios import
+import { useNavigate, useParams } from 'react-router-dom';
+import axios from 'axios';
 
 import { 
   ChevronLeft, 
@@ -9,11 +9,12 @@ import {
   Clock,
   MessageSquare,
   Share,
-  Send
+  Send,
+  MessageCircle // 채팅 아이콘 추가
 } from 'lucide-react';
 
 const PetPostDetail = ({ onClose }) => {
-  const { postId } = useParams();  // Extract postId from URL
+  const { postId } = useParams();
   const navigate = useNavigate();
   
   const [post, setPost] = useState(null);
@@ -28,16 +29,14 @@ const PetPostDetail = ({ onClose }) => {
 
 
   useEffect(() => {
-    if (!postId) return; // If no postId, do nothing.
+    if (!postId) return;
 
-    // Fetch the post details
     axios.get(`http://localhost:8090/api/v1/lost-foundposts/${postId}`)
       .then(response => {
         setPost(response.data.data);
       })
       .catch(error => console.error("Error fetching post data:", error));
 
-    // Fetch the comments for the post
     axios.get(`http://localhost:8090/api/v1/comments/lost-foundposts/${postId}`)
       .then(response => setComments(response.data.data || []))
       .catch(error => console.error("Error fetching comments:", error));
@@ -82,7 +81,6 @@ const PetPostDetail = ({ onClose }) => {
     const commentData = {
       content: newComment,
       findPostId: commentType === 'lost' ? postId : null,
-  
     };
 
     try {
@@ -96,14 +94,12 @@ const PetPostDetail = ({ onClose }) => {
     }
   };
 
-  // Edit comment handler
   const handleEditComment = (comment) => {
-    setNewComment(comment.content); // Set the current comment's content in the input box
+    setNewComment(comment.content);
     setIsEditing(true);
-    setEditingCommentId(comment.id); // Store the ID of the comment being edited
+    setEditingCommentId(comment.id);
   };
 
-  // Save the updated comment
   const handleUpdateComments = async () => {
     if (!newComment.trim()) return;
 
@@ -117,21 +113,20 @@ const PetPostDetail = ({ onClose }) => {
         setComments(comments.map(comment => 
           comment.id === editingCommentId ? { ...comment, content: newComment } : comment
         ));
-        setIsEditing(false); // Hide the edit form
-        setNewComment(''); // Clear the input
+        setIsEditing(false);
+        setNewComment('');
       }
     } catch (error) {
       console.error("Error updating comment:", error);
     }
   };
 
-  // Delete comment handler
   const handleDeleteComment = async (commentId) => {
     if (window.confirm('정말로 삭제하시겠습니까?')) {
       try {
         const response = await axios.delete(`http://localhost:8090/api/v1/comments/${commentId}`);
         if (response.data.resultCode === "200") {
-          setComments(comments.filter(comment => comment.id !== commentId)); // Remove deleted comment from state
+          setComments(comments.filter(comment => comment.id !== commentId));
         }
       } catch (error) {
         console.error("Error deleting comment:", error);
@@ -148,24 +143,43 @@ const PetPostDetail = ({ onClose }) => {
       navigate('/error');  // Example of a fallback
     }
   };
-  
+ 
 
-const handleDelete = async (postId) => {
-  if (window.confirm('정말로 삭제하시겠습니까?')) {
-    try {
-      const response = await axios.delete(`http://localhost:8090/api/v1/lost-foundposts/${postId}`);
-      if (response.data.resultCode === "200") {
-        console.log('Post deleted');
-        alert('게시글이 성공적으로 삭제되었습니다.');
-        navigate(-1);  // Navigate back after deleting the post
+  const handleDelete = async (postId) => {
+    if (window.confirm('정말로 삭제하시겠습니까?')) {
+      try {
+        const response = await axios.delete(`http://localhost:8090/api/v1/lost-foundposts/${postId}`);
+        if (response.data.resultCode === "200") {
+          console.log('Post deleted');
+          alert('게시글이 성공적으로 삭제되었습니다.');
+          navigate(-1);
+        }
+      } catch (error) {
+        console.error('게시글 삭제 중 오류 발생:', error);
+        alert('게시글 삭제에 실패했습니다.');
       }
-    } catch (error) {
-      console.error('게시글 삭제 중 오류 발생:', error);
-      alert('게시글 삭제에 실패했습니다.');
     }
-  }
-};
+  };
 
+  // 게시자와 1:1 채팅 시작 기능
+  const handleStartChat = () => {
+    console.log(post);
+    if (!post || !post.nickname) {
+      alert('게시자 정보를 불러올 수 없습니다.');
+      return;
+    }
+    
+    // 세션 스토리지에 채팅 상대 정보 저장 (페이지 이동 후에도 접근하기 위함)
+    sessionStorage.setItem('chatTarget', JSON.stringify({
+      userId: post.author.id, // 닉네임을 사용자 ID로 가정 (실제 구현에서는 수정 필요)
+      nickname: post.author.nickname,
+      postId: post.foundId,
+      postTitle: post.content
+    }));
+    
+    // 채팅 페이지로 이동
+    navigate('/chat');
+  };
 // Handle image rendering
 const renderImages = () => {
   if (post?.images?.length > 0) {
@@ -184,10 +198,8 @@ const renderImages = () => {
   return null;
 };
 
-
-
   const handleUpdate = () => {
-    setPost({...post, title: newComment}); // Update the post with new data
+    setPost({...post, title: newComment});
     setIsEditing(false);
   };
 
@@ -197,7 +209,7 @@ const renderImages = () => {
   };
 
   if (!post) {
-    return <div>Loading...</div>; // Show loading state while fetching
+    return <div>Loading...</div>;
   }
 
   return (
@@ -228,33 +240,33 @@ const renderImages = () => {
         </div>
       </header>
 
-       {/* Content */}
-<div className="flex-1 overflow-y-auto">
-  {isEditing ? (
-    <div className="p-4 space-y-4">
-      <textarea
-        value={newComment} // Use the newComment state to manage the content of the comment
-        onChange={(e) => setNewComment(e.target.value)} // Update the newComment state when content changes
-        className="w-full px-4 py-3 border rounded-lg h-32"
-        placeholder="수정할 댓글을 입력하세요..." // Placeholder for comment editing
-      />
-      
-      <div className="flex gap-2">
-        <button
-          onClick={() => setIsEditing(false)} // Cancel editing
-          className="flex-1 px-4 py-2 border rounded-lg"
-        >
-          취소
-        </button>
-        <button
-          onClick={handleUpdateComments} // Handle the comment update when "수정완료" is clicked
-          className="flex-1 px-4 py-2 bg-orange-500 text-white rounded-lg"
-        >
-          수정완료
-        </button>
-      </div>
-    </div>
-  ) : (
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto">
+        {isEditing ? (
+          <div className="p-4 space-y-4">
+            <textarea
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              className="w-full px-4 py-3 border rounded-lg h-32"
+              placeholder="수정할 댓글을 입력하세요..."
+            />
+            
+            <div className="flex gap-2">
+              <button
+                onClick={() => setIsEditing(false)}
+                className="flex-1 px-4 py-2 border rounded-lg"
+              >
+                취소
+              </button>
+              <button
+                onClick={handleUpdateComments}
+                className="flex-1 px-4 py-2 bg-orange-500 text-white rounded-lg"
+              >
+                수정완료
+              </button>
+            </div>
+          </div>
+        ) : (
           <>
             {/* Post Content */}
             <div className="p-4 space-y-4">
@@ -270,49 +282,54 @@ const renderImages = () => {
                 </span>
                 <h2 className="text-xl font-bold">{post.content}</h2>
                 <p className="text-gray-700">
-  {post.lostTime ? `실종시간: ${post.lostTime}` : post.findTime ? `발견시각: ${post.findTime}` : "시간 정보 없음"}
-</p>
+                  {post.lostTime ? `실종시간: ${post.lostTime}` : post.findTime ? `발견시각: ${post.findTime}` : "시간 정보 없음"}
+                </p>
 
                 {/* Location */}
                 <div className="flex items-center gap-2 text-gray-500 text-sm">
                   <MapPin size={16} />
                   <span>{post.latitude}, {post.longitude}</span>
                 </div>
-
-              
               </div>
               <div className="space-y-2">
-  {post.pet && post.pet.estimatedAge && (
-    <p className="text-gray-500">생년월일: {post.pet.estimatedAge}</p>
-  )}
-  {post.pet && post.pet.gender && (
-    <p className="text-gray-500">성별: {post.pet.gender}</p>
-  )}
-  {post.pet && post.pet.breed && (
-    <p className="text-gray-500">품종: {post.pet.breed}</p>
-  )}
-  {post.pet && post.pet.healthCondition && (
-    <p className="text-gray-500">건강 상태: {post.pet.healthCondition}</p>
-  )}
-  {post.pet && post.pet.feature && (
-    <p className="text-gray-500">특징: {post.pet.feature}</p>
-  )}
-  {post.pet && post.pet.size && (
-    <p className="text-gray-500">크기: {post.pet.size}</p>
-  )}
-</div>
-
-              
+                {post.pet && post.pet.estimatedAge && (
+                  <p className="text-gray-500">생년월일: {post.pet.estimatedAge}</p>
+                )}
+                {post.pet && post.pet.gender && (
+                  <p className="text-gray-500">성별: {post.pet.gender}</p>
+                )}
+                {post.pet && post.pet.breed && (
+                  <p className="text-gray-500">품종: {post.pet.breed}</p>
+                )}
+                {post.pet && post.pet.healthCondition && (
+                  <p className="text-gray-500">건강 상태: {post.pet.healthCondition}</p>
+                )}
+                {post.pet && post.pet.feature && (
+                  <p className="text-gray-500">특징: {post.pet.feature}</p>
+                )}
+                {post.pet && post.pet.size && (
+                  <p className="text-gray-500">크기: {post.pet.size}</p>
+                )}
+              </div>
 
               {/* Render Images */}
-          {renderImages()}
-
+              {renderImages()}
 
               <div className="flex justify-between py-2 border-t">
                 <button className="flex items-center gap-1 text-gray-500">
                   <MessageSquare size={20} />
                   <span>댓글 {comments.length}</span>
                 </button>
+                
+                {/* 채팅 버튼 */}
+                <button 
+                  onClick={handleStartChat}
+                  className="flex items-center gap-1 text-orange-500 hover:text-orange-600 transition-colors"
+                >
+                  <MessageCircle size={20} />
+                  <span>채팅하기</span>
+                </button>
+                
                 <button className="flex items-center gap-1 text-gray-500">
                   <Share size={20} />
                   <span>공유하기</span>
