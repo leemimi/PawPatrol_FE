@@ -1,0 +1,208 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { MessageSquare, Search, UserCircle, Bell, FileText } from 'lucide-react';
+import axios from 'axios';
+
+const ChatList = () => {
+  const navigate = useNavigate();
+  const [chatRooms, setChatRooms] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  
+  const currentUser = {
+    id: JSON.parse(localStorage.getItem('userInfo'))?.id,
+    nickname: JSON.parse(localStorage.getItem('userInfo'))?.nickname
+  };
+
+  useEffect(() => {
+    fetchChatRooms();
+  }, []);
+
+  const fetchChatRooms = async () => {
+    if (!currentUser.id) {
+      console.error('Current user ID is missing');
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const response = await axios.get('/api/v1/chatlist');
+      console.log('Fetched chat rooms:', response.data);
+      
+      if (response.data && response.data.resultCode === "200") {
+        setChatRooms(response.data.data || []);
+      } else {
+        console.warn('Unexpected response format:', response.data);
+        setChatRooms([]);
+      }
+    } catch (error) {
+      console.error('Error fetching chat rooms:', error);
+      setChatRooms([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleChatSelect = (room) => {
+    const otherMember = room.member1.id === currentUser.id ? room.member2 : room.member1;
+    
+    // Store chat target info in session storage
+    sessionStorage.setItem('chatTarget', JSON.stringify({
+      userId: otherMember.id,
+      nickname: otherMember.nickname,
+      postId: room.post.foundId,
+      postTitle: room.post.content
+    }));
+    
+    navigate('/chat');
+  };
+
+  // Format relative time (e.g., "2시간 전", "방금 전")
+  const formatRelativeTime = (timestamp) => {
+    if (!timestamp) return '';
+    
+    const now = new Date();
+    const messageTime = new Date(timestamp);
+    const diffMs = now - messageTime;
+    
+    // Convert to appropriate units
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    
+    if (diffMins < 1) return '방금 전';
+    if (diffMins < 60) return `${diffMins}분 전`;
+    if (diffHours < 24) return `${diffHours}시간 전`;
+    if (diffDays < 7) return `${diffDays}일 전`;
+    
+    // If older than a week, show date
+    return `${messageTime.getMonth() + 1}월 ${messageTime.getDate()}일`;
+  };
+
+  const getOtherMemberName = (room) => {
+    if (!room.member1 || !room.member2) return '알 수 없음';
+    return room.member1.id === currentUser.id ? room.member2.nickname : room.member1.nickname;
+  };
+
+  const getUnreadCount = (room) => {
+    if (!room.messages || !room.messages.length) return 0;
+    
+    return room.messages.filter(msg => 
+      !msg.isRead && msg.receiver.id === currentUser.id
+    ).length;
+  };
+
+  const filteredRooms = chatRooms.filter(room => {
+    const otherMemberName = getOtherMemberName(room);
+    const postTitle = room.post?.title || '';
+    const lastMessage = room.messages && room.messages.length > 0 
+      ? room.messages[room.messages.length - 1].content 
+      : '';
+    
+    return otherMemberName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+           postTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
+           lastMessage.toLowerCase().includes(searchQuery.toLowerCase());
+  });
+
+  return (
+    <div className="flex flex-col h-full bg-gray-50">
+      {/* Header */}
+      <div className="bg-orange-500 p-4 shadow-md">
+        <div className="flex items-center justify-between">
+          <h1 className="text-white text-xl font-semibold">채팅</h1>
+          <div className="flex items-center space-x-2">
+            <button className="w-8 h-8 rounded-full bg-orange-400 flex items-center justify-center text-white">
+              <Bell size={18} />
+            </button>
+          </div>
+        </div>
+        
+      </div>
+      
+      {/* Chat List */}
+      <div className="flex-1 overflow-y-auto">
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center h-full p-4">
+            <div className="animate-pulse flex space-x-4">
+              <div className="rounded-full bg-orange-200 h-12 w-12"></div>
+              <div className="flex-1 space-y-2 py-1">
+                <div className="h-4 bg-orange-200 rounded w-3/4"></div>
+                <div className="h-4 bg-orange-200 rounded w-5/6"></div>
+              </div>
+            </div>
+            <p className="text-orange-500 mt-4">채팅 목록을 불러오는 중...</p>
+          </div>
+        ) : filteredRooms.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full p-4 text-gray-500">
+            <div className="bg-orange-100 rounded-full p-4 mb-3">
+              <MessageSquare className="w-8 h-8 text-orange-500" />
+            </div>
+            {searchQuery ? (
+              <p>검색 결과가 없습니다</p>
+            ) : (
+              <>
+                <p>아직 채팅이 없어요</p>
+                <p className="text-sm mt-2">게시글에서 메시지를 보내보세요!</p>
+              </>
+            )}
+          </div>
+        ) : (
+          filteredRooms.map((room) => {
+            const otherMemberName = getOtherMemberName(room);
+            const lastMessage = room.lastMessage 
+            const unreadCount = room.unreadCount
+            
+            return (
+              <div 
+                key={room.id} 
+                className="border-b border-gray-100 hover:bg-orange-50 transition-colors duration-200 cursor-pointer"
+                onClick={() => handleChatSelect(room)}
+              >
+                <div className="flex items-start p-4">
+                  {/* Avatar */}
+                  <div className="relative mr-3">
+                    <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center">
+                      <UserCircle className="w-10 h-10 text-orange-500" />
+                    </div>
+                    {unreadCount > 0 && (
+                      <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                        {unreadCount}
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-medium text-gray-900 truncate">{otherMemberName}</h3>
+                      <span className="text-xs text-gray-500">
+                        {lastMessage ? formatRelativeTime(lastMessage.timestamp) : ''}
+                      </span>
+                    </div>
+                    
+                    {/* Post Title */}
+                    {room.post && (
+                      <div className="flex items-center text-xs text-blue-500 mt-1">
+                        <FileText className="w-3 h-3 mr-1 flex-shrink-0" />
+                        <span className="truncate">{room.post.content}</span>
+                      </div>
+                    )}
+                    
+                    {/* Last Message */}
+                    <p className={`text-sm mt-1 truncate ${unreadCount > 0 ? 'font-medium text-gray-900' : 'text-gray-500'}`}>
+                      {lastMessage ?lastMessage.content : '새로운 대화를 시작하세요'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+      
+    </div>
+  );
+};
+
+export default ChatList;

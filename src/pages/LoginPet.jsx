@@ -55,7 +55,9 @@ const LoginScreen = () => {
                 )
 
                 if (response) {
+                    console.log(response.data.data);
                     const loginUserInfo = {
+                        id: response.data.data.id,
                         email: response.data.data.email,
                         nickname: response.data.data.nickname,
                         profileImage: response.data.data.profileImage,
