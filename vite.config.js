@@ -4,9 +4,15 @@ import path from 'path'
 
 export default defineConfig({
   plugins: [react()],
+  define: {
+    global: 'globalThis',
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      'process': 'process/browser',
+      'stream': 'stream-browserify',
+      'util': 'util'
     },
   },
   server: {
@@ -16,8 +22,5 @@ export default defineConfig({
         changeOrigin: true
       }
     }
-  },
-  define: {
-    global: 'window',
   }
 })
