@@ -143,7 +143,7 @@ const Protection = () => {
                   ? 'bg-yellow-400 text-white'
                   : animal.caseStatus === 'TEMP_PROTECTING'
                     ? 'bg-red-400 text-white'
-                    : 'bg-blue-300 text-white'
+                    : 'bg-blue-600 text-white'
                   }`}>
                   {getStatusText(animal.caseStatus)}
                 </span>
