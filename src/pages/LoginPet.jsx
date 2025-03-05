@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import puppyLogo from '../assets/images/pet.png';
+import SignUpTypeModal from '../components/SignUpTypeModal';
 import axios from 'axios';
 
 const LoginScreen = () => {
@@ -9,6 +10,7 @@ const LoginScreen = () => {
     const socialLoginForNaverUrl = `${import.meta.env.VITE_CORE_API_BASE_URL}/oauth2/authorization/naver`;
     const redirectUrlAfterSocialLogin = `${import.meta.env.VITE_CORE_FRONT_BASE_URL}/oauth2/redirect`;
 
+    const [showSignUpModal, setShowSignUpModal] = useState(false); // 모달 표시 상태
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [rememberMe, setRememberMe] = useState(false);
@@ -16,6 +18,7 @@ const LoginScreen = () => {
 
     // 컴포넌트 마운트 시 로컬 스토리지에서 저장된 이메일 확인
     useEffect(() => {
+        window.scrollTo(0, 0);
         const savedEmail = localStorage.getItem('savedEmail');
         const isRemembered = localStorage.getItem('rememberMe') === 'true';
 
@@ -76,7 +79,7 @@ const LoginScreen = () => {
     };
 
     const handleClickSignUp = () => {
-        navigate('/sign-up');
+        setShowSignUpModal(true); // 모달 열기
     };
 
     return (
@@ -182,6 +185,12 @@ const LoginScreen = () => {
                         회원가입
                     </button>
                 </div>
+                {/* 회원가입 유형 선택 모달 */}
+                {showSignUpModal && (
+                    <SignUpTypeModal
+                        onClose={() => setShowSignUpModal(false)}
+                    />
+                )}
             </div>
         </div>
     );

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import DaumPostcode from 'react-daum-postcode';
@@ -147,6 +147,10 @@ const SignUp = () => {
             }
         }
     };
+
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, []);
 
     return (
         <div className="min-h-screen bg-orange-50 flex flex-col items-center justify-center p-4">
