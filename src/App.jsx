@@ -4,6 +4,7 @@ import Layout from './layout/Layout'
 import Map from './pages/Map'
 import MyPage from './pages/MyPage'
 import SignUp from './pages/SignUpPage'
+import SignUpShelter from './pages/SignUpShelterPage'
 import LoginPet from './pages/LoginPet'
 import Protection from './pages/Protection'
 import ProtectionDetail from './pages/ProtectionDetail'
@@ -56,6 +57,7 @@ const App = () => {
         <Route path="/lostmypetfix/:postId" element={<Lostmypetfix />} />
         <Route path="/shelter-mypage" element={<ShelterMyPage />} />
         <Route path="/admin-dashboard" element={<AdminDashboard />} />
+        <Route path="/sign-up-shelter" element={<SignUpShelter />} />
       </Route>
     </Routes>
   );
