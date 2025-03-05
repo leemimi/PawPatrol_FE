@@ -1,15 +1,16 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, X, Check, Home, Clock } from 'lucide-react';
+import { ChevronLeft, Home, Clock } from 'lucide-react';
 import axios from 'axios';
 import ApplicationsModal from '../../components/ApplicationsModal';
+import StatusBadge from '../../components/StatusBadge';
+import InfiniteScroll from '../../components/InfiniteScroll';
 
 const MyRegisteredAnimals = () => {
     const [animals, setAnimals] = useState([]);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(0);
     const [hasMore, setHasMore] = useState(true);
-    const observerRef = useRef();
     const navigate = useNavigate();
     const [selectedAnimal, setSelectedAnimal] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -21,21 +22,6 @@ const MyRegisteredAnimals = () => {
     useEffect(() => {
         window.scrollTo(0, 0);
     }, []);
-
-    // 마지막 아이템 참조 콜백
-    const lastAnimalRef = useCallback(node => {
-        if (loading) return;
-        if (observerRef.current) observerRef.current.disconnect();
-
-        observerRef.current = new IntersectionObserver(entries => {
-            if (entries[0].isIntersecting && hasMore) {
-                console.log(`마지막 아이템에 도달했습니다. 페이지 ${page + 1} 로드 시작`);
-                setPage(prevPage => prevPage + 1);
-            }
-        });
-
-        if (node) observerRef.current.observe(node);
-    }, [loading, hasMore]);
 
     // 동물 목록 가져오기
     const fetchMyRegisteredAnimals = async () => {
@@ -106,30 +92,6 @@ const MyRegisteredAnimals = () => {
     useEffect(() => {
         fetchMyRegisteredAnimals();
     }, [page]);
-
-    const getStatusText = (status) => {
-        switch (status) {
-            case 'PROTECT_WAITING':
-                return '신청가능';
-            case 'TEMP_PROTECTING':
-                return '임보중';
-            default:
-                return status;
-        }
-    };
-
-    const getStatusColor = (status) => {
-        switch (status) {
-            case 'PROTECT_WAITING':
-                return 'bg-yellow-400 text-white';
-            case 'TEMP_PROTECTING':
-                return 'bg-red-400 text-white';
-            case 'PROTECTION_POSSIBLE':
-                return 'bg-red-400 text-white';
-            default:
-                return 'bg-gray-400 text-white';
-        }
-    };
 
     // 보호 유형에 따른 배지 생성
     const getProtectionTypeBadge = (type) => {
@@ -234,6 +196,85 @@ const MyRegisteredAnimals = () => {
         }
     };
 
+    // 동물 카드 렌더링 함수
+    const renderAnimal = (animal, index) => (
+        <div
+            className="bg-white rounded-xl overflow-hidden shadow hover:shadow-md transition-shadow cursor-pointer"
+            onClick={() => navigate(`/protection/${animal.animalCaseId}`)}
+        >
+            <div className="flex p-3">
+                {/* 이미지 */}
+                <div className="w-24 h-24 rounded-lg overflow-hidden flex-shrink-0">
+                    {animal.imageUrl && (
+                        <img
+                            src={animal.imageUrl}
+                            alt={animal.animalName || animal.title}
+                            className="w-full h-full object-cover"
+                        />
+                    )}
+                </div>
+
+                {/* 정보 */}
+                <div className="ml-3 flex-1 flex flex-col justify-between">
+                    <div>
+                        <div className="flex justify-between items-start">
+                            <h3 className="text-sm font-medium text-gray-800 line-clamp-1">
+                                {animal.animalName || "이름 미정"}
+                            </h3>
+                            <div
+                                className="flex items-center"
+                                onClick={(e) => animal.pendingApplicationsCount > 0 ? openApplicationsModal(animal, e) : null}
+                            >
+                                <span className={`ml-2 px-2 py-1 rounded-full text-xs ${animal.pendingApplicationsCount > 0 ? 'bg-orange-100 text-orange-600 cursor-pointer' : 'bg-gray-100 text-gray-600'}`}>
+                                    신청 [{animal.pendingApplicationsCount || 0}]
+                                </span>
+                            </div>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1 line-clamp-2">
+                            {animal.title || "제목 없음"}
+                        </p>
+                    </div>
+                    <div className="flex justify-between items-center mt-2">
+                        <StatusBadge status={animal.caseStatus} type="protection" />
+                        <span className="text-xs text-gray-400">
+                            {new Date(animal.createdAt).toLocaleDateString()}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+
+    // 로딩 컴포넌트
+    const loadingComponent = (
+        <div className="text-center py-4">
+            <div className="inline-block animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-orange-500"></div>
+            <span className="ml-2 text-gray-500">불러오는 중...</span>
+        </div>
+    );
+
+    // 빈 상태 컴포넌트
+    const emptyComponent = (
+        <div className="flex flex-col items-center justify-center h-64 p-4">
+            <p className="text-gray-600 text-center">
+                등록한 동물이 없습니다.
+            </p>
+            <button
+                className="mt-4 px-4 py-2 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 transition-colors"
+                onClick={() => navigate('/register-animal')}
+            >
+                동물 등록하기
+            </button>
+        </div>
+    );
+
+    // 끝 메시지 컴포넌트
+    const endMessage = (
+        <div className="text-center py-4">
+            <span className="text-gray-500">모든 동물을 불러왔습니다.</span>
+        </div>
+    );
+
     return (
         <div className="max-w-lg mx-auto bg-[#FFF5E6] min-h-screen">
             {/* 헤더 */}
@@ -290,87 +331,17 @@ const MyRegisteredAnimals = () => {
                     <div className="flex justify-center items-center h-64">
                         <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-orange-500"></div>
                     </div>
-                ) : animals.length > 0 ? (
-                    <div className="space-y-3">
-                        {animals.map((animal, index) => (
-                            <div
-                                key={animal.animalCaseId}
-                                ref={index === animals.length - 1 ? lastAnimalRef : null}
-                                className="bg-white rounded-xl overflow-hidden shadow hover:shadow-md transition-shadow cursor-pointer"
-                                onClick={() => navigate(`/protection/${animal.animalCaseId}`)}
-                            >
-                                <div className="flex p-3">
-                                    {/* 이미지 */}
-                                    <div className="w-24 h-24 rounded-lg overflow-hidden flex-shrink-0">
-                                        {animal.imageUrl && (
-                                            <img
-                                                src={animal.imageUrl}
-                                                alt={animal.animalName || animal.title}
-                                                className="w-full h-full object-cover"
-                                            />
-                                        )}
-                                    </div>
-
-                                    {/* 정보 */}
-                                    <div className="ml-3 flex-1 flex flex-col justify-between">
-                                        <div>
-                                            <div className="flex justify-between items-start">
-                                                <h3 className="text-sm font-medium text-gray-800 line-clamp-1">
-                                                    {animal.animalName || "이름 미정"}
-                                                </h3>
-                                                <div
-                                                    className="flex items-center"
-                                                    onClick={(e) => animal.pendingApplicationsCount > 0 ? openApplicationsModal(animal, e) : null}
-                                                >
-                                                    <span className={`ml-2 px-2 py-1 rounded-full text-xs ${animal.pendingApplicationsCount > 0 ? 'bg-orange-100 text-orange-600 cursor-pointer' : 'bg-gray-100 text-gray-600'}`}>
-                                                        신청 [{animal.pendingApplicationsCount || 0}]
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <p className="text-xs text-gray-500 mt-1 line-clamp-2">
-                                                {animal.title || "제목 없음"}
-                                            </p>
-                                        </div>
-                                        <div className="flex justify-between items-center mt-2">
-                                            <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(animal.caseStatus)}`}>
-                                                {getStatusText(animal.caseStatus)}
-                                            </span>
-                                            <span className="text-xs text-gray-400">
-                                                {new Date(animal.createdAt).toLocaleDateString()}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-
-                        {/* 로딩 인디케이터 (첫 페이지 로딩이 아닌 경우) */}
-                        {loading && page > 0 && (
-                            <div className="text-center py-4">
-                                <div className="inline-block animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-orange-500"></div>
-                                <span className="ml-2 text-gray-500">불러오는 중...</span>
-                            </div>
-                        )}
-
-                        {/* 더 이상 데이터가 없는 경우 */}
-                        {!hasMore && animals.length > 0 && (
-                            <div className="text-center py-4">
-                                <span className="text-gray-500">모든 동물을 불러왔습니다.</span>
-                            </div>
-                        )}
-                    </div>
                 ) : (
-                    <div className="flex flex-col items-center justify-center h-64 p-4">
-                        <p className="text-gray-600 text-center">
-                            등록한 동물이 없습니다.
-                        </p>
-                        <button
-                            className="mt-4 px-4 py-2 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 transition-colors"
-                            onClick={() => navigate('/register-animal')}
-                        >
-                            동물 등록하기
-                        </button>
-                    </div>
+                    <InfiniteScroll
+                        items={animals}
+                        hasMore={hasMore}
+                        loading={loading && page > 0}
+                        loadMore={() => setPage(prevPage => prevPage + 1)}
+                        renderItem={renderAnimal}
+                        loadingComponent={loadingComponent}
+                        emptyComponent={emptyComponent}
+                        endMessage={endMessage}
+                    />
                 )}
             </main>
 
