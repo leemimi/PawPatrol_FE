@@ -1012,7 +1012,12 @@ const MyPage = () => {
                                     <div className="p-4 space-y-3">
                                         <div className="flex justify-between items-center">
                                             <h3 className="text-xl font-bold text-gray-800">{pet.name}</h3>
-                                            <span className="text-sm font-medium px-2 py-1 bg-blue-100 text-blue-800 rounded-full">
+                                            <span
+                                                className={`text-sm font-medium px-2 py-1 rounded-full ${pet.animalType === 'DOG'
+                                                        ? 'bg-blue-100 text-blue-800' // 강아지 스타일
+                                                        : 'bg-pink-100 text-pink-800' // 고양이 스타일
+                                                    }`}
+                                            >
                                                 {pet.animalType === 'DOG' ? '강아지' : '고양이'}
                                             </span>
                                         </div>
