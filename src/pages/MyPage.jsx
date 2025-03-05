@@ -625,6 +625,31 @@ const MyPage = () => {
         }
     }, []);
 
+
+    // 반려동물 클릭 시 상세화면으로 전환
+    const handlePetClick = async (pet) => {
+        try {
+            const response = await axios.get(
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/animal-cases/animals/${pet.id}`,
+                { withCredentials: true }
+            );
+
+            if (response.data.resultCode === "200") {
+                const animalCaseId = response.data.data;
+                // Navigate to AnimalDetail page with the animalCaseId
+                navigate(`/protection/${animalCaseId}`);
+            } else {
+                console.error('Failed to get animal case ID:', response.data);
+                alert('동물 케이스 정보를 불러오는데 실패했습니다.');
+            }
+        } catch (error) {
+            console.error('Error fetching animal case ID:', error);
+            alert('동물 케이스 정보를 불러오는데 오류가 발생했습니다.');
+        }
+    };
+
+
+
     return (
         <div className="min-h-screen bg-[#FFF5E6]">
             <div className="max-w-4xl mx-auto bg-white rounded-lg shadow p-8">
@@ -999,7 +1024,11 @@ const MyPage = () => {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {myPets.map(pet => (
-                                <div key={pet.id} className="bg-white border rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200">
+                                <div
+                                    key={pet.id}
+                                    className="bg-white border rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200"
+                                    onClick={() => handlePetClick(pet)}
+                                >
                                     {/* 고정된 비율의 이미지 컨테이너 */}
                                     <div className="relative w-full pb-[75%]"> {/* 4:3 비율 유지 */}
                                         <img
@@ -1012,7 +1041,12 @@ const MyPage = () => {
                                     <div className="p-4 space-y-3">
                                         <div className="flex justify-between items-center">
                                             <h3 className="text-xl font-bold text-gray-800">{pet.name}</h3>
-                                            <span className="text-sm font-medium px-2 py-1 bg-blue-100 text-blue-800 rounded-full">
+                                            <span
+                                                className={`text-sm font-medium px-2 py-1 rounded-full ${pet.animalType === 'DOG'
+                                                    ? 'bg-blue-100 text-blue-800' // 강아지 스타일
+                                                    : 'bg-pink-100 text-pink-800' // 고양이 스타일
+                                                    }`}
+                                            >
                                                 {pet.animalType === 'DOG' ? '강아지' : '고양이'}
                                             </span>
                                         </div>
@@ -1037,13 +1071,19 @@ const MyPage = () => {
 
                                         <div className="flex justify-end space-x-2 pt-3 border-t mt-3">
                                             <button
-                                                onClick={() => handleEditPet(pet)}
+                                                onClick={(e) => {
+                                                    e.stopPropagation(); // Prevent navigation when clicking the buttons
+                                                    handleEditPet(pet);
+                                                }}
                                                 className="px-3 py-1.5 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors text-sm"
                                             >
                                                 수정
                                             </button>
                                             <button
-                                                onClick={() => handleDeleteConfirm(pet)}
+                                                onClick={(e) => {
+                                                    e.stopPropagation(); // Prevent navigation when clicking the buttons
+                                                    handleDeleteConfirm(pet);
+                                                }}
                                                 className="px-3 py-1.5 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors text-sm"
                                             >
                                                 삭제
