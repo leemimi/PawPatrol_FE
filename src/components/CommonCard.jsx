@@ -9,14 +9,8 @@ export const CommonCard = ({ item, type, onClose }) => {
 
 
 
-
-
-
-
-
-
-    // 반려동물 상태 텍스트 변환
-    const getStatusText = (status) => { //수정 
+    // 반려동물 상태 텍스트 변환 수정 
+    const getStatusText = (status) => {
         switch (status) {
             case 'FINDING': return '찾는중';
             case 'FOSTERING': return '임보 중';
@@ -101,8 +95,8 @@ export const CommonCard = ({ item, type, onClose }) => {
                     <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
                             <span className={`text-sm px-3 py-1.5 rounded-full font-medium ${statusText === '찾는중' ? 'bg-orange-100 text-orange-500' :
-                                    statusText === '목격' ? 'bg-red-100 text-red-500' :
-                                        'bg-green-100 text-green-500'
+                                statusText === '목격' ? 'bg-red-100 text-red-500' :
+                                    'bg-green-100 text-green-500'
                                 }`}>
                                 {statusText}
                             </span>
