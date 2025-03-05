@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronDown, ChevronUp, ArrowLeft, Edit2, Trash2, Home, Clock, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import axios from 'axios';
 import ApplicationsModal from '../../components/ApplicationsModal';
 
 const AnimalDetail = () => {
@@ -29,19 +30,20 @@ const AnimalDetail = () => {
         const fetchAnimalDetail = async () => {
             try {
                 setLoading(true);
-                const response = await fetch(`/api/v1/protections/${id}`, {
-                    method: 'GET',
-                    credentials: 'include',
-                    headers: {
-                        'Content-Type': 'application/json',
+                const response = await axios.get(
+                    `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/protections/${id}`,
+                    {
+                        withCredentials: true,
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
                     }
-                });
+                );
 
-                if (response.ok) {
-                    const data = await response.json();
-                    console.log("상세 정보:", data);
-                    if (data.resultCode === "200") {
-                        setAnimalData(data.data);
+                if (response.status === 200) {
+                    console.log("상세 정보:", response.data);
+                    if (response.data.resultCode === "200") {
+                        setAnimalData(response.data.data);
                     }
                 }
             } catch (error) {
@@ -110,21 +112,23 @@ const AnimalDetail = () => {
     const handleConfirmDelete = async () => {
         try {
             setIsSubmitting(true);
-            const response = await fetch(`/api/v1/protections/${id}`, {
-                method: 'PATCH',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json',
+            const response = await axios.patch(
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/protections/${id}`,
+                {},
+                {
+                    withCredentials: true,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
                 }
-            });
+            );
 
-            if (response.ok) {
-                const data = await response.json();
-                if (data.resultCode === "200") {
+            if (response.status === 200) {
+                if (response.data.resultCode === "200") {
                     alert('삭제되었습니다.');
                     navigate('/my-cases');
                 } else {
-                    alert('삭제 중 오류가 발생했습니다: ' + data.message);
+                    alert('삭제 중 오류가 발생했습니다: ' + response.data.message);
                 }
             } else {
                 alert('삭제 중 오류가 발생했습니다.');
@@ -147,25 +151,26 @@ const AnimalDetail = () => {
         try {
             setIsSubmitting(true);
 
-            const response = await fetch(`/api/v1/protections/${id}/apply`, {
-                method: 'POST',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
+            const response = await axios.post(
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/protections/${id}/apply`,
+                {
                     reason: applyReason,
                     protectionType: applicationType === 'adoption' ? 'ADOPTION' : 'TEMP_PROTECTION'
-                })
-            });
+                },
+                {
+                    withCredentials: true,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
 
-            if (response.ok) {
-                const data = await response.json();
-                if (data.resultCode === "200") {
+            if (response.status === 200) {
+                if (response.data.resultCode === "200") {
                     alert(applicationType === 'adoption' ? '입양 신청이 완료되었습니다.' : '임시보호 신청이 완료되었습니다.');
                     navigate('/my-applications');
                 } else {
-                    alert('신청 중 오류가 발생했습니다: ' + data.message);
+                    alert('신청 중 오류가 발생했습니다: ' + response.data.message);
                 }
             } else {
                 alert('신청 중 오류가 발생했습니다.');
@@ -183,21 +188,23 @@ const AnimalDetail = () => {
 
     const handleApproveProtection = async (protectionId) => {
         try {
-            const response = await fetch(`/api/v1/protections/${protectionId}/accept`, {
-                method: 'PATCH',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json',
+            const response = await axios.patch(
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/protections/${protectionId}/accept`,
+                {},
+                {
+                    withCredentials: true,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
                 }
-            });
+            );
 
-            if (response.ok) {
-                const data = await response.json();
-                if (data.resultCode === "200") {
+            if (response.status === 200) {
+                if (response.data.resultCode === "200") {
                     alert('신청이 승인되었습니다.');
                     window.location.reload();
                 } else {
-                    alert('승인 중 오류가 발생했습니다: ' + data.message);
+                    alert('승인 중 오류가 발생했습니다: ' + response.data.message);
                 }
             } else {
                 alert('승인 중 오류가 발생했습니다.');
@@ -213,24 +220,25 @@ const AnimalDetail = () => {
         if (rejectReason === null) return;
 
         try {
-            const response = await fetch(`/api/v1/protections/${protectionId}/reject`, {
-                method: 'PATCH',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
+            const response = await axios.patch(
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/protections/${protectionId}/reject`,
+                {
                     rejectReason: rejectReason
-                })
-            });
+                },
+                {
+                    withCredentials: true,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
 
-            if (response.ok) {
-                const data = await response.json();
-                if (data.resultCode === "200") {
+            if (response.status === 200) {
+                if (response.data.resultCode === "200") {
                     alert('신청이 거절되었습니다.');
                     window.location.reload();
                 } else {
-                    alert('거절 중 오류가 발생했습니다: ' + data.message);
+                    alert('거절 중 오류가 발생했습니다: ' + response.data.message);
                 }
             } else {
                 alert('거절 중 오류가 발생했습니다.');
@@ -292,13 +300,17 @@ const AnimalDetail = () => {
                                     ? 'bg-yellow-400 text-white'
                                     : animalData.animalCaseDetail.caseStatus === 'SHELTER_PROTECTING'
                                         ? 'bg-blue-400 text-white'
-                                        : 'bg-orange-300 text-white'
+                                        : animalData.animalCaseDetail.caseStatus === 'MY_PET'
+                                            ? 'bg-purple-400 text-white'
+                                            : 'bg-orange-300 text-white'
                                     }`}>
                                     {animalData.animalCaseDetail.caseStatus === 'PROTECT_WAITING'
                                         ? '신청가능'
                                         : animalData.animalCaseDetail.caseStatus === 'SHELTER_PROTECTING'
                                             ? '보호소 보호중'
-                                            : '임보중'}
+                                            : animalData.animalCaseDetail.caseStatus === 'MY_PET'
+                                                ? 'My Pet'
+                                                : '임보중'}
                                 </span>
 
                                 {/* 수정/삭제 버튼 - 내가 등록한 경우에만 표시 */}
@@ -361,8 +373,8 @@ const AnimalDetail = () => {
                                                         <button
                                                             key={index}
                                                             className={`w-2 h-2 rounded-full transition-all ${index === currentImageIndex
-                                                                    ? 'bg-white scale-125'
-                                                                    : 'bg-white bg-opacity-60'
+                                                                ? 'bg-white scale-125'
+                                                                : 'bg-white bg-opacity-60'
                                                                 }`}
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
@@ -391,8 +403,8 @@ const AnimalDetail = () => {
                                             <button
                                                 key={index}
                                                 className={`flex-shrink-0 h-16 w-16 rounded-md overflow-hidden border-2 transition-all ${index === currentImageIndex
-                                                        ? 'border-orange-500 shadow-md scale-105'
-                                                        : 'border-transparent hover:border-orange-300'
+                                                    ? 'border-orange-500 shadow-md scale-105'
+                                                    : 'border-transparent hover:border-orange-300'
                                                     }`}
                                                 onClick={() => setCurrentImageIndex(index)}
                                             >
@@ -752,8 +764,8 @@ const AnimalDetail = () => {
                                 <button
                                     key={index}
                                     className={`w-3 h-3 rounded-full transition-all ${index === currentImageIndex
-                                            ? 'bg-white scale-125'
-                                            : 'bg-white bg-opacity-60 hover:bg-opacity-100'
+                                        ? 'bg-white scale-125'
+                                        : 'bg-white bg-opacity-60 hover:bg-opacity-100'
                                         }`}
                                     onClick={() => setCurrentImageIndex(index)}
                                 />

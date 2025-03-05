@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Menu } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const Protection = () => {
   const [animals, setAnimals] = useState([]);
@@ -43,19 +44,18 @@ const Protection = () => {
   const fetchAnimals = async () => {
     try {
       setLoading(true);
-      const apiUrl = `/api/v1/protections?page=${page}&size=10`;
+      const apiUrl = `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/protections?page=${page}&size=10`;
       console.log(`데이터 요청: ${apiUrl}`);
 
-      const response = await fetch(apiUrl, {
-        method: 'GET',
-        credentials: 'include',
+      const response = await axios.get(apiUrl, {
+        withCredentials: true,
         headers: {
           'Content-Type': 'application/json',
         }
       });
 
-      if (response.ok) {
-        const data = await response.json();
+      if (response.status === 200) {
+        const data = response.data;
 
         if (data.resultCode === "200") {
           const newAnimals = data.data.content;

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, X, Check, Home, Clock } from 'lucide-react';
+import axios from 'axios';
 
 const MyApplications = () => {
     const [applications, setApplications] = useState([]);
@@ -54,16 +55,18 @@ const MyApplications = () => {
     const fetchMyApplications = async () => {
         try {
             setLoading(true);
-            const response = await fetch(`/api/v1/protections/my-protections?page=${page}&size=10`, {
-                method: 'GET',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json',
+            const response = await axios.get(
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/protections/my-protections?page=${page}&size=10`,
+                {
+                    withCredentials: true,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
                 }
-            });
+            );
 
-            if (response.ok) {
-                const data = await response.json();
+            if (response.status === 200) {
+                const data = response.data;
                 console.log('내 신청 목록 데이터:', data);
                 if (data.resultCode === "200") {
                     const newApplications = data.data.content || [];
@@ -178,16 +181,19 @@ const MyApplications = () => {
         if (window.confirm('신청을 취소하시겠습니까?')) {
             try {
                 setCancelLoading(true);
-                const response = await fetch(`/api/v1/protections/${protectionId}/cancel`, {
-                    method: 'PATCH',
-                    credentials: 'include',
-                    headers: {
-                        'Content-Type': 'application/json',
+                const response = await axios.patch(
+                    `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/protections/${protectionId}/cancel`,
+                    {},
+                    {
+                        withCredentials: true,
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
                     }
-                });
+                );
 
-                if (response.ok) {
-                    const data = await response.json();
+                if (response.status === 200) {
+                    const data = response.data;
                     if (data.resultCode === "200") {
                         alert('신청이 취소되었습니다.');
 

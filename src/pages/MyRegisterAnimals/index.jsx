@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, X, Check, Home, Clock } from 'lucide-react';
+import axios from 'axios';
 import ApplicationsModal from '../../components/ApplicationsModal';
 
 const MyRegisteredAnimals = () => {
@@ -40,16 +41,18 @@ const MyRegisteredAnimals = () => {
     const fetchMyRegisteredAnimals = async () => {
         try {
             setLoading(true);
-            const response = await fetch(`/api/v1/protections/my-cases?page=${page}&size=10`, {
-                method: 'GET',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json',
+            const response = await axios.get(
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/protections/my-cases?page=${page}&size=10`,
+                {
+                    withCredentials: true,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
                 }
-            });
+            );
 
-            if (response.ok) {
-                const data = await response.json();
+            if (response.status === 200) {
+                const data = response.data;
                 console.log('내가 등록한 동물 데이터:', data);
                 if (data.resultCode === "200") {
                     const newAnimals = data.data.content || [];
@@ -157,16 +160,19 @@ const MyRegisteredAnimals = () => {
     // 임시보호 신청 승인
     const handleApproveProtection = async (protectionId) => {
         try {
-            const response = await fetch(`/api/v1/protections/${protectionId}/accept`, {
-                method: 'PATCH',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json',
+            const response = await axios.patch(
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/protections/${protectionId}/accept`,
+                {},
+                {
+                    withCredentials: true,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
                 }
-            });
+            );
 
-            if (response.ok) {
-                const data = await response.json();
+            if (response.status === 200) {
+                const data = response.data;
                 if (data.resultCode === "200") {
                     alert('신청이 승인되었습니다.');
 
@@ -193,19 +199,21 @@ const MyRegisteredAnimals = () => {
         if (rejectReason === null) return; // 취소 버튼 누른 경우
 
         try {
-            const response = await fetch(`/api/v1/protections/${protectionId}/reject`, {
-                method: 'PATCH',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
+            const response = await axios.patch(
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/protections/${protectionId}/reject`,
+                {
                     rejectReason: rejectReason
-                })
-            });
+                },
+                {
+                    withCredentials: true,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                }
+            );
 
-            if (response.ok) {
-                const data = await response.json();
+            if (response.status === 200) {
+                const data = response.data;
                 if (data.resultCode === "200") {
                     alert('신청이 거절되었습니다.');
 
