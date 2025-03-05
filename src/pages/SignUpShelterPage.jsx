@@ -134,6 +134,7 @@ const SignUpShelter = () => {
         }
     };
 
+    // 회원가입
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({
@@ -161,14 +162,15 @@ const SignUpShelter = () => {
 
         try {
             const response = await axios.post(
-                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/auth/sign-up`,
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/auth/shelter/sigh-up`,
                 {
                     email: formData.email,
                     password: formData.password,
+                    owner: formData.owner,
                     nickname: formData.nickname,
                     address: `${address} ${detailAddress}`.trim(),
+                    startDate: startDate.replace(/-/g, ''), // YYYYMMDD 형식으로 변환
                     businessRegistrationNumber: businessRegistrationNumber.replace(/-/g, ''), // '-' 제거
-                    startDate: startDate.replace(/-/g, '') // YYYYMMDD 형식으로 변환
                 },
                 {
                     headers: { 'Content-Type': 'application/json' },
