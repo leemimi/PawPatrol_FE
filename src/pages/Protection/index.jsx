@@ -1,6 +1,9 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Menu } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import StatusBadge from '../../components/StatusBadge';
+import InfiniteScroll from '../../components/InfiniteScroll';
 
 const Protection = () => {
   const [animals, setAnimals] = useState([]);
@@ -8,52 +11,24 @@ const Protection = () => {
   const [loading, setLoading] = useState(false);
   const [totalElements, setTotalElements] = useState(0);
   const [hasMore, setHasMore] = useState(true);
-  const observerRef = useRef();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
-
-  // 마지막 아이템 참조 콜백
-  const lastAnimalRef = useCallback(node => {
-    if (loading) return;
-    if (observerRef.current) observerRef.current.disconnect();
-
-    observerRef.current = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && hasMore) {
-        console.log(`마지막 아이템에 도달했습니다. 페이지 ${page + 1} 로드 시작`);
-        setPage(prevPage => prevPage + 1);
-      }
-    });
-
-    if (node) observerRef.current.observe(node);
-  }, [loading, hasMore]);
-
-  const getStatusText = (status) => {
-    switch (status) {
-      case 'PROTECT_WAITING':
-        return '신청가능';
-      case 'TEMP_PROTECTING':
-        return '임보중';
-      default:
-        return status;
-    }
-  };
 
   const fetchAnimals = async () => {
     try {
       setLoading(true);
-      const apiUrl = `/api/v1/protections?page=${page}&size=10`;
+      const apiUrl = `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/protections?page=${page}&size=10`;
       console.log(`데이터 요청: ${apiUrl}`);
 
-      const response = await fetch(apiUrl, {
-        method: 'GET',
-        credentials: 'include',
+      const response = await axios.get(apiUrl, {
+        withCredentials: true,
         headers: {
           'Content-Type': 'application/json',
         }
       });
 
-      if (response.ok) {
-        const data = await response.json();
+      if (response.status === 200) {
+        const data = response.data;
 
         if (data.resultCode === "200") {
           const newAnimals = data.data.content;
@@ -68,7 +43,13 @@ const Protection = () => {
           if (page === 0) {
             setAnimals(newAnimals);
           } else {
-            setAnimals(prev => [...prev, ...newAnimals]);
+            setAnimals(prev => {
+              const existingIds = prev.map(animal => animal.animalCaseId);
+              const uniqueNewAnimals = newAnimals.filter(
+                animal => !existingIds.includes(animal.animalCaseId)
+              );
+              return [...prev, ...uniqueNewAnimals];
+            });
           }
 
           setTotalElements(data.data.totalElements);
@@ -100,6 +81,56 @@ const Protection = () => {
     navigate(`/protection/${animal.animalCaseId}`);
   };
 
+  const renderAnimal = (animal, index) => (
+    <div
+      className="bg-white rounded-xl overflow-hidden shadow hover:shadow-md transition-shadow cursor-pointer"
+      onClick={() => handleAnimalClick(animal)}
+    >
+      <div className="relative h-40">
+        {animal.imageUrl && (
+          <img
+            src={animal.imageUrl}
+            alt={animal.title}
+            className="w-full h-full object-cover"
+          />
+        )}
+        <div className="absolute top-2 left-2">
+          <StatusBadge status={animal.caseStatus} type="protection" />
+        </div>
+      </div>
+
+      <div className="p-3 h-[5.5rem] flex flex-col justify-between">
+        <h3 className="text-sm text-gray-800 min-h-[2.5rem] line-clamp-2 text-center">
+          {animal.title}
+        </h3>
+        <div className="flex justify-between items-center text-xs mt-1">
+          <span className="text-orange-500">{animal.breed}</span>
+          <span className="text-gray-400">{new Date(animal.createdAt).toLocaleDateString()}</span>
+        </div>
+      </div>
+    </div>
+  );
+
+  const loadingComponent = (
+    <div className="text-center py-4">
+      <span className="text-gray-500">불러오는 중...</span>
+    </div>
+  );
+
+  const endMessage = (
+    <div className="text-center py-4">
+      <span className="text-gray-500">모든 동물을 불러왔습니다.</span>
+    </div>
+  );
+
+  const emptyComponent = (
+    <div className="flex flex-col items-center justify-center h-64 p-4">
+      <p className="text-gray-600 text-center">
+        등록된 동물이 없습니다.
+      </p>
+    </div>
+  );
+
   return (
     <div className="max-w-lg mx-auto bg-[#FFF5E6] min-h-screen p-3 relative pb-24">
       <div className="mb-6 bg-white rounded-xl p-4 shadow hover:shadow-md transition-shadow">
@@ -115,44 +146,17 @@ const Protection = () => {
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        {animals.map((animal, index) => (
-          <div
-            key={animal.animalCaseId || index}
-            ref={index === animals.length - 1 ? lastAnimalRef : null}
-            className="bg-white rounded-xl overflow-hidden shadow hover:shadow-md transition-shadow cursor-pointer"
-            onClick={() => handleAnimalClick(animal)}
-          >
-            <div className="relative h-40">
-              {animal.imageUrl && (
-                <img
-                  src={animal.imageUrl}
-                  alt={animal.title}
-                  className="w-full h-full object-cover"
-                />
-              )}
-              <div className="absolute top-2 left-2">
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${animal.caseStatus === 'PROTECT_WAITING'
-                  ? 'bg-yellow-400 text-white'
-                  : animal.caseStatus === 'TEMP_PROTECTING'
-                    ? 'bg-red-400 text-white'
-                    : 'bg-orange-300 text-white'
-                  }`}>
-                  {getStatusText(animal.caseStatus)}
-                </span>
-              </div>
-            </div>
-
-            <div className="p-3 h-[5.5rem] flex flex-col justify-between">
-              <h3 className="text-sm text-gray-800 min-h-[2.5rem] line-clamp-2 text-center">
-                {animal.title}
-              </h3>
-              <div className="flex justify-between items-center text-xs mt-1">
-                <span className="text-orange-500">{animal.breed}</span>
-                <span className="text-gray-400">{new Date(animal.createdAt).toLocaleDateString()}</span>
-              </div>
-            </div>
-          </div>
-        ))}
+        <InfiniteScroll
+          items={animals}
+          hasMore={hasMore}
+          loading={loading}
+          loadMore={() => setPage(prevPage => prevPage + 1)}
+          renderItem={renderAnimal}
+          loadingComponent={loadingComponent}
+          emptyComponent={emptyComponent}
+          endMessage={endMessage}
+          className="grid grid-cols-2 gap-3 col-span-2"
+        />
       </div>
 
       {/* 메뉴 버튼과 팝업 */}
@@ -197,18 +201,6 @@ const Protection = () => {
           </div>
         )}
       </div>
-
-      {loading && (
-        <div className="text-center py-4">
-          <span className="text-gray-500">불러오는 중...</span>
-        </div>
-      )}
-
-      {!hasMore && animals.length > 0 && (
-        <div className="text-center py-4">
-          <span className="text-gray-500">모든 동물을 불러왔습니다.</span>
-        </div>
-      )}
     </div>
   );
 };
