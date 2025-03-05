@@ -19,24 +19,27 @@ const AdminDashboard = () => {
     const handleStatusChange = async (userId, newStatus) => {
         try {
             const response = await axios.patch(
-                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/admin/${userId}/status`,
-                { status: newStatus },
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/admin/members`,
+                {
+                    userId: userId,
+                    status: newStatus
+                },
                 { withCredentials: true }
             );
 
             if (response.data.statusCode === 200) {
                 // 성공 메시지 표시
-                toast.success(`회원 상태가 ${newStatus === 'ACTIVE' ? '정상' :
-                        newStatus === 'BANNED' ? '정지' :
-                            newStatus === 'INACTIVE' ? '휴면' : '탈퇴'
+                alert(`회원 상태가 ${newStatus === 'ACTIVE' ? '정상' :
+                    newStatus === 'BANNED' ? '정지' :
+                        newStatus === 'INACTIVE' ? '휴면' : '탈퇴'
                     }으로 변경되었습니다.`);
 
                 // 회원 목록 새로고침
-                fetchUsers(pagination.currentPage);
+                await fetchUsers();
             }
         } catch (error) {
             console.error('회원 상태 변경 오류:', error);
-            toast.error('회원 상태 변경에 실패했습니다.');
+            alert('회원 상태 변경에 실패했습니다.');
         }
     };
 
@@ -64,7 +67,7 @@ const AdminDashboard = () => {
         setIsLoading(true);
         try {
             const response = await axios.get(
-                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/admin?page=${page}&size=10`,
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/admin/members?page=${page}&size=10`,
                 { withCredentials: true }
             );
 
@@ -89,7 +92,7 @@ const AdminDashboard = () => {
         setIsLoading(true);
         try {
             const response = await axios.get(
-                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/admin/shelters`,
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/admin/shelter-members?page=${page}&size=10`,
                 { withCredentials: true }
             );
             if (response.data.statusCode === 200) {
@@ -226,6 +229,7 @@ const AdminDashboard = () => {
                                                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">이메일</th>
                                                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">닉네임</th>
                                                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">가입일</th>
+                                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">계정유형</th>
                                                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">상태</th>
                                                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">관리</th>
                                                     </tr>
@@ -238,6 +242,11 @@ const AdminDashboard = () => {
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{user.nickname}</td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                                 {new Date(user.createdAt).toLocaleDateString()}
+                                                            </td>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                                {user.role === 'ROLE_USER' ? '일반 사용자' :
+                                                                    user.role === 'ROLE_SHELTER' ? '보호소 관리자' :
+                                                                        ''}
                                                             </td>
                                                             <td className="px-6 py-4 whitespace-nowrap">
                                                                 <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${user.status === 'ACTIVE' ? 'bg-green-100 text-green-800' :
