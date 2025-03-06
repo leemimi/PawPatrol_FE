@@ -1,81 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { Menu } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import StatusBadge from '../../components/StatusBadge';
 import InfiniteScroll from '../../components/InfiniteScroll';
+import { useProtections } from '../../hooks/useProtections';
 
 const Protection = () => {
-  const [animals, setAnimals] = useState([]);
-  const [page, setPage] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [totalElements, setTotalElements] = useState(0);
-  const [hasMore, setHasMore] = useState(true);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const fetchAnimals = async () => {
-    try {
-      setLoading(true);
-      const apiUrl = `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/protections?page=${page}&size=10`;
-      console.log(`데이터 요청: ${apiUrl}`);
+  // 수정된 커스텀 훅 사용
+  const {
+    data,
+    loading,
+    error,
+    nextPage
+  } = useProtections(0, 10);
 
-      const response = await axios.get(apiUrl, {
-        withCredentials: true,
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
-
-      if (response.status === 200) {
-        const data = response.data;
-
-        if (data.resultCode === "200") {
-          const newAnimals = data.data.content;
-          console.log('받아온 데이터:', newAnimals[0]); // 데이터 구조 확인용 로그
-
-          if (newAnimals.length === 0) {
-            setHasMore(false);
-            console.log('더 이상 로드할 데이터가 없습니다');
-            return;
-          }
-
-          if (page === 0) {
-            setAnimals(newAnimals);
-          } else {
-            setAnimals(prev => {
-              const existingIds = prev.map(animal => animal.animalCaseId);
-              const uniqueNewAnimals = newAnimals.filter(
-                animal => !existingIds.includes(animal.animalCaseId)
-              );
-              return [...prev, ...uniqueNewAnimals];
-            });
-          }
-
-          setTotalElements(data.data.totalElements);
-
-          // 더 로드할 데이터가 있는지 확인
-          const isLastPage = data.data.last || newAnimals.length < 10;
-          setHasMore(!isLastPage);
-          console.log(`마지막 페이지 여부: ${isLastPage}, 더 데이터 있음: ${!isLastPage}`);
-        }
-      }
-    } catch (error) {
-      console.error('데이터 로드 오류:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // 훅에서 누적된 데이터 사용
+  const animals = data.content;
+  const totalElements = data.totalElements;
+  const hasMore = !data.last;
 
   // 페이지 로드 시 스크롤을 최상단으로 이동
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
-
-  // 페이지가 변경될 때만 데이터 가져오기
-  useEffect(() => {
-    fetchAnimals();
-  }, [page]);
 
   const handleAnimalClick = (animal) => {
     navigate(`/protection/${animal.animalCaseId}`);
@@ -131,6 +81,23 @@ const Protection = () => {
     </div>
   );
 
+  // 에러 처리
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 p-4">
+        <p className="text-red-600 text-center">
+          데이터를 불러오는 중 오류가 발생했습니다.
+        </p>
+        <button
+          className="mt-4 px-4 py-2 bg-orange-500 text-white rounded-lg"
+          onClick={() => window.location.reload()}
+        >
+          다시 시도
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-lg mx-auto bg-[#FFF5E6] min-h-screen p-3 relative pb-24">
       <div className="mb-6 bg-white rounded-xl p-4 shadow hover:shadow-md transition-shadow">
@@ -150,7 +117,7 @@ const Protection = () => {
           items={animals}
           hasMore={hasMore}
           loading={loading}
-          loadMore={() => setPage(prevPage => prevPage + 1)}
+          loadMore={nextPage}
           renderItem={renderAnimal}
           loadingComponent={loadingComponent}
           emptyComponent={emptyComponent}
