@@ -61,7 +61,7 @@ const MyPage = () => {
                 localStorage.removeItem('userInfo');
                 localStorage.removeItem('isLoggedIn');
                 // 로그인 페이지로 이동
-                navigate('/login-pet', { replace: true });
+                navigate('/', { replace: true });
             }
         } catch (error) {
             console.error('회원 탈퇴 오류:', error);
@@ -467,7 +467,7 @@ const MyPage = () => {
                 localStorage.removeItem('accessToken');
                 localStorage.removeItem('userInfo');
                 localStorage.removeItem('isLoggedIn');
-                navigate('/login-pet');
+                navigate('/');
             }
         } catch (error) {
             console.error('Logout error:', error);

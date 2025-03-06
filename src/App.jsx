@@ -37,12 +37,12 @@ const App = () => {
   return (
     <Routes>
       <Route element={<Layout />}>
-        <Route path="/login-pet" element={<LoginPet />} />
+        <Route path="/" element={<LoginPet />} />
         <Route path="/sign-up" element={<SignUp />} />
         <Route path="/mypage" element={<MyPage />} />
         <Route path="/connect" element={<SocialConnect />} />
         <Route path="/chat" element={<Chat />} />
-        <Route path="/" element={<Map />} />
+        <Route path="/main" element={<Map />} />
         <Route path="/oauth2/redirect" element={<OAuth2RedirectHandler />} />
         <Route path="/protection" element={<Protection />} />
         <Route path="/protection/:id" element={<ProtectionDetail />} />

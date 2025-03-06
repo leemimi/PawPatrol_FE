@@ -16,18 +16,6 @@ const LoginScreen = () => {
     const [rememberMe, setRememberMe] = useState(false);
     const navigate = useNavigate();
 
-    // 컴포넌트 마운트 시 로컬 스토리지에서 저장된 이메일 확인
-    useEffect(() => {
-        window.scrollTo(0, 0);
-        const savedEmail = localStorage.getItem('savedEmail');
-        const isRemembered = localStorage.getItem('rememberMe') === 'true';
-
-        if (savedEmail && isRemembered) {
-            setEmail(savedEmail);
-            setRememberMe(true);
-        }
-    }, []);
-
     const handleLogin = async (e) => {
         e.preventDefault();
 
@@ -70,17 +58,40 @@ const LoginScreen = () => {
                     localStorage.setItem('userInfo', JSON.stringify(loginUserInfo));
                     localStorage.setItem('isLoggedIn', 'true');
 
-                    navigate('/', { replace: true });
+                    navigate('/main', { replace: true });
                 }
             }
         } catch (error) {
-            alert(error.response.data.message);
+            alert(error.response.data.msg || error.response.data.message);
+            console.log(error);
         }
     };
 
     const handleClickSignUp = () => {
         setShowSignUpModal(true); // 모달 열기
     };
+
+    useEffect(() => {
+        // 로그인 상태 확인
+        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+
+        // 이미 로그인되어 있다면 /main으로 리다이렉트
+        if (isLoggedIn) {
+            navigate('/main', { replace: true });
+        }
+    }, [navigate]);
+
+    // 컴포넌트 마운트 시 로컬 스토리지에서 저장된 이메일 확인
+    useEffect(() => {
+        window.scrollTo(0, 0);
+        const savedEmail = localStorage.getItem('savedEmail');
+        const isRemembered = localStorage.getItem('rememberMe') === 'true';
+
+        if (savedEmail && isRemembered) {
+            setEmail(savedEmail);
+            setRememberMe(true);
+        }
+    }, []);
 
     return (
         <div className="min-h-screen bg-orange-50 flex flex-col items-center justify-center p-4">
