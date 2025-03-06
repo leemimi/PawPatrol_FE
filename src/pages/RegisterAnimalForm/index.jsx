@@ -15,6 +15,7 @@ const RegisterAnimalForm = () => {
     const [formData, setFormData] = useState({
         title: "",
         description: "",
+        location: "",
         breed: "",
         gender: "MALE",
         size: "MEDIUM",
@@ -224,6 +225,18 @@ const RegisterAnimalForm = () => {
                                         <option value="LARGE">대형</option>
                                     </select>
                                 </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm text-orange-900 mb-1">위치</label>
+                                <input
+                                    type="text"
+                                    name="location"
+                                    value={formData.location}
+                                    onChange={handleChange}
+                                    placeholder="간단한 위치 정보를 입력하세요 (예: 서울시 강남구)"
+                                    className="w-full p-2 border border-orange-200 rounded-lg text-orange-900 placeholder-orange-300 focus:outline-none focus:border-orange-400"
+                                />
                             </div>
 
                             <div>

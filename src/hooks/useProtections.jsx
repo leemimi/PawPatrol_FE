@@ -225,6 +225,7 @@ export const useAnimalForm = (id = null) => {
                 const formData = {
                     title: animalData.title || "",
                     description: animalData.description || "",
+                    location: animalData.location || "",
                     breed: animalData.animalInfo.breed || "",
                     gender: animalData.animalInfo.gender === 'M' ? 'MALE' : animalData.animalInfo.gender === 'F' ? 'FEMALE' : 'UNKNOWN',
                     size: animalData.animalInfo.size || "MEDIUM",

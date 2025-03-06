@@ -1,5 +1,5 @@
 import React from 'react';
-import { Edit2, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Edit2, Trash2, ChevronLeft, ChevronRight, MapPin } from 'lucide-react';
 import StatusBadge from '../../../components/StatusBadge';
 import ImageCarousel from './ImageCarousel';
 
@@ -90,10 +90,17 @@ const AnimalInfo = ({
                 </div>
 
                 {/* Health Status - Blue background */}
-                <div className="bg-blue-50 rounded-lg p-4">
+                <div className="bg-blue-50 rounded-lg p-4 space-y-3">
                     <div className="flex justify-between items-center">
                         <span className="text-blue-500 text-sm">건강상태</span>
                         <span className="text-gray-800 text-sm">{animalData.animalCaseDetail.animalInfo.healthCondition}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                        <span className="text-blue-500 text-sm">위치</span>
+                        <div className="flex items-center">
+                            <MapPin size={16} className="mr-1" />
+                            <span className="text-gray-800 text-sm">{animalData.animalCaseDetail.location || '위치 정보 없음'}</span>
+                        </div>
                     </div>
                 </div>
 
