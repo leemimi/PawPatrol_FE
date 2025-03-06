@@ -2,9 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import DaumPostcode from 'react-daum-postcode';
+import ShelterSearchModal from '../components/ShelterSearchModal';
+
 
 
 const SignUpShelter = () => {
+    const [searchResults, setSearchResults] = useState([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [showSearchResults, setShowSearchResults] = useState(false);
     const navigate = useNavigate();
     const [openPostcode, setOpenPostcode] = useState(false);
     const [startDate, setStartDate] = useState('');
@@ -21,8 +26,45 @@ const SignUpShelter = () => {
         passwordConfirm: '',
         nickname: '',
         owner: '',
-        startDate: ''    // 개업일자
+        startDate: '',    // 개업일자
+        shelterName: ''
     });
+    // 보호소 검색 모달 상태
+    const [showShelterModal, setShowShelterModal] = useState(false);
+    const [selectedShelter, setSelectedShelter] = useState(null);
+
+    // 보호소 검색 함수
+    const searchShelters = async () => {
+        if (!formData.shelterName.trim()) return;
+
+        setIsLoading(true);
+        setShowSearchResults(true);
+
+        try {
+            const response = await axios.get(
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/shelters/search?keyword=${formData.shelterName}`,
+                { withCredentials: true }
+            );
+            setSearchResults(response.data.data || []);
+        } catch (error) {
+            console.error('보호소 검색 오류:', error);
+            alert('보호소 검색 중 오류가 발생했습니다.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // 보호소 선택 핸들러
+    const handleSelectShelter = (shelter) => {
+        setSelectedShelter(shelter);
+        setFormData(prev => ({
+            ...prev,
+            shelterName: shelter.name,
+            owner: prev.owner || '' // 기존 값 유지
+        }));
+        setAddress(shelter.address.split(' ').slice(0, 3).join(' ')); // 주소 기본 부분
+        setDetailAddress(shelter.address.split(' ').slice(3).join(' ')); // 상세 주소 부분
+    };
 
     // 사업자등록번호 검증 함수
     const handleBusinessRegistrationVerification = async () => {
@@ -191,9 +233,9 @@ const SignUpShelter = () => {
         }
     };
 
-        useEffect(() => {
-            window.scrollTo(0, 0);
-        }, []);
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, []);
 
 
     return (
@@ -282,54 +324,87 @@ const SignUpShelter = () => {
                                 required
                             />
                         </div>
+
+                        {/* 보호소 검색 필드 추가 */}
                         <div>
-                            <input
-                                type="text"
-                                name="nickname"
-                                placeholder="회사명"
-                                value={formData.nickname}
-                                onChange={handleChange}
-                                className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:border-orange-500"
-                                required
-                            />
+                            <div className="relative mb-4">
+                                <input type="text"
+                                    id="shelterName"
+                                    name="shelterName"
+                                    placeholder="보호소 이름 검색"
+                                    value={formData.shelterName}
+                                    onChange={(e) => {
+                                        handleChange(e);
+                                        // 입력 값이 변경될 때마다 검색 실행 (디바운스 적용)
+                                        if (e.target.value.trim()) {
+                                            setFormData(prev => ({ ...prev, shelterName: e.target.value }));
+                                            // 디바운스 처리를 위한 타이머 설정
+                                            if (window.searchTimer) clearTimeout(window.searchTimer);
+                                            window.searchTimer = setTimeout(() => {
+                                                setSearchTerm(e.target.value);
+                                                searchShelters();
+                                            }, 300); // 300ms 디바운스
+                                        }
+                                    }}
+                                    className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:border-orange-500"
+                                    required
+                                />
+                                <button
+                                    onClick={searchShelters}
+                                    type="button"
+                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 px-3 py-1 bg-orange-500 text-white rounded-lg text-sm hover:bg-orange-600"
+                                >
+                                    검색
+                                </button>
+                            </div>
+
+                            {/* 검색 결과 표시 영역 */}
+                            {showSearchResults && (
+                                <div className="max-h-60 overflow-y-auto mb-4 border border-gray-200 rounded-xl">
+                                    {isLoading ? (
+                                        <p className="text-center py-2">검색 중...</p>
+                                    ) : searchResults.length > 0 ? (
+                                        <ul className="divide-y divide-gray-200">
+                                            {searchResults.map((shelter) => (
+                                                <li
+                                                    key={shelter.id}
+                                                    onClick={() => handleSelectShelter(shelter)}
+                                                    className="py-3 px-2 hover:bg-gray-50 cursor-pointer"
+                                                >
+                                                    <div className="font-semibold">{shelter.name}</div>
+                                                    <div className="text-sm text-gray-600">{shelter.address}</div>
+                                                    <div className="text-sm text-gray-600">{shelter.phone}</div>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    ) : (
+                                        <div className="text-center py-4">
+                                            <p className="text-gray-500 mb-3">검색 결과가 없습니다.</p>
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowShelterModal(true)}
+                                                className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600"
+                                            >
+                                                보호소 등록
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
+
 
                         <div className="relative">
                             <input
                                 type="text"
                                 name="address"
-                                placeholder="주소 검색 (예: 서울 강남구 역삼동)"
+                                placeholder="주소"
                                 value={address}
                                 readOnly
-                                className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:border-orange-500"
+                                className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none"
                                 required
                             />
-                            <button
-                                type="button"
-                                onClick={handleToggle}
-                                className="absolute right-3 top-1/2 transform -translate-y-1/2 px-3 py-1 bg-orange-500 text-white rounded-lg text-sm hover:bg-orange-600"
-                            >
-                                검색
-                            </button>
                         </div>
-                        {/* 우편번호 검색 팝업 */}
-                        {openPostcode && (
-                            <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-                                <div className="bg-white rounded-lg p-4 w-full max-w-md relative">
-                                    <button
-                                        onClick={() => setOpenPostcode(false)}
-                                        className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
-                                    >
-                                        ✕
-                                    </button>
-                                    <DaumPostcode
-                                        onComplete={handleComplete}
-                                        style={{ height: '400px' }}
-                                    />
-                                </div>
-                            </div>
-
-                        )}
                         <input
                             type="text"
                             name="detailAddress"
@@ -412,6 +487,13 @@ const SignUpShelter = () => {
                             가입하기
                         </button>
                     </form>
+
+                    {/* 보호소 등록 모달 */}
+                    <ShelterSearchModal
+                        isOpen={showShelterModal}
+                        onClose={() => setShowShelterModal(false)}
+                        onSelectShelter={handleSelectShelter}
+                    />
 
                     <div className="flex items-center justify-center space-x-4 text-sm text-gray-600">
                         <button
