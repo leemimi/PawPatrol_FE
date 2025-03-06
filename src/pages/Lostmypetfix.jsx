@@ -11,7 +11,7 @@ const Lostmypetfix = () => {
   const [previewUrls, setPreviewUrls] = useState([]);
   const [formData, setFormData] = useState({
     content: null,
-    location: "서울시 강남구",
+    location: null,
     lostTime: "2025-02-20T10:30:00",
     findTime: null,
     status: "FINDING",
@@ -185,6 +185,22 @@ const handleImageUpload = (e) => {
 />
           </div>
 
+          {/* Location */}
+                              <div className="bg-white p-4 rounded-2xl border-2 border-orange-100">
+                                <div className="flex items-center gap-2 text-orange-400 mb-2">
+                                  <MapPin size={20} strokeWidth={2.5} />
+                                  <span className="font-medium">발견 위치</span>
+                                </div>
+                                <input
+                                  type="text"
+                                  name="location"
+                                  placeholder="위치를 입력하세요"
+                                  value={formData.location}
+                                  onChange={handleChange}
+                                  className="w-full text-orange-900 focus:outline-none p-2 border rounded-md"
+                                />
+                              </div>
+
           {/* Location & Map */}
                      <div className="bg-white p-4 rounded-2xl border-2 border-orange-100">
                       <div className="flex items-center gap-2 text-orange-400 mb-2">
@@ -215,14 +231,16 @@ const handleImageUpload = (e) => {
             />
           </div>
 
+        
+
+          {/* Title & Content */}
           <div className="bg-white p-4 rounded-2xl border-2 border-orange-100">
-            <input
-              type="text"
+            <textarea
               name="content"
-              placeholder="내용입력"
+              placeholder="내용을 입력하세요"
               value={formData.content}
               onChange={handleChange}
-              className="w-full text-orange-900 placeholder-orange-300 focus:outline-none"
+              className="w-full h-32 text-orange-900 placeholder-orange-300 focus:outline-none resize-none"
             />
           </div>
 
