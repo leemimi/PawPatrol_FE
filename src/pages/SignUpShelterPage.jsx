@@ -7,6 +7,7 @@ import ShelterSearchModal from '../components/ShelterSearchModal';
 
 
 const SignUpShelter = () => {
+    const [isComposing, setIsComposing] = useState(false);
     const [searchResults, setSearchResults] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [showSearchResults, setShowSearchResults] = useState(false);
@@ -34,15 +35,18 @@ const SignUpShelter = () => {
     const [selectedShelter, setSelectedShelter] = useState(null);
 
     // 보호소 검색 함수
-    const searchShelters = async () => {
-        if (!formData.shelterName.trim()) return;
+    // 보호소 검색 함수
+    const searchShelters = async (searchTerm) => {
+        // 인자가 없으면 formData에서 가져옴
+        const term = searchTerm || formData.shelterName.trim();
+        if (!term) return;
 
         setIsLoading(true);
         setShowSearchResults(true);
 
         try {
             const response = await axios.get(
-                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/auth/shelters?keyword=${formData.shelterName}`,
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/auth/shelters?keyword=${term}`,
                 { withCredentials: true }
             );
 
@@ -54,6 +58,7 @@ const SignUpShelter = () => {
             setIsLoading(false);
         }
     };
+
 
 
     // 보호소 선택 핸들러
@@ -336,28 +341,42 @@ const SignUpShelter = () => {
                                     placeholder="보호소 이름 검색"
                                     value={formData.shelterName}
                                     onChange={(e) => {
-                                        // 기본 폼 데이터 업데이트
+                                        // 원래 값 그대로 저장 (trim 적용하지 않음)
                                         handleChange(e);
 
                                         // 검색어가 있을 경우에만 디바운스 검색 실행
-                                        if (e.target.value.trim()) {
-                                            // 기존 타이머 취소
-                                            if (window.searchTimer) clearTimeout(window.searchTimer);
+                                        const searchTerm = e.target.value;
 
-                                            // 새 타이머 설정
+                                        if (window.searchTimer) clearTimeout(window.searchTimer);
+
+                                        if (searchTerm) {
                                             window.searchTimer = setTimeout(() => {
-                                                searchShelters();
-                                            }, 300);
+                                                // 검색 실행 시에만 trim 적용
+                                                searchShelters(searchTerm.trim());
+                                            }, 200);
                                         } else {
-                                            // 검색어가 비어있으면 결과 숨기기
                                             setShowSearchResults(false);
+                                        }
+                                    }}
+                                    // 입력 필드에 다음 속성 추가
+                                    onCompositionStart={() => setIsComposing(true)}
+                                    onCompositionEnd={(e) => {
+                                        setIsComposing(false);
+                                        // 조합이 완료된 후 검색 실행
+                                        if (e.target.value.trim()) {
+                                            searchShelters(e.target.value.trim());
+                                        }
+                                    }}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
+                                            searchShelters(e.target.value.trim());
                                         }
                                     }}
                                     className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:border-orange-500"
                                     required
                                 />
                                 <button
-                                    onClick={searchShelters}
+                                    onClick={() => searchShelters(formData.shelterName.trim())}
                                     type="button"
                                     className="absolute right-3 top-1/2 transform -translate-y-1/2 px-3 py-1 bg-orange-500 text-white rounded-lg text-sm hover:bg-orange-600"
                                 >
@@ -385,34 +404,26 @@ const SignUpShelter = () => {
                                                     </li>
                                                 ))}
                                             </ul>
-
-                                            {/* 검색 결과가 있어도 원하는 보호소가 없을 경우를 위한 버튼 */}
-                                            <div className="text-center py-3 border-t border-gray-200">
-                                                <p className="text-gray-500 mb-2">원하는 보호소가 없으신가요?</p>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setShowShelterModal(true)}
-                                                    className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600"
-                                                >
-                                                    보호소 직접 등록
-                                                </button>
-                                            </div>
                                         </div>
                                     ) : (
                                         <div className="text-center py-4">
                                             <p className="text-gray-500 mb-3">검색 결과가 없습니다.</p>
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowShelterModal(true)}
-                                                className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600"
-                                            >
-                                                보호소 등록
-                                            </button>
                                         </div>
                                     )}
                                 </div>
-
                             )}
+                        </div>
+
+                        {/* 원하는 보호소가 없을 경우를 위한 버튼 */}
+                        <div className="text-center py-3 border-t border-gray-200">
+                            <p className="text-gray-500 mb-2">원하는 보호소가 없으신가요?</p>
+                            <button
+                                type="button"
+                                onClick={() => setShowShelterModal(true)}
+                                className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600"
+                            >
+                                보호소 직접 등록
+                            </button>
                         </div>
                         <input
                             type="text"
