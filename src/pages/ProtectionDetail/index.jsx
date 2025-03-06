@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
-import axios from 'axios';
 import Header from './components/Header';
 import AnimalInfo from './components/AnimalInfo';
 import HistorySection from './components/HistorySection';
@@ -11,21 +10,33 @@ import DeleteConfirmModal from './components/DeleteConfirmModal';
 import ApplyModal from './components/ApplyModal';
 import ImageGallery from './components/ImageGallery';
 import ActionButtons from './components/ActionButtons';
+import { useProtectionDetail, useAnimalDeletion, useProtectionApplication } from '../../hooks/useProtections';
 
 const AnimalDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const [animalData, setAnimalData] = useState(null);
-    const [loading, setLoading] = useState(true);
+
+    // 상세 정보 조회 훅
+    const { data: animalData, loading, error, refresh } = useProtectionDetail(id);
+
+    // 동물 삭제 훅
+    const { loading: deleteLoading, deleteAnimal } = useAnimalDeletion();
+
+    // 보호/입양 신청 관련 훅
+    const {
+        loading: applicationLoading,
+        applyForProtection,
+        approveProtection,
+        rejectProtection
+    } = useProtectionApplication();
+
+    // 로컬 상태 관리
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
-    const [isSubmitting, setIsSubmitting] = useState(false);
     const [applyReason, setApplyReason] = useState('');
     const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
     const [applicationType, setApplicationType] = useState('');
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
-
-    // Image gallery state
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [isGalleryOpen, setIsGalleryOpen] = useState(false);
 
@@ -33,36 +44,6 @@ const AnimalDetail = () => {
     useEffect(() => {
         window.scrollTo(0, 0);
     }, []);
-
-    useEffect(() => {
-        const fetchAnimalDetail = async () => {
-            try {
-                setLoading(true);
-                const response = await axios.get(
-                    `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/protections/${id}`,
-                    {
-                        withCredentials: true,
-                        headers: {
-                            'Content-Type': 'application/json'
-                        }
-                    }
-                );
-
-                if (response.status === 200) {
-                    console.log("상세 정보:", response.data);
-                    if (response.data.resultCode === "200") {
-                        setAnimalData(response.data.data);
-                    }
-                }
-            } catch (error) {
-                console.error('상세 정보 로드 오류:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchAnimalDetail();
-    }, [id]);
 
     const handleApplyClick = (type) => {
         setApplicationType(type);
@@ -89,33 +70,13 @@ const AnimalDetail = () => {
 
     const handleConfirmDelete = async () => {
         try {
-            setIsSubmitting(true);
-            const response = await axios.patch(
-                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/protections/${id}`,
-                {},
-                {
-                    withCredentials: true,
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                }
-            );
-
-            if (response.status === 200) {
-                if (response.data.resultCode === "200") {
-                    alert('삭제되었습니다.');
-                    navigate('/my-cases');
-                } else {
-                    alert('삭제 중 오류가 발생했습니다: ' + response.data.message);
-                }
-            } else {
-                alert('삭제 중 오류가 발생했습니다.');
-            }
+            await deleteAnimal(id);
+            alert('삭제되었습니다.');
+            navigate('/my-register-animals');
         } catch (error) {
             console.error('삭제 오류:', error);
             alert('삭제 중 오류가 발생했습니다.');
         } finally {
-            setIsSubmitting(false);
             setIsDeleteModalOpen(false);
         }
     };
@@ -127,37 +88,17 @@ const AnimalDetail = () => {
         }
 
         try {
-            setIsSubmitting(true);
+            await applyForProtection(id, {
+                reason: applyReason,
+                protectionType: applicationType === 'adoption' ? 'ADOPTION' : 'TEMP_PROTECTION'
+            });
 
-            const response = await axios.post(
-                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/protections/${id}/apply`,
-                {
-                    reason: applyReason,
-                    protectionType: applicationType === 'adoption' ? 'ADOPTION' : 'TEMP_PROTECTION'
-                },
-                {
-                    withCredentials: true,
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                }
-            );
-
-            if (response.status === 200) {
-                if (response.data.resultCode === "200") {
-                    alert(applicationType === 'adoption' ? '입양 신청이 완료되었습니다.' : '임시보호 신청이 완료되었습니다.');
-                    navigate('/my-applications');
-                } else {
-                    alert('신청 중 오류가 발생했습니다: ' + response.data.message);
-                }
-            } else {
-                alert('신청 중 오류가 발생했습니다.');
-            }
+            alert(applicationType === 'adoption' ? '입양 신청이 완료되었습니다.' : '임시보호 신청이 완료되었습니다.');
+            navigate('/my-applications');
         } catch (error) {
             console.error('신청 오류:', error);
             alert('신청 중 오류가 발생했습니다.');
         } finally {
-            setIsSubmitting(false);
             setIsApplyModalOpen(false);
             setApplyReason('');
             setApplicationType('');
@@ -166,27 +107,9 @@ const AnimalDetail = () => {
 
     const handleApproveProtection = async (protectionId) => {
         try {
-            const response = await axios.patch(
-                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/protections/${protectionId}/accept`,
-                {},
-                {
-                    withCredentials: true,
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                }
-            );
-
-            if (response.status === 200) {
-                if (response.data.resultCode === "200") {
-                    alert('신청이 승인되었습니다.');
-                    window.location.reload();
-                } else {
-                    alert('승인 중 오류가 발생했습니다: ' + response.data.message);
-                }
-            } else {
-                alert('승인 중 오류가 발생했습니다.');
-            }
+            await approveProtection(protectionId);
+            alert('신청이 승인되었습니다.');
+            refresh(); // 데이터 새로고침
         } catch (error) {
             console.error('승인 오류:', error);
             alert('승인 중 오류가 발생했습니다.');
@@ -198,34 +121,36 @@ const AnimalDetail = () => {
         if (rejectReason === null) return;
 
         try {
-            const response = await axios.patch(
-                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/protections/${protectionId}/reject`,
-                {
-                    rejectReason: rejectReason
-                },
-                {
-                    withCredentials: true,
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                }
-            );
-
-            if (response.status === 200) {
-                if (response.data.resultCode === "200") {
-                    alert('신청이 거절되었습니다.');
-                    window.location.reload();
-                } else {
-                    alert('거절 중 오류가 발생했습니다: ' + response.data.message);
-                }
-            } else {
-                alert('거절 중 오류가 발생했습니다.');
-            }
+            await rejectProtection(protectionId, rejectReason);
+            alert('신청이 거절되었습니다.');
+            refresh(); // 데이터 새로고침
         } catch (error) {
             console.error('거절 오류:', error);
             alert('거절 중 오류가 발생했습니다.');
         }
     };
+
+    // 오류 처리
+    if (error) {
+        return (
+            <div className="max-w-lg mx-auto bg-[#FFF5E6] min-h-screen">
+                <Header navigate={navigate} />
+                <main className="pt-20 pb-20 px-4">
+                    <div className="flex flex-col items-center justify-center h-64 p-4">
+                        <p className="text-red-600 text-center">
+                            데이터를 불러오는 중 오류가 발생했습니다.
+                        </p>
+                        <button
+                            className="mt-4 px-4 py-2 bg-orange-500 text-white rounded-lg"
+                            onClick={refresh}
+                        >
+                            다시 시도
+                        </button>
+                    </div>
+                </main>
+            </div>
+        );
+    }
 
     return (
         <div className="max-w-lg mx-auto bg-[#FFF5E6] min-h-screen">
@@ -280,7 +205,7 @@ const AnimalDetail = () => {
                         applicationType={applicationType}
                         applyReason={applyReason}
                         setApplyReason={setApplyReason}
-                        isSubmitting={isSubmitting}
+                        isSubmitting={applicationLoading}
                         handleCancel={handleCancelApply}
                         handleSubmit={handleSubmitApply}
                     />
@@ -289,13 +214,13 @@ const AnimalDetail = () => {
                 {isDeleteModalOpen && (
                     <DeleteConfirmModal
                         isOpen={isDeleteModalOpen}
-                        isSubmitting={isSubmitting}
+                        isSubmitting={deleteLoading}
                         handleCancel={handleCancelDelete}
                         handleConfirm={handleConfirmDelete}
                     />
                 )}
 
-                {isGalleryOpen && animalData.images && (
+                {isGalleryOpen && animalData && animalData.images && (
                     <ImageGallery
                         images={animalData.images}
                         currentIndex={currentImageIndex}
