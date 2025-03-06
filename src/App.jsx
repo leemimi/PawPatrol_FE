@@ -12,6 +12,9 @@ import MyApplications from './pages/MyApplications'
 import MyRegisterAnimals from './pages/MyRegisterAnimals'
 import RegisterAnimalForm from './pages/RegisterAnimalForm'
 import EditAnimalForm from './pages/EditAnimalForm'
+import Rescue from './pages/Rescue'
+import RescueProtection from './pages/RescueProtection'
+import RescueReport from './pages/RescueReport'
 // import Layout from './layout/Layout.jsx'
 import SocialConnect from './pages/SocialConnectPage'
 import LostPostForm from './pages/LostPostForm'
@@ -50,7 +53,7 @@ const App = () => {
         <Route path="/forgot-password" element={<ForgotPasswordScreen />} />
         <Route path="/lost-pet-registration" element={<LostPostForm />} />
         <Route path="/find-pet-report" element={<ReportPostForm />} />
-        <Route path="/community" element={<LostPetListPages/>} />
+        <Route path="/community" element={<LostPetListPages />} />
         <Route path="/chatlist" element={<ChatList />} />
         <Route path="/community" element={<LostPetListPages />} />
         <Route path="/PetPostDetail/:postId" element={<PetPostDetail />} />
@@ -58,6 +61,9 @@ const App = () => {
         <Route path="/shelter-mypage" element={<ShelterMyPage />} />
         <Route path="/admin-dashboard" element={<AdminDashboard />} />
         <Route path="/sign-up-shelter" element={<SignUpShelter />} />
+        <Route path="/rescue" element={<Rescue />} />
+        <Route path="/rescue-protection" element={<RescueProtection />} />
+        <Route path="/rescue-report" element={<RescueReport />} />
       </Route>
     </Routes>
   );
