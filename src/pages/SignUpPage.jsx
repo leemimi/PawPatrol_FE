@@ -92,7 +92,7 @@ const SignUp = () => {
         } catch (error) {
             console.error('Verification code error:', error);
             if (error.response && error.response.data) {
-                alert(error.response.data.msg || '인증 코드가 일치하지 않습니다.');
+                alert(error.response.data.message || '인증 코드가 일치하지 않습니다.');
             } else {
                 alert('인증 코드 확인 중 오류가 발생했습니다.');
             }
@@ -141,7 +141,7 @@ const SignUp = () => {
         } catch (error) {
             console.error('SignUp error:', error);
             if (error.response && error.response.data) {
-                alert(error.response.data.msg || '회원가입에 실패했습니다.');
+                alert(error.response.data.message || '회원가입에 실패했습니다.');
             } else {
                 alert('회원가입 중 오류가 발생했습니다.');
             }

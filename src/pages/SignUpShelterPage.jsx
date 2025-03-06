@@ -42,9 +42,10 @@ const SignUpShelter = () => {
 
         try {
             const response = await axios.get(
-                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/shelters/search?keyword=${formData.shelterName}`,
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/auth/shelters?keyword=${formData.shelterName}`,
                 { withCredentials: true }
             );
+
             setSearchResults(response.data.data || []);
         } catch (error) {
             console.error('보호소 검색 오류:', error);
@@ -54,16 +55,22 @@ const SignUpShelter = () => {
         }
     };
 
+
     // 보호소 선택 핸들러
     const handleSelectShelter = (shelter) => {
         setSelectedShelter(shelter);
         setFormData(prev => ({
             ...prev,
             shelterName: shelter.name,
-            owner: prev.owner || '' // 기존 값 유지
+            shelterId: shelter.id,
+            shelterAddress: shelter.address,
+            shelterTel: shelter.tel
         }));
         setAddress(shelter.address.split(' ').slice(0, 3).join(' ')); // 주소 기본 부분
         setDetailAddress(shelter.address.split(' ').slice(3).join(' ')); // 상세 주소 부분
+
+        // 검색 결과창 닫기
+        setShowSearchResults(false);
     };
 
     // 사업자등록번호 검증 함수
@@ -109,12 +116,6 @@ const SignUpShelter = () => {
 
         setAddress(selectedAddress);
         setOpenPostcode(false);
-    };
-
-
-    // 버튼 클릭 이벤트, 주소입력
-    const handleToggle = () => {
-        setOpenPostcode(current => !current);
     };
 
     // 이메일 인증
@@ -169,7 +170,7 @@ const SignUpShelter = () => {
         } catch (error) {
             console.error('Verification code error:', error);
             if (error.response && error.response.data) {
-                alert(error.response.data.msg || '인증 코드가 일치하지 않습니다.');
+                alert(error.response.data.message || '인증 코드가 일치하지 않습니다.');
             } else {
                 alert('인증 코드 확인 중 오류가 발생했습니다.');
             }
@@ -209,10 +210,12 @@ const SignUpShelter = () => {
                     email: formData.email,
                     password: formData.password,
                     owner: formData.owner,
-                    nickname: formData.nickname,
+                    nickname: formData.shelterName,
                     address: `${address} ${detailAddress}`.trim(),
                     startDate: startDate.replace(/-/g, ''), // YYYYMMDD 형식으로 변환
                     businessRegistrationNumber: businessRegistrationNumber.replace(/-/g, ''), // '-' 제거
+                    shelterId: formData.shelterId,
+                    shelterTel: formData.shelterTel
                 },
                 {
                     headers: { 'Content-Type': 'application/json' },
@@ -225,9 +228,8 @@ const SignUpShelter = () => {
         } catch (error) {
             console.error('SignUp error:', error);
             if (error.response && error.response.data) {
-                alert(error.response.data.msg || '회원가입에 실패했습니다.');
+                alert(error.response.data.message || '회원가입에 실패했습니다.');
             } else {
-                f
                 alert('회원가입 중 오류가 발생했습니다.');
             }
         }
@@ -334,16 +336,21 @@ const SignUpShelter = () => {
                                     placeholder="보호소 이름 검색"
                                     value={formData.shelterName}
                                     onChange={(e) => {
+                                        // 기본 폼 데이터 업데이트
                                         handleChange(e);
-                                        // 입력 값이 변경될 때마다 검색 실행 (디바운스 적용)
+
+                                        // 검색어가 있을 경우에만 디바운스 검색 실행
                                         if (e.target.value.trim()) {
-                                            setFormData(prev => ({ ...prev, shelterName: e.target.value }));
-                                            // 디바운스 처리를 위한 타이머 설정
+                                            // 기존 타이머 취소
                                             if (window.searchTimer) clearTimeout(window.searchTimer);
+
+                                            // 새 타이머 설정
                                             window.searchTimer = setTimeout(() => {
-                                                setSearchTerm(e.target.value);
                                                 searchShelters();
-                                            }, 300); // 300ms 디바운스
+                                            }, 300);
+                                        } else {
+                                            // 검색어가 비어있으면 결과 숨기기
+                                            setShowSearchResults(false);
                                         }
                                     }}
                                     className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:border-orange-500"
@@ -364,19 +371,33 @@ const SignUpShelter = () => {
                                     {isLoading ? (
                                         <p className="text-center py-2">검색 중...</p>
                                     ) : searchResults.length > 0 ? (
-                                        <ul className="divide-y divide-gray-200">
-                                            {searchResults.map((shelter) => (
-                                                <li
-                                                    key={shelter.id}
-                                                    onClick={() => handleSelectShelter(shelter)}
-                                                    className="py-3 px-2 hover:bg-gray-50 cursor-pointer"
+                                        <div>
+                                            <ul className="divide-y divide-gray-200">
+                                                {searchResults.map((shelter) => (
+                                                    <li
+                                                        key={shelter.id}
+                                                        onClick={() => handleSelectShelter(shelter)}
+                                                        className="py-3 px-2 hover:bg-gray-50 cursor-pointer"
+                                                    >
+                                                        <div className="font-semibold">{shelter.name}</div>
+                                                        <div className="text-sm text-gray-600">{shelter.address}</div>
+                                                        <div className="text-sm text-gray-600">{shelter.tel}</div>
+                                                    </li>
+                                                ))}
+                                            </ul>
+
+                                            {/* 검색 결과가 있어도 원하는 보호소가 없을 경우를 위한 버튼 */}
+                                            <div className="text-center py-3 border-t border-gray-200">
+                                                <p className="text-gray-500 mb-2">원하는 보호소가 없으신가요?</p>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowShelterModal(true)}
+                                                    className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600"
                                                 >
-                                                    <div className="font-semibold">{shelter.name}</div>
-                                                    <div className="text-sm text-gray-600">{shelter.address}</div>
-                                                    <div className="text-sm text-gray-600">{shelter.phone}</div>
-                                                </li>
-                                            ))}
-                                        </ul>
+                                                    보호소 직접 등록
+                                                </button>
+                                            </div>
+                                        </div>
                                     ) : (
                                         <div className="text-center py-4">
                                             <p className="text-gray-500 mb-3">검색 결과가 없습니다.</p>
@@ -390,28 +411,17 @@ const SignUpShelter = () => {
                                         </div>
                                     )}
                                 </div>
+
                             )}
-                        </div>
-
-
-                        <div className="relative">
-                            <input
-                                type="text"
-                                name="address"
-                                placeholder="주소"
-                                value={address}
-                                readOnly
-                                className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none"
-                                required
-                            />
                         </div>
                         <input
                             type="text"
-                            name="detailAddress"
-                            placeholder="상세주소"
-                            value={detailAddress}
-                            onChange={(e) => setDetailAddress(e.target.value)}
-                            className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:border-orange-500"
+                            name="address"
+                            placeholder="주소"
+                            value={address + (detailAddress ? ' ' + detailAddress : '')}
+                            readOnly
+                            className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none"
+                            required
                         />
                         {/* 대표자명 입력 필드 */}
                         <div>
@@ -478,6 +488,17 @@ const SignUpShelter = () => {
                                 사업자등록번호 검증하기
                             </button>
                         )}
+
+                        <input
+                            type="hidden"
+                            name="shelterId"
+                            value={formData.shelterId || ''}
+                        />
+                        <input
+                            type="hidden"
+                            name="shelterTel"
+                            value={formData.shelterTel || ''}
+                        />
 
 
                         <button
