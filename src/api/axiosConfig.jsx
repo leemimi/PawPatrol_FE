@@ -28,9 +28,6 @@ axios.interceptors.response.use(
         return response;
     },
     (error) => {
-        // URL 확인 및 로깅
-        console.log("Error URL:", error.config?.url);
-
         // 블랙리스트 확인 및 401 에러 처리
         if (error.config && isNotBlackListed(error.config.url)) {
             if (error.response && error.response.status === 401) {

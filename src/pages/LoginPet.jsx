@@ -46,7 +46,6 @@ const LoginScreen = () => {
                 )
 
                 if (response) {
-                    console.log(response.data.data);
                     const loginUserInfo = {
                         id: response.data.data.id,
                         email: response.data.data.email,
@@ -63,7 +62,6 @@ const LoginScreen = () => {
             }
         } catch (error) {
             alert(error.response.data.msg || error.response.data.message);
-            console.log(error);
         }
     };
 
