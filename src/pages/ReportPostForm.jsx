@@ -15,7 +15,7 @@ const ReportPostForm = ({ formType = "standalone" }) => {
     content: "강아지를 발견했어요. 제발 도와주세요.",
     latitude: null,
     longitude: null,
-    location: "서울시 강남구",
+    location: null,
     lostTime: null,
     findTime: "2025-02-20T10:30:00",
     status: "SIGHTED", // 상태
@@ -118,6 +118,12 @@ const ReportPostForm = ({ formType = "standalone" }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+
+    if (!formData.location) {
+      alert("위치를 입력해주세요.");
+      return;
+    }
     const metadataJson = JSON.stringify(formData);
     const formDataToSend = new FormData();
     formDataToSend.append("metadata", metadataJson);
@@ -239,6 +245,22 @@ const ReportPostForm = ({ formType = "standalone" }) => {
               className="w-full h-32 text-orange-900 placeholder-orange-300 focus:outline-none resize-none"
             />
           </div>
+
+          {/* Location */}
+                    <div className="bg-white p-4 rounded-2xl border-2 border-orange-100">
+                      <div className="flex items-center gap-2 text-orange-400 mb-2">
+                        <MapPin size={20} strokeWidth={2.5} />
+                        <span className="font-medium">발견 위치</span>
+                      </div>
+                      <input
+                        type="text"
+                        name="location"
+                        placeholder="위치를 입력하세요"
+                        value={formData.location}
+                        onChange={handleChange}
+                        className="w-full text-orange-900 focus:outline-none p-2 border rounded-md"
+                      />
+                    </div>
 
           {/* Location & Map */}
           <div className="bg-white p-4 rounded-2xl border-2 border-orange-100">
