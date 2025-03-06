@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronLeft, MapPin, Pencil, Camera, X, Plus } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
-import axios from 'axios';
+import { useAnimalForm } from '../../hooks/useProtections';
 
 const EditAnimalForm = () => {
     const { id } = useParams();
@@ -9,8 +9,9 @@ const EditAnimalForm = () => {
     const fileInputRef = useRef(null);
     const [images, setImages] = useState([]);
     const [previewUrls, setPreviewUrls] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // useAnimalForm 훅 사용
+    const { loading, submitting, error, initialData, updateAnimal } = useAnimalForm(id);
 
     const [formData, setFormData] = useState({
         title: "",
@@ -26,53 +27,17 @@ const EditAnimalForm = () => {
         animalType: "DOG"
     });
 
-    // 동물 정보 불러오기
+    // 훅에서 초기 데이터를 받아오면 폼 데이터 설정
     useEffect(() => {
-        const fetchAnimalData = async () => {
-            try {
-                setLoading(true);
-                const response = await axios.get(`/api/v1/protections/${id}`, {
-                    headers: { 'Content-Type': 'application/json' },
-                    withCredentials: true
-                });
+        if (initialData) {
+            setFormData(initialData.formData);
 
-                if (response.data.resultCode === "200") {
-                    const animalData = response.data.data.animalCaseDetail;
-
-                    // 서버로부터 받은 데이터로 폼 초기화
-                    setFormData({
-                        title: animalData.title || "",
-                        description: animalData.description || "",
-                        breed: animalData.animalInfo.breed || "",
-                        gender: animalData.animalInfo.gender === 'M' ? 'MALE' : animalData.animalInfo.gender === 'F' ? 'FEMALE' : 'UNKNOWN',
-                        size: animalData.animalInfo.size || "MEDIUM",
-                        feature: animalData.animalInfo.feature || "",
-                        healthCondition: animalData.animalInfo.healthCondition || "",
-                        name: animalData.animalInfo.name || "",
-                        estimatedAge: animalData.animalInfo.age || "",
-                        registrationNo: animalData.animalInfo.registrationNo || "",
-                        animalType: animalData.animalInfo.animalType || "DOG"
-                    });
-
-                    // 이미지가 있는 경우 미리보기 설정
-                    if (animalData.animalInfo.imageUrl) {
-                        setPreviewUrls([animalData.animalInfo.imageUrl]);
-                    }
-                } else {
-                    alert("데이터를 불러오는데 실패했습니다: " + response.data.message);
-                    navigate(-1);
-                }
-            } catch (error) {
-                console.error("데이터 로드 중 오류 발생:", error);
-                alert("데이터를 불러오는데 실패했습니다.");
-                navigate(-1);
-            } finally {
-                setLoading(false);
+            // 이미지가 있는 경우 미리보기 설정
+            if (initialData.imageUrl) {
+                setPreviewUrls([initialData.imageUrl]);
             }
-        };
-
-        fetchAnimalData();
-    }, [id, navigate]);
+        }
+    }, [initialData]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -103,7 +68,6 @@ const EditAnimalForm = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setIsSubmitting(true);
 
         const formDataToSend = new FormData();
 
@@ -121,26 +85,12 @@ const EditAnimalForm = () => {
         });
 
         try {
-            const response = await axios.put(
-                `/api/v1/protections/${id}`,
-                formDataToSend,
-                {
-                    headers: { "Content-Type": "multipart/form-data" },
-                    withCredentials: true
-                }
-            );
-
-            if (response.data.resultCode === "200") {
-                alert("정보가 성공적으로 수정되었습니다.");
-                navigate(`/protection/${id}`);
-            } else {
-                alert("수정 실패: " + response.data.message);
-            }
+            await updateAnimal(id, formDataToSend);
+            alert("정보가 성공적으로 수정되었습니다.");
+            navigate(`/protection/${id}`);
         } catch (error) {
             console.error("동물 정보 수정 중 오류 발생:", error);
             alert("정보 수정에 실패했습니다." + (error.response?.data?.message || ""));
-        } finally {
-            setIsSubmitting(false);
         }
     };
 
@@ -377,10 +327,10 @@ const EditAnimalForm = () => {
 
                     <button
                         type="submit"
-                        disabled={isSubmitting}
+                        disabled={submitting}
                         className="w-full px-4 py-3 bg-orange-500 text-white rounded-full hover:bg-orange-600 transition-colors font-medium disabled:bg-orange-300"
                     >
-                        {isSubmitting ? "수정 중..." : "정보 수정하기"}
+                        {submitting ? "수정 중..." : "정보 수정하기"}
                     </button>
                 </form>
             </main>
