@@ -14,10 +14,10 @@ const LostPostForm = () => {
   const [selectedPet, setSelectedPet] = useState(null);
   
   const [formData, setFormData] = useState({
-    content: "강아지를 발견했어요. 제발 도와주세요.",
+    content: null,
     latitude: 37.5665,
     longitude: 126.978,
-    location: "서울시 강남구",
+    location: null,
     lostTime: "2025-02-20T10:30:00",
     findTime: null,
     status: "FINDING", // 상태
@@ -141,6 +141,17 @@ const LostPostForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Ensure a pet is selected and location is provided
+    if (!selectedPet) {
+      alert("반려동물을 선택해주세요.");
+      return;
+    }
+
+    if (!formData.location) {
+      alert("위치를 입력해주세요.");
+      return;
+    }
     const metadataJson = JSON.stringify(formData);
     const formDataToSend = new FormData();
     formDataToSend.append("metadata", metadataJson);
@@ -249,6 +260,9 @@ const LostPostForm = () => {
 
           {/* Image Upload */}
           <div className="bg-white p-4 rounded-2xl border-2 border-orange-100">
+          <div className="text-center mb-4">
+    <p className="text-gray-700 text-sm">펫의 측면과 옆모습 사진을 업로드해주세요</p>
+  </div>
             <div className="flex flex-wrap gap-2">
               {previewUrls.map((url, index) => (
                 <div key={index} className="relative w-24 h-24">
@@ -294,6 +308,22 @@ const LostPostForm = () => {
               value={formData.content}
               onChange={handleChange}
               className="w-full h-32 text-orange-900 placeholder-orange-300 focus:outline-none resize-none"
+            />
+          </div>
+
+          {/* Location */}
+          <div className="bg-white p-4 rounded-2xl border-2 border-orange-100">
+            <div className="flex items-center gap-2 text-orange-400 mb-2">
+              <MapPin size={20} strokeWidth={2.5} />
+              <span className="font-medium">발견 위치</span>
+            </div>
+            <input
+              type="text"
+              name="location"
+              placeholder="위치를 입력하세요"
+              value={formData.location}
+              onChange={handleChange}
+              className="w-full text-orange-900 focus:outline-none p-2 border rounded-md"
             />
           </div>
 
