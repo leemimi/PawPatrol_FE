@@ -8,6 +8,7 @@ const ChatList = () => {
   const [chatRooms, setChatRooms] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState('ALL'); 
   
   const currentUser = {
     id: JSON.parse(localStorage.getItem('userInfo'))?.id,
@@ -16,7 +17,7 @@ const ChatList = () => {
 
   useEffect(() => {
     fetchChatRooms();
-  }, []);
+  }, [activeTab]);
 
   const fetchChatRooms = async () => {
     if (!currentUser.id) {
@@ -27,7 +28,13 @@ const ChatList = () => {
 
     try {
       setIsLoading(true);
-      const response = await axios.get('/api/v1/chatlist');
+      // 탭에 따라 다른 API 엔드포인트 호출
+      let endpoint = '/api/v1/chatlist';
+      if (activeTab !== 'ALL') {
+        endpoint += `?type=${activeTab}`;
+      }
+      
+      const response = await axios.get(endpoint);
       console.log('Fetched chat rooms:', response.data);
       
       if (response.data && response.data.resultCode === "200") {
@@ -51,8 +58,9 @@ const ChatList = () => {
     sessionStorage.setItem('chatTarget', JSON.stringify({
       userId: otherMember.id,
       nickname: otherMember.nickname,
-      postId: room.post.foundId,
-      postTitle: room.post.content
+      postId: room.post.id,
+      postTitle: room.post.content,
+      type: room.type
     }));
     
     navigate('/chat');
@@ -117,7 +125,42 @@ const ChatList = () => {
             </button>
           </div>
         </div>
-        
+      </div>
+      
+      {/* Tab Navigation */}
+      <div className="flex border-b border-gray-200">
+        <button 
+          className={`flex-1 py-3 font-medium text-sm ${activeTab === 'ALL' ? 'text-orange-500 border-b-2 border-orange-500' : 'text-gray-500'}`}
+          onClick={() => setActiveTab('ALL')}
+        >
+          전체
+        </button>
+        <button 
+          className={`flex-1 py-3 font-medium text-sm ${activeTab === 'PROTECTADOPT' ? 'text-orange-500 border-b-2 border-orange-500' : 'text-gray-500'}`}
+          onClick={() => setActiveTab('PROTECTADOPT')}
+        >
+          임보/입양
+        </button>
+        <button 
+          className={`flex-1 py-3 font-medium text-sm ${activeTab === 'LOSTFOUND' ? 'text-orange-500 border-b-2 border-orange-500' : 'text-gray-500'}`}
+          onClick={() => setActiveTab('LOSTFOUND')}
+        >
+          구조/제보
+        </button>
+      </div>
+      
+      {/* Search Bar */}
+      <div className="p-3 bg-white sticky top-0 z-10 border-b border-gray-100">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+          <input 
+            type="text" 
+            placeholder="이름, 내용 검색" 
+            className="w-full py-2 pl-10 pr-4 border border-gray-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
       </div>
       
       {/* Chat List */}
@@ -143,7 +186,11 @@ const ChatList = () => {
             ) : (
               <>
                 <p>아직 채팅이 없어요</p>
-                <p className="text-sm mt-2">게시글에서 메시지를 보내보세요!</p>
+                <p className="text-sm mt-2">
+                  {activeTab === 'ALL' ? '게시글에서 메시지를 보내보세요!' : 
+                   activeTab === 'PROTECTADOPT' ? '임보/입양 관련 채팅이 없습니다.' : 
+                   '구조/제보 관련 채팅이 없습니다.'}
+                </p>
               </>
             )}
           </div>
@@ -186,12 +233,17 @@ const ChatList = () => {
                       <div className="flex items-center text-xs text-blue-500 mt-1">
                         <FileText className="w-3 h-3 mr-1 flex-shrink-0" />
                         <span className="truncate">{room.post.content}</span>
+                        {/* 채팅방 타입 표시 */}
+                        <span className="ml-2 px-1.5 py-0.5 text-xs rounded-full bg-gray-100 text-gray-600">
+                          {room.type === 'PROTECTADOPT' ? '임보/입양' : 
+                           room.type === 'LOSTFOUND' ? '구조/제보' : '기타'}
+                        </span>
                       </div>
                     )}
                     
                     {/* Last Message */}
                     <p className={`text-sm mt-1 truncate ${unreadCount > 0 ? 'font-medium text-gray-900' : 'text-gray-500'}`}>
-                      {lastMessage ?lastMessage.content : '새로운 대화를 시작하세요'}
+                      {lastMessage ? lastMessage.content : '새로운 대화를 시작하세요'}
                     </p>
                   </div>
                 </div>
@@ -200,7 +252,6 @@ const ChatList = () => {
           })
         )}
       </div>
-      
     </div>
   );
 };
