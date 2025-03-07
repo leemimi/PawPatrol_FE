@@ -39,6 +39,7 @@ const [currentImageIndex, setCurrentImageIndex] = useState(0);
         setPost(response.data.data);
       })
       .catch(error => console.error("Error fetching post data:", error));
+      
 
     axios.get(`http://localhost:8090/api/v1/comments/lost-foundposts/${postId}`)
       .then(response => setComments(response.data.data || []))
@@ -304,6 +305,7 @@ const closeGallery = () => {
                 {/* Location */}
                 <div className="flex items-center gap-2 text-gray-500 text-sm">
                   <MapPin size={16} />
+                  
                   <span>{post.latitude}, {post.longitude}</span>
                 </div>
                 
