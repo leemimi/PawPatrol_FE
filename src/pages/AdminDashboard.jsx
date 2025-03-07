@@ -59,7 +59,7 @@ const AdminDashboard = () => {
                 localStorage.removeItem('accessToken');
                 localStorage.removeItem('userInfo');
                 localStorage.removeItem('isLoggedIn');
-                navigate('/login-pet');
+                navigate('/');
             }
         } catch (error) {
             console.error('Logout error:', error);
@@ -145,7 +145,7 @@ const AdminDashboard = () => {
                 return;
             }
         } else {
-            navigate('/login-pet');
+            navigate('/');
             return;
         }
 

@@ -171,7 +171,7 @@ const ForgotPasswordScreen = () => {
                         <div className="text-center">
                             <button 
                                 type="button" 
-                                onClick={() => navigate('/login-pet')}
+                                onClick={() => navigate('/')}
                                 className="text-sm text-gray-600 hover:text-orange-500"
                             >
                                 로그인 화면으로 돌아가기
@@ -273,7 +273,7 @@ const ForgotPasswordScreen = () => {
                         </p>
                         
                         <button
-                            onClick={() => navigate('/login-pet')}
+                            onClick={() => navigate('/')}
                             className="w-full bg-orange-500 text-white py-3 rounded-xl font-medium hover:bg-orange-600 transition-colors"
                         >
                             로그인 화면으로 이동

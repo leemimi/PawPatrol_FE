@@ -62,7 +62,7 @@ const Footer = () => {
         } else {
             // 로컬 스토리지 정리 및 사용자에게 알림
             localStorage.removeItem('isLoggedIn');
-            navigate('/login-pet');
+            navigate('/');
         }
     };
 
@@ -71,7 +71,7 @@ const Footer = () => {
             <div className="flex justify-between items-center w-full px-4">
                 <div className="flex-1 flex flex-col items-center py-3">
                     <button
-                        onClick={() => navigate('/')}
+                        onClick={() => navigate('/main')}
                         className="flex flex-col items-center text-orange-400 hover:text-orange-500 transition-colors"
                     >
                         <Home size={20} strokeWidth={2.5} />

@@ -137,7 +137,7 @@ const SignUp = () => {
             );
 
             alert('회원가입이 완료되었습니다.');
-            navigate('/login-pet');
+            navigate('/');
         } catch (error) {
             console.error('SignUp error:', error);
             if (error.response && error.response.data) {
@@ -294,7 +294,7 @@ const SignUp = () => {
 
                     <div className="flex items-center justify-center space-x-4 text-sm text-gray-600">
                         <button
-                            onClick={() => navigate('/login-pet')}
+                            onClick={() => navigate('/')}
                             className="hover:text-orange-500"
                         >
                             이미 계정이 있으신가요? 로그인하기

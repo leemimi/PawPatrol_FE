@@ -130,7 +130,7 @@ const SocialConnectPage = () => {
 
                 <div className="text-center text-sm">
                     <button
-                        onClick={() => navigate('/login-pet')}
+                        onClick={() => navigate('/')}
                         className="text-orange-500 hover:text-orange-600"
                     >
                         로그인 페이지로 돌아가기
