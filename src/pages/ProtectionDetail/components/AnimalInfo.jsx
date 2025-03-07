@@ -87,6 +87,12 @@ const AnimalInfo = ({
                             {animalData.animalCaseDetail.animalInfo.gender === 'M' ? '남아' : '여아'}
                         </span>
                     </div>
+                    {animalData.animalCaseDetail.animalInfo.registrationNo && (
+                        <div className="flex justify-between items-center">
+                            <span className="text-orange-500 text-sm">동물등록번호</span>
+                            <span className="text-gray-800 text-sm">{animalData.animalCaseDetail.animalInfo.registrationNo}</span>
+                        </div>
+                    )}
                 </div>
 
                 {/* Health Status - Blue background */}
