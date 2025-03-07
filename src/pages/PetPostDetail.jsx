@@ -248,9 +248,9 @@ const closeGallery = () => {
               <button onClick={handleEdit} className="w-full px-4 py-2 text-left hover:bg-gray-100">
                 수정하기
               </button>
-              <button onClick={handleDelete} className="w-full px-4 py-2 text-left text-red-500 hover:bg-gray-100">
-                삭제하기
-              </button>
+              <button onClick={() => handleDelete(postId)} className="w-full px-4 py-2 text-left text-red-500 hover:bg-gray-100">
+  삭제하기
+</button>
             </div>
           )}
         </div>

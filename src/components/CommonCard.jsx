@@ -63,7 +63,7 @@ export const CommonCard = ({ item, type, onClose }) => {
 
         const petInfo = item?.pet ? (
             <h3 className="text-lg font-bold text-orange-900 mb-1">
-                {getAnimalTypeText(item.animalType)}  / {getAnimalTypeText(item.pet.animalType)}
+                {getAnimalTypeText(item.animalType)} 
                 / {item.pet.name || item.pet.breed || ''}
                 {item.pet.gender ? ` / ${item.pet.gender}` : ''}
             </h3>
@@ -143,7 +143,7 @@ export const CommonCard = ({ item, type, onClose }) => {
                 {process.env.NODE_ENV === 'development' && (
                     <div className="mt-2 pt-2 border-t border-gray-200 w-full">
                         <p className="text-xs text-gray-400">
-                            {item?.foundId ? `foundId: ${item.foundId}` : '(foundId 없음)'} |
+                            
                             {item?.id ? ` id: ${item.id}` : ' (id 없음)'}
                         </p>
                     </div>
