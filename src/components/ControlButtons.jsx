@@ -5,7 +5,6 @@ import { List, MapPin, X, Search, Eye, ArrowRight } from 'lucide-react';
 export const ControlButtons = ({
   onLocationClick,
   onListClick,
-  onFacilitiesToggle,
   onSelectMissingPost,
   onSelectReportPost
 }) => {
@@ -58,14 +57,6 @@ export const ControlButtons = ({
         <List size={24} strokeWidth={2.5} />
       </button>
       
-      {/* 시설 토글 버튼 추가 */}
-      <button
-        onClick={onFacilitiesToggle}
-        className="fixed top-28 left-6 z-40 flex items-center gap-2 px-3 py-1.5 rounded-full shadow-lg bg-orange-500 text-white hover:bg-orange-600 transition-colors"
-      >
-        <MapPin size={16} strokeWidth={2.5} />
-        <span className="font-small">병원 정보 보기</span>
-      </button>
       
     </>
   );
@@ -74,7 +65,6 @@ export const ControlButtons = ({
 ControlButtons.propTypes = {
   onLocationClick: PropTypes.func.isRequired,
   onListClick: PropTypes.func.isRequired,
-  onFacilitiesToggle: PropTypes.func,
   onSelectMissingPost: PropTypes.func,
   onSelectReportPost: PropTypes.func
 };

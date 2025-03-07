@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { ProtectionApiService } from '../api/ProtectionApiService';
 
 // 보호 동물 목록 조회 훅
-export const useProtections = (initialPage = 0, initialSize = 10) => {
+export const useProtections = (initialPage = 0, initialSize = 10, animalType = null, location = null) => {
     // 누적 컨텐츠 배열 추가
     const [accumulatedContent, setAccumulatedContent] = useState([]);
     const [data, setData] = useState({ content: [], totalElements: 0, last: true });
@@ -10,12 +10,21 @@ export const useProtections = (initialPage = 0, initialSize = 10) => {
     const [size, setSize] = useState(initialSize);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [currentAnimalType, setCurrentAnimalType] = useState(animalType);
+    const [currentLocation, setCurrentLocation] = useState(location);
+
+    useEffect(() => {
+        setCurrentAnimalType(animalType);
+        setCurrentLocation(location);
+    }, [animalType, location]);
 
     const fetchProtections = useCallback(async () => {
         try {
             setLoading(true);
             setError(null);
-            const result = await ProtectionApiService.fetchProtections(page, size);
+            const result = await ProtectionApiService.fetchProtections(
+                page, size, currentAnimalType, currentLocation
+            );
 
             // 원본 데이터 저장
             setData(result);
@@ -41,7 +50,7 @@ export const useProtections = (initialPage = 0, initialSize = 10) => {
         } finally {
             setLoading(false);
         }
-    }, [page, size]);
+    }, [page, size, currentAnimalType, currentLocation]);
 
     useEffect(() => {
         fetchProtections();
@@ -86,7 +95,6 @@ export const useProtections = (initialPage = 0, initialSize = 10) => {
         resetPage,
         changeSize,
         refresh: () => {
-            resetPage();
             fetchProtections();
         }
     };
@@ -129,7 +137,11 @@ export const useProtectionDetail = (id) => {
 // 나의 등록 동물 목록 훅
 export const useMyRegisteredAnimals = (initialPage = 0, initialSize = 10) => {
     const [accumulatedContent, setAccumulatedContent] = useState([]);
-    const [data, setData] = useState({ content: [], totalElements: 0, last: true });
+    const [data, setData] = useState({
+        page: { content: [], totalElements: 0, last: true },
+        waitingCount: 0,
+        protectingCount: 0
+    });
     const [page, setPage] = useState(initialPage);
     const [size, setSize] = useState(initialSize);
     const [loading, setLoading] = useState(false);
@@ -146,11 +158,11 @@ export const useMyRegisteredAnimals = (initialPage = 0, initialSize = 10) => {
 
             // 누적 컨텐츠 업데이트 
             if (page === 0) {
-                setAccumulatedContent(result.content);
+                setAccumulatedContent(result.page.content);
             } else {
                 setAccumulatedContent(prev => {
                     const existingIds = new Set(prev.map(item => item.animalCaseId));
-                    const uniqueNewContent = result.content.filter(
+                    const uniqueNewContent = result.page.content.filter(
                         item => !existingIds.has(item.animalCaseId)
                     );
                     return [...prev, ...uniqueNewContent];
@@ -169,7 +181,7 @@ export const useMyRegisteredAnimals = (initialPage = 0, initialSize = 10) => {
     }, [fetchMyAnimals]);
 
     const nextPage = () => {
-        if (!data.last) {
+        if (!data.page.last) {
             setPage(prevPage => prevPage + 1);
         }
     };
@@ -187,8 +199,13 @@ export const useMyRegisteredAnimals = (initialPage = 0, initialSize = 10) => {
 
     return {
         data: {
-            ...data,
-            content: accumulatedContent
+            // 원래 반환하던 형식 유지하되 내부 구조 변경
+            content: accumulatedContent,
+            totalElements: data.page.totalElements,
+            last: data.page.last,
+            // 새로운 속성 추가
+            waitingCount: data.waitingCount,
+            protectingCount: data.protectingCount
         },
         loading,
         error,
@@ -225,6 +242,7 @@ export const useAnimalForm = (id = null) => {
                 const formData = {
                     title: animalData.title || "",
                     description: animalData.description || "",
+                    location: animalData.location || "",
                     breed: animalData.animalInfo.breed || "",
                     gender: animalData.animalInfo.gender === 'M' ? 'MALE' : animalData.animalInfo.gender === 'F' ? 'FEMALE' : 'UNKNOWN',
                     size: animalData.animalInfo.size || "MEDIUM",

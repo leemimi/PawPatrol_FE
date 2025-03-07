@@ -4,10 +4,16 @@ const BASE_URL = `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/protections`;
 
 export const ProtectionApiService = {
     // 모든 보호 동물 목록 조회
-    async fetchProtections(page = 0, size = 10) {
+    async fetchProtections(page = 0, size = 10, animalType = null, location = null) {
         try {
+            const params = { page, size };
+
+            // null이 아닌 파라미터만 추가
+            if (animalType) params.animalType = animalType;
+            if (location) params.location = location;
+
             const response = await axios.get(`${BASE_URL}`, {
-                params: { page, size },
+                params,
                 withCredentials: true,
                 headers: {
                     'Content-Type': 'application/json',

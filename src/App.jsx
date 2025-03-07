@@ -50,11 +50,13 @@ const App = () => {
       setupFirebase();
     }, []);
 
-  return (
-    <Router> {/* This Router wrapper was missing */}
+  return (  /*수정*/
+    <Router> {/* This Router wrapper was missing  */}
       <Routes>
         <Route element={<Layout />}>
+
           <Route path="/" element={<LoginPet />} />
+
           <Route path="/sign-up" element={<SignUp />} />
           <Route path="/mypage" element={<MyPage />} />
           <Route path="/connect" element={<SocialConnect />} />

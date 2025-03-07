@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MessageSquare, Search, UserCircle, Bell, FileText } from 'lucide-react';
+import { MessageSquare, UserCircle, FileText } from 'lucide-react';
 import axios from 'axios';
 
 const ChatList = () => {
   const navigate = useNavigate();
   const [chatRooms, setChatRooms] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('ALL'); 
   
   const currentUser = {
@@ -101,17 +100,7 @@ const ChatList = () => {
     ).length;
   };
 
-  const filteredRooms = chatRooms.filter(room => {
-    const otherMemberName = getOtherMemberName(room);
-    const postTitle = room.post?.title || '';
-    const lastMessage = room.messages && room.messages.length > 0 
-      ? room.messages[room.messages.length - 1].content 
-      : '';
-    
-    return otherMemberName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-           postTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
-           lastMessage.toLowerCase().includes(searchQuery.toLowerCase());
-  });
+  const filteredRooms = chatRooms;
 
   return (
     <div className="flex flex-col h-full bg-gray-50">
@@ -119,11 +108,6 @@ const ChatList = () => {
       <div className="bg-orange-500 p-4 shadow-md">
         <div className="flex items-center justify-between">
           <h1 className="text-white text-xl font-semibold">채팅</h1>
-          <div className="flex items-center space-x-2">
-            <button className="w-8 h-8 rounded-full bg-orange-400 flex items-center justify-center text-white">
-              <Bell size={18} />
-            </button>
-          </div>
         </div>
       </div>
       
@@ -149,20 +133,6 @@ const ChatList = () => {
         </button>
       </div>
       
-      {/* Search Bar */}
-      <div className="p-3 bg-white sticky top-0 z-10 border-b border-gray-100">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
-          <input 
-            type="text" 
-            placeholder="이름, 내용 검색" 
-            className="w-full py-2 pl-10 pr-4 border border-gray-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-      </div>
-      
       {/* Chat List */}
       <div className="flex-1 overflow-y-auto">
         {isLoading ? (
@@ -181,18 +151,12 @@ const ChatList = () => {
             <div className="bg-orange-100 rounded-full p-4 mb-3">
               <MessageSquare className="w-8 h-8 text-orange-500" />
             </div>
-            {searchQuery ? (
-              <p>검색 결과가 없습니다</p>
-            ) : (
-              <>
-                <p>아직 채팅이 없어요</p>
-                <p className="text-sm mt-2">
-                  {activeTab === 'ALL' ? '게시글에서 메시지를 보내보세요!' : 
-                   activeTab === 'PROTECTADOPT' ? '임보/입양 관련 채팅이 없습니다.' : 
-                   '구조/제보 관련 채팅이 없습니다.'}
-                </p>
-              </>
-            )}
+            <p>아직 채팅이 없어요</p>
+            <p className="text-sm mt-2">
+              {activeTab === 'ALL' ? '게시글에서 메시지를 보내보세요!' : 
+               activeTab === 'PROTECTADOPT' ? '임보/입양 관련 채팅이 없습니다.' : 
+               '구조/제보 관련 채팅이 없습니다.'}
+            </p>
           </div>
         ) : (
           filteredRooms.map((room) => {

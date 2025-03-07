@@ -10,8 +10,6 @@ const MyRegisteredAnimals = () => {
     const navigate = useNavigate();
     const [selectedAnimal, setSelectedAnimal] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [waitingCount, setWaitingCount] = useState(0);
-    const [protectingCount, setProtectingCount] = useState(0);
 
     // 훅 사용
     const {
@@ -23,10 +21,14 @@ const MyRegisteredAnimals = () => {
         refresh
     } = useMyRegisteredAnimals(0, 10);
 
-    // 기존 상태와 매핑
+    // 기존 상태와 매핑 - 새로운 데이터 구조에 맞게 수정
     const animals = data.content;
     const totalCount = data.totalElements;
     const hasMore = !data.last;
+
+    // 상태별 개수는 API에서 제공
+    const waitingCount = data.waitingCount || 0;
+    const protectingCount = data.protectingCount || 0;
 
     // 신청 승인/거절 훅
     const {
@@ -39,20 +41,6 @@ const MyRegisteredAnimals = () => {
     useEffect(() => {
         window.scrollTo(0, 0);
     }, []);
-
-    // 상태별 동물 수 계산
-    useEffect(() => {
-        calculateStatusCounts(animals);
-    }, [animals]);
-
-    // 상태별 동물 수 계산
-    const calculateStatusCounts = (animalData) => {
-        const waiting = animalData.filter(animal => animal.caseStatus === 'PROTECT_WAITING').length;
-        const protecting = animalData.filter(animal => animal.caseStatus === 'TEMP_PROTECTING').length;
-
-        setWaitingCount(waiting);
-        setProtectingCount(protecting);
-    };
 
     // 보호 유형에 따른 배지 생성
     const getProtectionTypeBadge = (type) => {
