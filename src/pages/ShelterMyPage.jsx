@@ -16,6 +16,7 @@ const ShelterMyPage = () => {
     const [hasMore, setHasMore] = useState(true);
     const [isLoading, setIsLoading] = useState(false);
     const observerRef = useRef(null);
+    const [shouldReload, setShouldReload] = useState(false);
 
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [selectedPet, setSelectedPet] = useState(null);
@@ -47,10 +48,11 @@ const ShelterMyPage = () => {
     const [shelterAnimals, setShelterAnimals] = useState([]);
 
     // 보호 동물 목록 가져오기
-    const fetchShelterAnimals = async (pageNum = 0) => {
-        if (isLoading || !hasMore) return;
+    const fetchShelterAnimals = async (pageNum) => {
+        if (isLoading) return;
 
         setIsLoading(true);
+
         try {
             const response = await axios.get(
                 `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/pets?page=${pageNum}&size=10`,
@@ -58,12 +60,20 @@ const ShelterMyPage = () => {
             );
 
             if (response.data.statusCode === 200) {
-                const newAnimals = response.data.data;
-                if (newAnimals.length === 0) {
-                    setHasMore(false);
+                const newAnimals = response.data.data.content;
+
+                if (pageNum === 0) {
+                    setShelterAnimals(newAnimals);
                 } else {
-                    setShelterAnimals(prev => pageNum === 0 ? newAnimals : [...prev, ...newAnimals]);
-                    setPage(pageNum + 1);
+                    setShelterAnimals(prev => [...prev, ...newAnimals]);
+                }
+
+                // 다음 페이지 설정 - 현재 페이지 번호를 기준으로
+                const isLast = response.data.data.last;
+                setHasMore(!isLast);
+
+                if (!isLast) {
+                    setPage(pageNum + 1); // 현재 페이지 기준으로 다음 페이지 설정
                 }
             }
         } catch (error) {
@@ -72,6 +82,7 @@ const ShelterMyPage = () => {
             setIsLoading(false);
         }
     };
+
 
     // 소셜 계정 연동 해제 함수
     const handleUnlinkSocialAccount = async (providerType) => {
@@ -272,7 +283,7 @@ const ShelterMyPage = () => {
             if (response.data.statusCode === 200) {
                 alert('반려동물 정보가 성공적으로 수정되었습니다.');
                 setIsEditOpen(false);
-                await fetchShelterAnimals(); // 보호동물 목록 새로고침
+                await fetchShelterAnimals(0); // 보호동물 목록 새로고침
             }
         } catch (error) {
             console.error('Error updating pet:', error);
@@ -299,9 +310,9 @@ const ShelterMyPage = () => {
 
             if (response.data.statusCode === 200) {
                 alert('반려동물이 성공적으로 삭제되었습니다.');
+                setShouldReload(true); // 리로드 플래그 설정
                 setIsDeleteConfirmOpen(false);
                 setPetToDelete(null);
-                await fetchShelterAnimals(); // 반려동물 목록 새로고침
             }
         } catch (error) {
             console.error('Error deleting pet:', error);
@@ -428,7 +439,7 @@ const ShelterMyPage = () => {
 
             // 모달 닫기
             setIsRegisterOpen(false);  // PetRegisterModal 닫기
-            await fetchShelterAnimals();
+            setShouldReload(true); // 리로드 플래그 설정
             setPetFormData({  // 폼 초기화
                 name: '',
                 breed: '',
@@ -584,30 +595,59 @@ const ShelterMyPage = () => {
                 }));
             }
         } catch (error) {
-            console.error('제보글 불러오기 오류:', error);
+
         }
     };
 
     useEffect(() => {
+        if (shouldReload) {
+            setShelterAnimals([]);
+            setPage(0);
+            setHasMore(true);
+            fetchShelterAnimals(0);
+            setShouldReload(false); // 플래그 리셋
+        }
+    }, [shouldReload]);
+
+    useEffect(() => {
+
+        // 탭이 'pets'가 아니면 Observer를 설정하지 않음
+        if (activeTab !== 'pets') {
+            return;
+        }
+
         const observer = new IntersectionObserver(
             entries => {
                 if (entries[0].isIntersecting && hasMore && !isLoading) {
                     fetchShelterAnimals(page);
                 }
             },
-            { threshold: 1.0 }
+            {
+                root: null,
+                rootMargin: '0px 0px 300px 0px', // 여유 더 늘림
+                threshold: 0.1
+            }
         );
 
-        if (observerRef.current) {
-            observer.observe(observerRef.current);
-        }
+        // setTimeout을 사용하여 DOM 렌더링 후 Observer 설정
+        setTimeout(() => {
+            if (observerRef.current) {
+                observer.observe(observerRef.current);
+            } else {
+
+            }
+        }, 100);
 
         return () => {
-            if (observerRef.current) {
+            if (observer && observerRef.current) {
+
                 observer.unobserve(observerRef.current);
             }
         };
-    }, [page, hasMore, isLoading]);
+    }, [page, hasMore, isLoading, activeTab]);
+
+
+
 
     useEffect(() => {
         const userInfoStr = localStorage.getItem('userInfo');
@@ -615,25 +655,25 @@ const ShelterMyPage = () => {
 
         if (userInfoStr && isLoggedIn === 'true') {
             const userInfo = JSON.parse(userInfoStr);
+            // 프로필 이미지 설정
+            setProfileImage(userInfo?.profileImage || defaultImage);
+            setNickname(userInfo?.nickname || '');
 
-            // 프로필 이미지 상태 올바르게 설정
-            if (userInfo?.profileImage) {
-                setProfileImage(userInfo.profileImage);
-            } else {
-                setProfileImage(defaultImage);
-            }
+            // 상태 초기화를 명확하게 처리
+            setShelterAnimals([]); // 기존 데이터 초기화
+            setPage(0);
+            setHasMore(true);
 
-            if (userInfo?.nickname) {
-                setNickname(userInfo.nickname);
-            }
-
-            window.scrollTo(0, 0);
-            fetchShelterAnimals(0);
-            fetchMyReportPosts(0);
-            fetchMyWitnessPosts(0);
-            fetchSocialConnections();
+            // setTimeout으로 상태 업데이트 후 데이터 로딩 보장
+            setTimeout(() => {
+                fetchShelterAnimals(0);
+                fetchMyReportPosts(0);
+                fetchMyWitnessPosts(0);
+                fetchSocialConnections();
+            }, 0);
         }
     }, []);
+
 
     return (
         <div className="min-h-screen bg-[#FFF5E6]">
@@ -1026,13 +1066,28 @@ const ShelterMyPage = () => {
                                     </div>
                                 </div>
                             ))}
-                        </div>
 
-                        {hasMore && (
-                            <div ref={observerRef} className="loading-indicator">
-                                {isLoading ? '로딩 중...' : ''}
-                            </div>
-                        )}
+                        </div>
+                        {/* 관찰 요소 - 명확한 높이와 스타일 지정 */}
+                        <div
+                            ref={observerRef}
+                            style={{
+                                height: '30px',
+                                margin: '20px 0',
+                                display: 'flex',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                width: '100%'
+                            }}
+                        >
+                            {isLoading ? (
+                                <div className="loading-spinner">로딩 중...</div>
+                            ) : hasMore ? (
+                                <div className="load-more-indicator">더 보기</div>
+                            ) : (
+                                <div className="no-more-data">더 이상 데이터가 없습니다</div>
+                            )}
+                        </div>
 
                         <PetTypeSelectModal
                             isOpen={isTypeSelectOpen}
