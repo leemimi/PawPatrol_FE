@@ -178,8 +178,9 @@ const [currentImageIndex, setCurrentImageIndex] = useState(0);
     sessionStorage.setItem('chatTarget', JSON.stringify({
       userId: post.author.id, // 닉네임을 사용자 ID로 가정 (실제 구현에서는 수정 필요)
       nickname: post.author.nickname,
-      postId: post.foundId,
-      postTitle: post.content
+      postId: post.id,
+      postTitle: post.content,
+      type: 'LOSTFOUND'
     }));
     
     // 채팅 페이지로 이동

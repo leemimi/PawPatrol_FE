@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuthStore } from '../stores/useAuthStore';
 import defaultImage from '../assets/images/default.png';
 import PetRegisterModal from '../components/PetRegisterModal.jsx';
@@ -11,6 +11,13 @@ import naverImage from '../assets/images/naver_simple_icon.png';
 import googleImage from '../assets/images/google_simple_icon.png';
 
 const MyPage = () => {
+    const [myPets, setMyPets] = useState([]); // 반려동물 리스트
+    const [page, setPage] = useState(0); // 현재 페이지 번호
+    const [hasMore, setHasMore] = useState(true); // 추가 데이터 여부
+    const [isLoading, setIsLoading] = useState(false); // 로딩 상태
+    const observerRef = useRef(null); // 무한 스크롤 관찰자
+    const [shouldReload, setShouldReload] = useState(false);
+
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [selectedPet, setSelectedPet] = useState(null);
     const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
@@ -19,13 +26,10 @@ const MyPage = () => {
     const [isPhoneEditing, setIsPhoneEditing] = useState(false);
     const userInfoStr = localStorage.getItem('userInfo');
     const userInfo = userInfoStr ? JSON.parse(userInfoStr) : null;
-    // const userInfo = useAuthStore((state) => state.userInfo?.data);
     const [activeTab, setActiveTab] = useState('profile');
     const [profileImage, setProfileImage] = useState();
     const [nickname, setNickname] = useState('');
     const [isEditing, setIsEditing] = useState(false);
-    const [myPets, setMyPets] = useState([]);
-    // const [myPosts, setMyPosts] = useState({ reports: [], witnesses: [] });
     const navigate = useNavigate();
     const [isTypeSelectOpen, setIsTypeSelectOpen] = useState(false);
     const [isRegisterOpen, setIsRegisterOpen] = useState(false);
@@ -289,7 +293,6 @@ const MyPage = () => {
                 `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/pets/${petToDelete.id}`,
                 {
                     withCredentials: true,
-                    data: { id: petToDelete.id }
                 }
             );
 
@@ -297,7 +300,7 @@ const MyPage = () => {
                 alert('반려동물이 성공적으로 삭제되었습니다.');
                 setIsDeleteConfirmOpen(false);
                 setPetToDelete(null);
-                await fetchMyPets(); // 반려동물 목록 새로고침
+                setShouldReload(true); // 리로드 플래그 설정
             }
         } catch (error) {
             console.error('Error deleting pet:', error);
@@ -424,7 +427,7 @@ const MyPage = () => {
 
             // 모달 닫기
             setIsRegisterOpen(false);  // PetRegisterModal 닫기
-            await fetchMyPets();
+            setShouldReload(true); // 리로드 플래그 설정
             setPetFormData({  // 폼 초기화
                 name: '',
                 breed: '',
@@ -521,15 +524,22 @@ const MyPage = () => {
 
     // 프로필 이미지 초기화
     const handleProfileImageReset = async () => {
+        const isConfirmed = window.confirm("정말로 프로필 이미지를 초기화하시겠습니까?");
+
+        if (!isConfirmed) return;
+
         const formData = new FormData();
         formData.append('imageUrl', profileImage);
+
         try {
-            const response = await axios.patch(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/profile/images`,
+            const response = await axios.patch(
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/profile/images`,
                 formData,
                 { withCredentials: true }
-            )
+            );
 
             setProfileImage(defaultImage);
+
             // 로컬 스토리지 업데이트
             const userInfoStr = localStorage.getItem('userInfo');
             if (userInfoStr) {
@@ -537,25 +547,45 @@ const MyPage = () => {
                 userInfo.profileImage = defaultImage;
                 localStorage.setItem('userInfo', JSON.stringify(userInfo));
             }
-
         } catch (error) {
             console.error('Image reset error:', error);
             alert('프로필 이미지 초기화 중 오류가 발생했습니다.');
         }
-    }
+    };
 
     // 내 반려동물 리스트 가져오기
-    const fetchMyPets = async () => {
+    const fetchMyPets = async (pageNum) => {
+        if (isLoading) return;
+
+        setIsLoading(true);
+
         try {
-            const response = await axios.get(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/pets`, {
-                withCredentials: true
-            });
+            const response = await axios.get(
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/pets?page=${pageNum}&size=10`,
+                { withCredentials: true }
+            );
 
             if (response.data.statusCode === 200) {
-                setMyPets(response.data.data);
+                const newAnimals = response.data.data.content;
+
+                if (pageNum === 0) {
+                    setMyPets(newAnimals);
+                } else {
+                    setMyPets(prev => [...prev, ...newAnimals]);
+                }
+
+                // 다음 페이지 설정 - 현재 페이지 번호를 기준으로
+                const isLast = response.data.data.last;
+                setHasMore(!isLast);
+
+                if (!isLast) {
+                    setPage(pageNum + 1); // 현재 페이지 기준으로 다음 페이지 설정
+                }
             }
         } catch (error) {
-            console.error('Fetch pets error:', error);
+            console.error('보호 동물 목록 불러오기 오류:', error);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -606,24 +636,73 @@ const MyPage = () => {
         if (userInfoStr && isLoggedIn === 'true') {
             const userInfo = JSON.parse(userInfoStr);
 
-            // 프로필 이미지 상태 올바르게 설정
-            if (userInfo?.profileImage) {
-                setProfileImage(userInfo.profileImage);
-            } else {
-                setProfileImage(defaultImage);
-            }
+            // 프로필 이미지 설정
+            setProfileImage(userInfo?.profileImage || defaultImage);
+            setNickname(userInfo?.nickname || '');
 
-            if (userInfo?.nickname) {
-                setNickname(userInfo.nickname);
-            }
+            // 상태 초기화를 명확하게 처리
+            setMyPets([]); // 기존 데이터 초기화
+            setPage(0);
+            setHasMore(true);
 
             window.scrollTo(0, 0);
-            fetchMyPets();
-            fetchMyReportPosts(0);
-            fetchMyWitnessPosts(0);
-            fetchSocialConnections();
+
+            // setTimeout으로 상태 업데이트 후 데이터 로딩 보장
+            setTimeout(() => {
+                fetchMyPets(0);
+                fetchMyReportPosts(0);
+                fetchMyWitnessPosts(0);
+                fetchSocialConnections();
+            }, 0);
         }
     }, []);
+
+    useEffect(() => {
+
+        // 탭이 'pets'가 아니면 Observer를 설정하지 않음
+        if (activeTab !== 'pets') {
+            return;
+        }
+
+        const observer = new IntersectionObserver(
+            entries => {
+                if (entries[0].isIntersecting && hasMore && !isLoading) {
+                    fetchMyPets(page);
+                }
+            },
+            {
+                root: null,
+                rootMargin: '0px 0px 100px 0px', // 여유 더 늘림
+                threshold: 0.1
+            }
+        );
+
+        // setTimeout을 사용하여 DOM 렌더링 후 Observer 설정
+        setTimeout(() => {
+            if (observerRef.current) {
+                observer.observe(observerRef.current);
+            } else {
+
+            }
+        }, 100);
+
+        return () => {
+            if (observer && observerRef.current) {
+
+                observer.unobserve(observerRef.current);
+            }
+        };
+    }, [page, hasMore, isLoading, activeTab]);
+
+    useEffect(() => {
+        if (shouldReload) {
+            setMyPets([]);
+            setPage(0);
+            setHasMore(true);
+            fetchMyPets(0);
+            setShouldReload(false); // 플래그 리셋
+        }
+    }, [shouldReload]);
 
 
     // 반려동물 클릭 시 상세화면으로 전환
@@ -1092,6 +1171,26 @@ const MyPage = () => {
                                     </div>
                                 </div>
                             ))}
+                        </div>
+                        {/* 관찰 요소 - 명확한 높이와 스타일 지정 */}
+                        <div
+                            ref={observerRef}
+                            style={{
+                                height: '30px',
+                                margin: '20px 0',
+                                display: 'flex',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                width: '100%'
+                            }}
+                        >
+                            {isLoading ? (
+                                <div className="loading-spinner">로딩 중...</div>
+                            ) : hasMore ? (
+                                <div className="load-more-indicator">더 보기</div>
+                            ) : (
+                                <div className="no-more-data">더 이상 데이터가 없습니다</div>
+                            )}
                         </div>
 
                         <PetTypeSelectModal
