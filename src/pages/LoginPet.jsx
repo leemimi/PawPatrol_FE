@@ -4,6 +4,7 @@ import puppyLogo from '../assets/images/pet.png';
 import SignUpTypeModal from '../components/SignUpTypeModal';
 import naverImage from '../assets/images/naver_simple_icon.png';
 import axios from 'axios';
+import { requestPermission } from '../firebase-config'; // Import from the new firebase-config file
 
 const LoginScreen = () => {
     const socialLoginForKakaoUrl = `${import.meta.env.VITE_CORE_API_BASE_URL}/oauth2/authorization/kakao`;
@@ -15,7 +16,44 @@ const LoginScreen = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [rememberMe, setRememberMe] = useState(false);
+    const [fcmToken, setFcmToken] = useState('');
     const navigate = useNavigate();
+
+    // FCM 토큰 가져오기
+    useEffect(() => {
+        const getFcmToken = async () => {
+            try {
+                // 저장된 토큰이 있는지 확인
+                const storedToken = localStorage.getItem('fcmToken');
+                
+                if (storedToken) {
+                    console.log('저장된 FCM 토큰:', storedToken);
+                    setFcmToken(storedToken);
+                } else {
+                    // 새로운 토큰 요청
+                    const newToken = await requestPermission();
+                    if (newToken) {
+                        setFcmToken(newToken);
+                    }
+                }
+            } catch (error) {
+                console.error('FCM 토큰 가져오기 오류:', error);
+            }
+        };
+
+        getFcmToken();
+    }, []);
+
+    // 컴포넌트 마운트 시 로컬 스토리지에서 저장된 이메일 확인
+    useEffect(() => {
+        const savedEmail = localStorage.getItem('savedEmail');
+        const isRemembered = localStorage.getItem('rememberMe') === 'true';
+
+        if (savedEmail && isRemembered) {
+            setEmail(savedEmail);
+            setRememberMe(true);
+        }
+    }, []);
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -31,7 +69,8 @@ const LoginScreen = () => {
 
         const request = {
             email: email,
-            password: password
+            password: password,
+            token: fcmToken  // FCM 토큰 추가
         }
 
         try {
@@ -52,7 +91,8 @@ const LoginScreen = () => {
                         email: response.data.data.email,
                         nickname: response.data.data.nickname,
                         profileImage: response.data.data.profileImage,
-                        role: response.data.data.role
+                        role: response.data.data.role,
+                        fcmToken: fcmToken  // FCM 토큰 저장
                     };
 
                     localStorage.setItem('userInfo', JSON.stringify(loginUserInfo));

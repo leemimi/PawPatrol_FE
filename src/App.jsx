@@ -32,40 +32,59 @@ import './api/axiosConfig'; // axios 전역 인터셉터 설정, 토큰 만료�
 import { useAuthStore } from './stores/useAuthStore'
 import './index.css';
 
+import { initializeFCM, setupForegroundMessageHandler } from './firebase-config';
 
 const App = () => {
+    useEffect(() => {
+      const setupFirebase = async () => {
+        // FCM 초기화
+        await initializeFCM();
+        
+        // 이미 로그인한 사용자인 경우에만 포그라운드 메시지 핸들러 설정
+        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+        if (isLoggedIn) {
+          setupForegroundMessageHandler();
+        }
+      };
+      
+      setupFirebase();
+    }, []);
+
   return (
-    <Routes>
-      <Route element={<Layout />}>
-        <Route path="/" element={<LoginPet />} />
-        <Route path="/sign-up" element={<SignUp />} />
-        <Route path="/mypage" element={<MyPage />} />
-        <Route path="/connect" element={<SocialConnect />} />
-        <Route path="/chat" element={<Chat />} />
-        <Route path="/main" element={<Map />} />
-        <Route path="/oauth2/redirect" element={<OAuth2RedirectHandler />} />
-        <Route path="/protection" element={<Protection />} />
-        <Route path="/protection/:id" element={<ProtectionDetail />} />
-        <Route path="/my-applications" element={<MyApplications />} />
-        <Route path="/my-register-animals" element={<MyRegisterAnimals />} />
-        <Route path="/register-animal" element={<RegisterAnimalForm />} />
-        <Route path="/edit-animal/:id" element={<EditAnimalForm />} />
-        <Route path="/forgot-password" element={<ForgotPasswordScreen />} />
-        <Route path="/lost-pet-registration" element={<LostPostForm />} />
-        <Route path="/find-pet-report" element={<ReportPostForm />} />
-        <Route path="/community" element={<LostPetListPages />} />
-        <Route path="/chatlist" element={<ChatList />} />
-        <Route path="/community" element={<LostPetListPages />} />
-        <Route path="/PetPostDetail/:postId" element={<PetPostDetail />} />
-        <Route path="/lostmypetfix/:postId" element={<Lostmypetfix />} />
-        <Route path="/shelter-mypage" element={<ShelterMyPage />} />
-        <Route path="/admin-dashboard" element={<AdminDashboard />} />
-        <Route path="/sign-up-shelter" element={<SignUpShelter />} />
+    <Router> {/* This Router wrapper was missing */}
+      <Routes>
+        <Route element={<Layout />}>
+          <Route path="/login-pet" element={<LoginPet />} />
+          <Route path="/sign-up" element={<SignUp />} />
+          <Route path="/mypage" element={<MyPage />} />
+          <Route path="/connect" element={<SocialConnect />} />
+          <Route path="/chat" element={<Chat />} />
+          <Route path="/" element={<Map />} />
+          <Route path="/oauth2/redirect" element={<OAuth2RedirectHandler />} />
+          <Route path="/protection" element={<Protection />} />
+          <Route path="/protection/:id" element={<ProtectionDetail />} />
+          <Route path="/my-applications" element={<MyApplications />} />
+          <Route path="/my-register-animals" element={<MyRegisterAnimals />} />
+          <Route path="/register-animal" element={<RegisterAnimalForm />} />
+          <Route path="/edit-animal/:id" element={<EditAnimalForm />} />
+          <Route path="/forgot-password" element={<ForgotPasswordScreen />} />
+          <Route path="/lost-pet-registration" element={<LostPostForm />} />
+          <Route path="/find-pet-report" element={<ReportPostForm />} />
+          <Route path="/community" element={<LostPetListPages/>} />
+          <Route path="/chatlist" element={<ChatList />} />
+          {/* You have duplicate route for /community, removed one */}
+          <Route path="/PetPostDetail/:postId" element={<PetPostDetail />} />
+          <Route path="/lostmypetfix/:postId" element={<Lostmypetfix />} />
+          <Route path="/shelter-mypage" element={<ShelterMyPage />} />
+          <Route path="/admin-dashboard" element={<AdminDashboard />} />
+          <Route path="/sign-up-shelter" element={<SignUpShelter />} />
         <Route path="/rescue" element={<Rescue />} />
         <Route path="/rescue-protection" element={<RescueProtection />} />
         <Route path="/rescue-report" element={<RescueReport />} />
-      </Route>
-    </Routes>
+        </Route>
+      </Routes>
+    </Router>
+
   );
 };
 
