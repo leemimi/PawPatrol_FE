@@ -28,7 +28,7 @@ const OAuth2RedirectHandler = () => {
                 }
             } catch (error) {
                 console.error('소셜 로그인 처리 중 오류 발생:', error);
-                await navigate('/login-pet', { replace: true });
+                await navigate('/', { replace: true });
             }
         };
 

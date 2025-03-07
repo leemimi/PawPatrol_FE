@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import DaumPostcode from 'react-daum-postcode';
 
 // 보호소 검색 모달 컴포넌트

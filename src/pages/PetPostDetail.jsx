@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import ImageGallery from './ProtectionDetail/components/ImageGallery'; // ImageGallery 컴포넌트를 import 합니다.
 import axios from 'axios';
 
 import { 
@@ -26,6 +27,8 @@ const PetPostDetail = ({ onClose }) => {
   const [commentType, setCommentType] = useState('lost'); // 'lost' or 'find'
   const [currentUserId, setCurrentUserId] = useState(null);
   const [isAuthor, setIsAuthor] = useState(false);
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
 
   useEffect(() => {
@@ -36,6 +39,7 @@ const PetPostDetail = ({ onClose }) => {
         setPost(response.data.data);
       })
       .catch(error => console.error("Error fetching post data:", error));
+      
 
     axios.get(`http://localhost:8090/api/v1/comments/lost-foundposts/${postId}`)
       .then(response => setComments(response.data.data || []))
@@ -174,8 +178,9 @@ const PetPostDetail = ({ onClose }) => {
     sessionStorage.setItem('chatTarget', JSON.stringify({
       userId: post.author.id, // 닉네임을 사용자 ID로 가정 (실제 구현에서는 수정 필요)
       nickname: post.author.nickname,
-      postId: post.foundId,
-      postTitle: post.content
+      postId: post.id,
+      postTitle: post.content,
+      type: 'LOSTFOUND'
     }));
     
     // 채팅 페이지로 이동
@@ -187,16 +192,28 @@ const renderImages = () => {
     return post.images.map((image, index) => {
       const imageUrl = image?.path || '/api/placeholder/160/160';
       return (
-        <img 
-          key={index} 
-          src={imageUrl} 
-          alt={`Post Image ${index + 1}`} 
-          className="w-32 h-32 object-cover rounded-lg" 
+        <img
+          key={index}
+          src={imageUrl}
+          alt={`Post Image ${index + 1}`}
+          className="w-32 h-32 object-cover rounded-lg cursor-pointer"
+          onClick={() => handleImageClick(index)} // 클릭 시 갤러리 열기
         />
       );
     });
   }
   return null;
+};
+
+// Open the gallery
+const handleImageClick = (index) => {
+  setCurrentImageIndex(index);
+  setIsGalleryOpen(true);
+};
+
+// Close the gallery
+const closeGallery = () => {
+  setIsGalleryOpen(false);
 };
 
   const handleUpdate = () => {
@@ -233,9 +250,9 @@ const renderImages = () => {
               <button onClick={handleEdit} className="w-full px-4 py-2 text-left hover:bg-gray-100">
                 수정하기
               </button>
-              <button onClick={handleDelete} className="w-full px-4 py-2 text-left text-red-500 hover:bg-gray-100">
-                삭제하기
-              </button>
+              <button onClick={() => handleDelete(postId)} className="w-full px-4 py-2 text-left text-red-500 hover:bg-gray-100">
+  삭제하기
+</button>
             </div>
           )}
         </div>
@@ -289,6 +306,7 @@ const renderImages = () => {
                 {/* Location */}
                 <div className="flex items-center gap-2 text-gray-500 text-sm">
                   <MapPin size={16} />
+                  
                   <span>{post.latitude}, {post.longitude}</span>
                 </div>
                 
@@ -323,8 +341,17 @@ const renderImages = () => {
                 )}
               </div>
 
-              {/* Render Images */}
-              {renderImages()}
+               {/* Render Images */}
+               <div className="flex gap-4">{renderImages()}</div>
+               {/* Image Gallery */}
+        {isGalleryOpen && (
+          <ImageGallery
+            images={post?.images || []}
+            currentIndex={currentImageIndex}
+            setCurrentIndex={setCurrentImageIndex}
+            closeGallery={closeGallery}
+          />
+        )}
 
               <div className="flex justify-between py-2 border-t">
                 <button className="flex items-center gap-1 text-gray-500">

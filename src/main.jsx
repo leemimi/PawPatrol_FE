@@ -1,23 +1,27 @@
-if (typeof global === 'undefined') {
-  window.global = window;
+// In your main.jsx or App.jsx
+import React, { useEffect } from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
+import { initializeFCM } from './firebase-config';
+import './index.css';
+
+// Initialize Firebase Cloud Messaging
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    initializeFCM()
+      .then(token => {
+        if (token) {
+          console.log('FCM 초기화 완료, 토큰:', token);
+        }
+      })
+      .catch(err => {
+        console.error('FCM 초기화 오류:', err);
+      });
+  });
 }
-
-
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import { BrowserRouter } from 'react-router-dom'
-import App from './App'
-import './index.css'
-import axios from 'axios';
-
-
-axios.defaults.baseURL = import.meta.env.VITE_CORE_API_BASE_URL;
-axios.defaults.withCredentials = true;
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
+    <App />
   </React.StrictMode>
-)
+);

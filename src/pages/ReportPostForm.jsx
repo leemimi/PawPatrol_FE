@@ -97,16 +97,24 @@ const ReportPostForm = ({ formType = "standalone" }) => {
 
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
+    const maxSize = 5 * 1024 * 1024; // 5MB 제한
     
-    // Combine new files with existing ones (up to 5)
-    const combinedImages = [...images, ...files].slice(0, 5);
+    // 필터링: 크기가 5MB를 넘는 파일은 제외
+    const validFiles = files.filter((file) => file.size <= maxSize);
+  
+    if (validFiles.length !== files.length) {
+      alert("파일 크기가 5MB를 초과한 파일이 있습니다. 5MB 이하의 파일만 업로드 가능합니다.");
+    }
+    
+    // Combine new valid files with existing ones (up to 5)
+    const combinedImages = [...images, ...validFiles].slice(0, 5);
     setImages(combinedImages);
-    
-    // Create and combine preview URLs for all images
-    const newPreviewUrls = files.map((file) => URL.createObjectURL(file));
+  
+    // Create and combine preview URLs for all valid images
+    const newPreviewUrls = validFiles.map((file) => URL.createObjectURL(file));
     const combinedPreviewUrls = [...previewUrls, ...newPreviewUrls].slice(0, 5);
     setPreviewUrls(combinedPreviewUrls);
-    
+  
     // Reset the file input to allow selecting the same file again
     e.target.value = null;
   };
