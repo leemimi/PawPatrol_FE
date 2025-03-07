@@ -3,10 +3,8 @@ import { RadiusControl } from '../components/RadiusControl';
 import { ControlButtons } from '../components/ControlButtons';
 import { useKakaoMap } from '@/hooks/UseKakaoMap';
 import { usePetData } from '../hooks/UsePetData';
-import { useFacilitiesData } from '../hooks/UseFacilitiesData.jsx';
 import { useGeolocation } from '../hooks/UseGeolocation.jsx';
 import { useCustomOverlays } from '../hooks/UseCustomOverlays';
-import { useFacilityOverlays } from '../hooks/UseFacilityOverlays'; 
 import { CommonList } from '../components/CommonList';
 import { CommonCard } from '../components/CommonCard';
 import { PetCard } from '../components/PetCard';
@@ -23,15 +21,12 @@ if (typeof global === 'undefined') {
 const Map = () => {
     const centerPosition = { lat: 37.497939, lng: 127.027587 };
 
-    const [selectedRange, setSelectedRange] = useState(10);
+    const [selectedRange, setSelectedRange] = useState(3);
     const [selectedPet, setSelectedPet] = useState(null);
-    const [selectedFacility, setSelectedFacility] = useState(null);
     const [showList, setShowList] = useState(false);
-    const [showFacilitiesList, setShowFacilitiesList] = useState(false);
     const [currentPosition, setCurrentPosition] = useState(centerPosition);
     const [isCardVisible, setIsCardVisible] = useState(false);
     const [isMarkerTransitioning, setIsMarkerTransitioning] = useState(false);
-    const [showFacilities, setShowFacilities] = useState(false);
     
     // 알림 관련 상태
     const [notification, setNotification] = useState(null);
@@ -52,21 +47,10 @@ const Map = () => {
         debouncedFetchPets 
     } = usePetData(currentPosition, selectedRange);
     
-    // 시설 데이터 관련 훅 사용
-    const { 
-        facilities, 
-        fetchFacilities, 
-        debouncedFetchFacilities 
-    } = useFacilitiesData(currentPosition, selectedRange);
-    
     // 위치 관련 훅 사용
     const { getCurrentLocation } = useGeolocation(map, circleRef, (newPosition) => {
         setCurrentPosition(newPosition);
-        if (showFacilities) {
-            fetchFacilities(newPosition, selectedRange);
-        } else {
-            fetchPets(newPosition, selectedRange);
-        }
+        fetchPets(newPosition, selectedRange);
     });
     
     // 펫 오버레이 관련 훅 사용
@@ -79,17 +63,6 @@ const Map = () => {
         selectedRange,
         selectedPet,
         onSelectPet: setSelectedPet
-    });
-
-    // 시설 오버레이 관련 훅 사용
-    const { 
-        facilityOverlays, 
-        createFacilityCustomOverlays, 
-        cleanupFacilityOverlays 
-    } = useFacilityOverlays({
-        map,
-        selectedFacility,
-        onSelectFacility: setSelectedFacility
     });
 
     useEffect(() => {
@@ -188,14 +161,12 @@ const Map = () => {
                 }
             };
         }
-    }, [currentPosition, selectedRange]); // currentPosition, selectedRange 변경 시마다 실행
+    }, [currentPosition, selectedRange]); 
     
 
-    // 사용자 ID 가져오기 함수 (실제 구현에 맞게 수정 필요)
     const getUserId = () => {
-        // localStorage나 상태 관리 라이브러리에서 사용자 정보 가져오기
         const userInfo = JSON.parse(localStorage.getItem('userInfo')) || {};
-        return userInfo.id || 1; // 기본값으로 1 반환
+        return userInfo.id || 1; 
     };
 
     // 알림 표시 함수
@@ -300,12 +271,7 @@ const Map = () => {
                     circleRef.current.setRadius(targetRadius);
                     setIsMarkerTransitioning(false);
                     
-                    // 현재 모드에 따라 다른 데이터 페치
-                    if (showFacilities) {
-                        fetchFacilities(currentPosition, newRange);
-                    } else {
-                        fetchPets(currentPosition, newRange);
-                    }
+                    fetchPets(currentPosition, newRange);
                     
                     // 위치 구독 업데이트
                     if (stompClientRef.current && stompClientRef.current.connected) {
@@ -327,7 +293,7 @@ const Map = () => {
 
             animate();
         }
-    }, [circleRef, currentPosition, fetchPets, fetchFacilities, showFacilities]);
+    }, [circleRef, currentPosition, fetchPets]);
 
     // 맵 드래그 종료 이벤트 useEffect
     useEffect(() => {
@@ -340,12 +306,7 @@ const Map = () => {
                 };
                 setCurrentPosition(newPosition);
                 
-                // 현재 모드에 따라 다른 데이터 페치
-                if (showFacilities) {
-                    debouncedFetchFacilities(newPosition, selectedRange);
-                } else {
-                    debouncedFetchPets(newPosition, selectedRange);
-                }
+                debouncedFetchPets(newPosition, selectedRange);
                 
                 // 위치 구독 업데이트
                 if (stompClientRef.current && stompClientRef.current.connected) {
@@ -369,89 +330,52 @@ const Map = () => {
                 window.kakao.maps.event.removeListener(map, 'dragend', handleDragEnd);
             };
         }
-    }, [map, selectedRange, debouncedFetchPets, debouncedFetchFacilities, showFacilities]);
+    }, [map, selectedRange, debouncedFetchPets]);
 
     // 선택된 항목에 따른 카드 가시성 useEffect
     useEffect(() => {
-        if (selectedPet || selectedFacility) {
+        if (selectedPet) {
             setTimeout(() => setIsCardVisible(true), 50);
         } else {
             setIsCardVisible(false);
         }
-    }, [selectedPet, selectedFacility]);
+    }, [selectedPet]);
 
     // showFacilities 변경 시 모드 변경 플래그 설정
     useEffect(() => {
         modeChangeRef.current = true;
-    }, [showFacilities]);
+    }, []);
 
     // 펫 데이터 변경 시 오버레이 업데이트
     useEffect(() => {
-        if (map && !showFacilities && pets.length > 0) {
+        if (map && pets.length > 0) {
             createCustomOverlays(pets);
         }
-    }, [map, pets, showFacilities, createCustomOverlays]);
-
-    // 시설 데이터 변경 시 오버레이 업데이트
-    useEffect(() => {
-        if (map && showFacilities && facilities.length > 0) {
-            createFacilityCustomOverlays(facilities);
-        }
-    }, [map, facilities, showFacilities, createFacilityCustomOverlays]);
-    
-    // 선택된 시설이 변경될 때도 오버레이 업데이트
-    useEffect(() => {
-        if (map && showFacilities && facilities.length > 0 && selectedFacility) {
-            createFacilityCustomOverlays(facilities);
-        }
-    }, [map, selectedFacility, facilities, showFacilities, createFacilityCustomOverlays]);
+    }, [map, pets, createCustomOverlays]);
 
     // 초기 데이터 로딩 useEffect
     useEffect(() => {
         if (map && !initialLoadRef.current) {
             initialLoadRef.current = true;
-            if (showFacilities) {
-                fetchFacilities(currentPosition, selectedRange);
-            } else {
-                fetchPets(currentPosition, selectedRange);
-            }
+            fetchPets(currentPosition, selectedRange);
         }
-    }, [map, currentPosition, selectedRange, showFacilities, fetchPets, fetchFacilities]);
+    }, [map, currentPosition, selectedRange, fetchPets]);
 
     // 모드 변경 시 오버레이 및 데이터 관리
     useEffect(() => {
         if (map && modeChangeRef.current) {
             modeChangeRef.current = false;
             
-            if (showFacilities) {
-                cleanupOverlays();
-                fetchFacilities(currentPosition, selectedRange);
-            } else {
-                cleanupFacilityOverlays();
-                fetchPets(currentPosition, selectedRange);
-            }
+            cleanupOverlays();
+            fetchPets(currentPosition, selectedRange);
         }
     }, [
         map, 
-        showFacilities, 
         currentPosition, 
         selectedRange, 
-        fetchFacilities, 
         fetchPets, 
-        cleanupOverlays, 
-        cleanupFacilityOverlays
+        cleanupOverlays
     ]);
-
-    // 시설/펫 토글 핸들러
-    const handleFacilitiesToggle = () => {
-        setShowFacilities(prev => !prev);
-        
-        // 선택된 항목 초기화
-        setSelectedPet(null);
-        setSelectedFacility(null);
-        setShowList(false);
-        setShowFacilitiesList(false);
-    };
 
     // 알림 닫기 핸들러
     const handleCloseNotification = () => {
@@ -534,16 +458,7 @@ const Map = () => {
 
                     <ControlButtons
                         onLocationClick={getCurrentLocation}
-                        onListClick={() => {
-                            if (showFacilities) {
-                                setShowFacilitiesList(!showFacilitiesList);
-                                setSelectedFacility(null);
-                            } else {
-                                setShowList(!showList);
-                                setSelectedPet(null);
-                            }
-                        }}
-                        onFacilitiesToggle={handleFacilitiesToggle}
+                        onListClick={() => setShowList(!showList)}
                     />
                     
                     {/* 알림 버튼 컴포넌트 - 글쓰기 버튼 위에 배치 */}
@@ -559,39 +474,32 @@ const Map = () => {
                     />
                     
                     {/* 공통 카드 컴포넌트 */}
-                    {(selectedPet || selectedFacility) && !(showList || showFacilitiesList) && (
+                    {selectedPet && !showList && (
                         <div className={`absolute bottom-16 left-0 right-0 max-h-[70vh] overflow-auto p-4 bg-white rounded-t-3xl shadow-lg border-t-2 border-orange-100 z-50 transition-all duration-300 ease-in-out ${
                             isCardVisible ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'
                         }`}>
                             <CommonCard 
-                                item={selectedPet || selectedFacility} 
-                                type={selectedPet ? 'pet' : 'facility'}
+                                item={selectedPet} 
+                                type="pet"
                                 onClose={() => {
                                     setSelectedPet(null);
-                                    setSelectedFacility(null);
                                 }} 
                             />
                         </div>
                     )}
                     
                     {/* 공통 리스트 컴포넌트 */}
-                    {(showList || showFacilitiesList) && (
+                    {showList && (
                         <div className="absolute bottom-16 left-0 right-0 max-h-[70vh] overflow-auto z-50 bg-white rounded-t-3xl shadow-lg">
                             <CommonList 
-                                items={showFacilities ? facilities : pets}
-                                type={showFacilities ? 'facility' : 'pet'}
+                                items={pets}
+                                type="pet"
                                 onItemClick={(item) => {
-                                    if (showFacilities) {
-                                        setSelectedFacility(item);
-                                        setShowFacilitiesList(false);
-                                    } else {
-                                        setSelectedPet(item);
-                                        setShowList(false);
-                                    }
+                                    setSelectedPet(item);
+                                    setShowList(false);
                                 }}
                                 onClose={() => {
                                     setShowList(false);
-                                    setShowFacilitiesList(false);
                                 }}
                             />
                         </div>
