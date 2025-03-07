@@ -54,7 +54,7 @@ const App = () => {
     <Router> {/* This Router wrapper was missing */}
       <Routes>
         <Route element={<Layout />}>
-          <Route path="/login-pet" element={<LoginPet />} />
+          <Route path="/" element={<LoginPet />} />
           <Route path="/sign-up" element={<SignUp />} />
           <Route path="/mypage" element={<MyPage />} />
           <Route path="/connect" element={<SocialConnect />} />

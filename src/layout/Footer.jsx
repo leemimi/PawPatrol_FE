@@ -72,7 +72,7 @@ const Footer = () => {
             navigate('/chatlist');
         } else {
             localStorage.removeItem('isLoggedIn');
-            navigate('/login-pet');
+            navigate('/');
         }
     };
     
