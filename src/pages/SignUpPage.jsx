@@ -30,8 +30,6 @@ const SignUp = () => {
 
         setAddress(selectedAddress);
         setOpenPostcode(false);
-
-        console.log('선택한 주소:', selectedAddress);
     };
 
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuthStore } from '../stores/useAuthStore';
 import defaultImage from '../assets/images/default.png';
 import PetRegisterModal from '../components/PetRegisterModal.jsx';
@@ -11,6 +11,12 @@ import naverImage from '../assets/images/naver_simple_icon.png';
 import googleImage from '../assets/images/google_simple_icon.png';
 
 const ShelterMyPage = () => {
+    // 무한스크롤 관련 상태
+    const [page, setPage] = useState(0);
+    const [hasMore, setHasMore] = useState(true);
+    const [isLoading, setIsLoading] = useState(false);
+    const observerRef = useRef(null);
+
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [selectedPet, setSelectedPet] = useState(null);
     const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
@@ -24,7 +30,6 @@ const ShelterMyPage = () => {
     const [profileImage, setProfileImage] = useState();
     const [nickname, setNickname] = useState('');
     const [isEditing, setIsEditing] = useState(false);
-    const [myPets, setMyPets] = useState([]);
     // const [myPosts, setMyPosts] = useState({ reports: [], witnesses: [] });
     const navigate = useNavigate();
     const [isTypeSelectOpen, setIsTypeSelectOpen] = useState(false);
@@ -41,18 +46,30 @@ const ShelterMyPage = () => {
     });
     const [shelterAnimals, setShelterAnimals] = useState([]);
 
-    // 보호 동물 목록 가져오기 (나중에 api 받아서 완성할것)
-    const fetchShelterAnimals = async () => {
+    // 보호 동물 목록 가져오기
+    const fetchShelterAnimals = async (pageNum = 0) => {
+        if (isLoading || !hasMore) return;
+
+        setIsLoading(true);
         try {
             const response = await axios.get(
-                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/shelters/animals`,
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/pets?page=${pageNum}&size=10`,
                 { withCredentials: true }
             );
+
             if (response.data.statusCode === 200) {
-                setShelterAnimals(response.data.data);
+                const newAnimals = response.data.data;
+                if (newAnimals.length === 0) {
+                    setHasMore(false);
+                } else {
+                    setShelterAnimals(prev => pageNum === 0 ? newAnimals : [...prev, ...newAnimals]);
+                    setPage(pageNum + 1);
+                }
             }
         } catch (error) {
             console.error('보호 동물 목록 불러오기 오류:', error);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -572,6 +589,27 @@ const ShelterMyPage = () => {
     };
 
     useEffect(() => {
+        const observer = new IntersectionObserver(
+            entries => {
+                if (entries[0].isIntersecting && hasMore && !isLoading) {
+                    fetchShelterAnimals(page);
+                }
+            },
+            { threshold: 1.0 }
+        );
+
+        if (observerRef.current) {
+            observer.observe(observerRef.current);
+        }
+
+        return () => {
+            if (observerRef.current) {
+                observer.unobserve(observerRef.current);
+            }
+        };
+    }, [page, hasMore, isLoading]);
+
+    useEffect(() => {
         const userInfoStr = localStorage.getItem('userInfo');
         const isLoggedIn = localStorage.getItem('isLoggedIn');
 
@@ -590,15 +628,10 @@ const ShelterMyPage = () => {
             }
 
             window.scrollTo(0, 0);
-            // fetchShelterAnimals();   나중에 구현하면 주석 해제할 것
+            fetchShelterAnimals(0);
             fetchMyReportPosts(0);
             fetchMyWitnessPosts(0);
             fetchSocialConnections();
-
-            // 보호소 계정인 경우 보호 동물 목록 가져오기
-            if (userInfo?.role === 'ROLE_SHELTER') {
-                fetchShelterAnimals();
-            }
         }
     }, []);
 
@@ -961,7 +994,7 @@ const ShelterMyPage = () => {
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {myPets.map(pet => (
+                            {shelterAnimals.map(pet => (
                                 <div key={pet.id} className="border rounded-lg shadow-sm overflow-hidden">
                                     <img
                                         src={pet.imageUrl}
@@ -994,6 +1027,12 @@ const ShelterMyPage = () => {
                                 </div>
                             ))}
                         </div>
+
+                        {hasMore && (
+                            <div ref={observerRef} className="loading-indicator">
+                                {isLoading ? '로딩 중...' : ''}
+                            </div>
+                        )}
 
                         <PetTypeSelectModal
                             isOpen={isTypeSelectOpen}
