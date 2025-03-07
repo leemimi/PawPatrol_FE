@@ -4,11 +4,6 @@ import { useNavigate } from 'react-router-dom';
 
 export const CommonCard = ({ item, type, onClose }) => {
     const navigate = useNavigate();
-    console.log('item.animalType:', item.animalType);
-    console.log('item.pet.animalType:', item.pet.animalType);
-
-
-
     // 반려동물 상태 텍스트 변환 수정 
     const getStatusText = (status) => {
         switch (status) {
@@ -71,16 +66,6 @@ export const CommonCard = ({ item, type, onClose }) => {
 
         // 이미지 경로 처리
         const imageUrl = item?.image || '/api/placeholder/160/160';
-
-
-
-
-
-
-
-
-
-
         return (
             <div className="flex flex-col items-start gap-4 bg-white p-4 rounded-lg border border-orange-200">
                 <div className="flex items-start gap-4 w-full">
@@ -160,9 +145,9 @@ export const CommonCard = ({ item, type, onClose }) => {
         const operatingHours = item?.operatingHours || '영업시간 정보 없음';
 
         return (
-            <div className="flex flex-col items-start gap-4 bg-white p-4 rounded-lg border border-green-200">
+            <div className="flex flex-col items-start gap-4 bg-white p-4 rounded-lg border border-orange-200">
                 <div className="flex items-start gap-4 w-full">
-                    <div className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-green-100 bg-green-50 flex items-center justify-center">
+                    <div className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-orange-100 bg-orange-50 flex items-center justify-center">
                         <img
                             src={facilityImage}
                             alt=""
@@ -180,18 +165,18 @@ export const CommonCard = ({ item, type, onClose }) => {
                             </span>
                         </div>
 
-                        <h3 className="text-lg font-bold text-green-900 mb-1">
+                        <h3 className="text-lg font-bold text-orange-900 mb-1">
                             {item.name}
                         </h3>
 
-                        <p className="text-sm text-green-600 flex items-center gap-1">
+                        <p className="text-sm text-orange-600 flex items-center gap-1">
                             <Hospital size={14} />
                             {address}
                         </p>
                     </div>
                     <button
                         onClick={onClose}
-                        className="text-green-300 hover:text-green-400 transition-colors"
+                        className="text-orange-300 hover:text-orange-400 transition-colors"
                     >
                         <X size={24} strokeWidth={2.5} />
                     </button>

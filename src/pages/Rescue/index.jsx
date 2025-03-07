@@ -1,11 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useKakaoMap } from '@/hooks/UseKakaoMap';
 import { RadiusControl } from '../../components/RadiusControl';
 import { ControlButtons } from '../../components/ControlButtons';
 import { useGeolocation } from '../../hooks/UseGeolocation.jsx';
 import { useFacilitiesData } from '../../hooks/UseFacilitiesData.jsx';
-import { ChevronDown, ChevronUp, AlertCircle, X, Phone, Bookmark, MapPin, Info } from 'lucide-react';
+import { useFacilityOverlays } from '@/hooks/UseFacilityOverlays';
+import { CommonCard } from '@/components/CommonCard';
+import { CommonList } from '@/components/CommonList';
+import { ChevronDown, ChevronUp, AlertCircle, X, Phone, Bookmark, MapPin, Info, Plus } from 'lucide-react';
 
 const Rescue = () => {
     const navigate = useNavigate();
@@ -13,14 +16,18 @@ const Rescue = () => {
 
     // 기본 상태들
     const [currentPosition, setCurrentPosition] = useState(centerPosition);
-    const [selectedRange, setSelectedRange] = useState(5);
+    const [selectedRange, setSelectedRange] = useState(3);
     const [isMarkerTransitioning, setIsMarkerTransitioning] = useState(false);
     const [showRescueGuide, setShowRescueGuide] = useState(true);
     const [currentStep, setCurrentStep] = useState(0);
-    const [animalInjured, setAnimalInjured] = useState(null); // null: 선택 전, true: 많이 다침, false: 경미한 부상
+    const [animalInjured, setAnimalInjured] = useState(null); // null: 선택 전, true: A많이 다침, false: 경미한 부상
     const [showNearbyHospitals, setShowNearbyHospitals] = useState(false);
     const [showEmergencyContacts, setShowEmergencyContacts] = useState(false);
     const [showAllContacts, setShowAllContacts] = useState(false);
+    const [showHospitals, setShowHospitals] = useState(false);
+    const [selectedFacility, setSelectedFacility] = useState(null);
+    const [isCardVisible, setIsCardVisible] = useState(false);
+    const [showList, setShowList] = useState(false);
 
     // 구조 단계 상태 정의
     const steps = [
@@ -31,6 +38,14 @@ const Rescue = () => {
         { id: 'report', title: '제보글 작성하기' },
         { id: 'temp-care', title: '임시보호 신청하기' }
     ];
+
+    useEffect(() => {
+        if (selectedFacility) {
+            setTimeout(() => setIsCardVisible(true), 50);
+        } else {
+            setIsCardVisible(false);
+        }
+    }, [selectedFacility]);
 
     // 지도 관련 훅
     const { map, setMarkers, circleRef } = useKakaoMap(currentPosition);
@@ -49,6 +64,28 @@ const Rescue = () => {
         fetchFacilities,
         debouncedFetchFacilities
     } = useFacilitiesData(currentPosition, selectedRange);
+
+    // selectedFacility 선택 핸들러 추가 - useCallback으로 메모이제이션
+    const handleSelectFacility = useCallback((facility) => {
+        // 이미 선택된 시설인 경우 다시 선택하지 않음
+        if (selectedFacility && selectedFacility.id === facility.id) {
+            return;
+        }
+        setSelectedFacility(facility);
+        setShowRescueGuide(false); // 구조 가이드 닫기
+        setShowList(false); // 리스트 닫기
+    }, [selectedFacility]);
+
+    // useFacilityOverlays 훅 사용 부분 수정
+    const { 
+        facilityOverlays, 
+        createFacilityCustomOverlays, 
+        cleanupFacilityOverlays 
+    } = useFacilityOverlays({
+        map,
+        selectedFacility,
+        onSelectFacility: handleSelectFacility // 새로운 핸들러 사용
+    });
 
     // 기본 스타일 설정
     useEffect(() => {
@@ -146,6 +183,26 @@ const Rescue = () => {
         setShowEmergencyContacts(prev => !prev);
     };
 
+    // 현재 위치 변경시 병원 정보 가져오기
+    useEffect(() => {
+        if (currentPosition) {
+            fetchFacilities(currentPosition, selectedRange);
+        }
+    }, [currentPosition, selectedRange]);
+
+    // 시설 데이터 변경 시 오버레이 업데이트
+    useEffect(() => {
+        if (map && facilities.length > 0) {
+            createFacilityCustomOverlays(facilities);
+        }
+    }, [map, facilities, createFacilityCustomOverlays]);
+
+    // 병원 목록 보기 버튼 핸들러
+    const handleShowHospitalList = () => {
+        setSelectedFacility(null); // 선택된 병원 초기화
+        setShowRescueGuide(false); // 가이드 닫기
+        setShowList(true); // 리스트 표시
+    };
 
     // 긴급 연락처 데이터
     const emergencyContactsData = [
@@ -166,6 +223,23 @@ const Rescue = () => {
         { region: '광주', location: '광주시 서구 유촌동 719-2일원', phone: '062-613-6651', organization: '광주시 보건환경연구원', type: '직영' }
     ];
 
+    // ChevronRight 컴포넌트 (Lucide 패키지에 없어서 임시로 만듦)
+    const ChevronRight = ({ size, className }) => (
+        <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width={size}
+            height={size}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className={className}
+        >
+            <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+    );
 
     // 렌더링할 단계 내용 결정
     const renderStepContent = () => {
@@ -244,7 +318,6 @@ const Rescue = () => {
                     </div>
                 );
 
-            // 동물 상태 체크 (case 1)
             case 1: // 동물 상태 체크
                 return (
                     <div className="space-y-4 pb-16">
@@ -271,7 +344,6 @@ const Rescue = () => {
                     </div>
                 );
 
-            // 긴급 대처 요령 (case 2)
             case 2: // 긴급 대처 요령
                 return (
                     <div className="space-y-4 pb-16">
@@ -280,7 +352,7 @@ const Rescue = () => {
                             {showNearbyHospitals && (
                                 <button
                                     className="px-3 py-1 bg-blue-500 text-white text-sm rounded-full"
-                                    onClick={() => setShowNearbyHospitals(true)}
+                                    onClick={handleShowHospitalList}
                                 >
                                     근처 병원 보기
                                 </button>
@@ -420,7 +492,7 @@ const Rescue = () => {
                         </div>
 
                         <button
-                            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg"
+                            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg mt-4"
                             onClick={goToPrevStep}
                         >
                             이전
@@ -432,24 +504,6 @@ const Rescue = () => {
                 return null;
         }
     };
-
-    // ChevronRight 컴포넌트 (Lucide 패키지에 없어서 임시로 만듦)
-    const ChevronRight = ({ size, className }) => (
-        <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width={size}
-            height={size}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className={className}
-        >
-            <polyline points="9 18 15 12 9 6"></polyline>
-        </svg>
-    );
 
     return (
         <div className="h-screen w-full bg-orange-50/30 relative overflow-hidden">
@@ -467,9 +521,42 @@ const Rescue = () => {
                     {/* 컨트롤 버튼 */}
                     <ControlButtons
                         onLocationClick={getCurrentLocation}
-                        onListClick={() => { }}
+                        onListClick={() => setShowList(true)}
                         onFacilitiesToggle={() => { }}
                     />
+
+                    {/* 선택된 병원 정보 카드 */}
+                    {selectedFacility && !showRescueGuide && !showList && (
+                        <div className={`absolute bottom-16 left-0 right-0 max-h-[70vh] overflow-auto p-4 bg-white rounded-t-3xl shadow-lg border-t-2 border-orange-100 z-50 transition-all duration-300 ease-in-out ${
+                            isCardVisible ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'
+                        }`}>
+                            <CommonCard 
+                                item={selectedFacility}
+                                type="facility"
+                                onClose={() => {
+                                    setSelectedFacility(null);
+                                    setShowRescueGuide(true); // 구조 가이드 다시 열기
+                                }}
+                            />
+                        </div>
+                    )}
+                    
+                    {/* 병원 목록 */}
+                    {showList && (
+                        <div className="absolute bottom-16 left-0 right-0 max-h-[70vh] overflow-auto z-50 bg-white rounded-t-3xl shadow-lg">
+                            <CommonList 
+                                items={facilities}
+                                type="facility"
+                                onItemClick={(facility) => {
+                                    setSelectedFacility(facility);
+                                    setShowList(false);
+                                }}
+                                onClose={() => {
+                                    setShowList(false);
+                                }}
+                            />
+                        </div>
+                    )}
 
                     {/* 구조 가이드 모달 */}
                     {showRescueGuide && (
@@ -526,33 +613,13 @@ const Rescue = () => {
                     )}
 
                     {/* 가이드가 닫혔을 때 보여줄 버튼 */}
-                    {!showRescueGuide && (
-                        <button
-                            onClick={() => setShowRescueGuide(true)}
-                            className="absolute bottom-20 right-4 bg-orange-500 text-white rounded-full p-3 shadow-lg z-50"
-                        >
-                            <AlertCircle size={24} />
-                        </button>
-                    )}
-
-                    {/* 근처 병원 표시 */}
-                    {showNearbyHospitals && facilities.length > 0 && (
-                        <div className="absolute top-4 left-4 right-4 bg-white rounded-lg shadow-lg p-3 z-40">
-                            <h3 className="text-lg font-medium text-orange-800 mb-2">근처 동물병원</h3>
-                            <div className="max-h-32 overflow-y-auto">
-                                {facilities.map((facility, index) => (
-                                    <div key={index} className="p-2 border-b last:border-b-0">
-                                        <p className="font-medium">{facility.name}</p>
-                                        <p className="text-sm text-gray-600">{facility.address}</p>
-                                        <p className="text-sm text-blue-500">{facility.phone}</p>
-                                    </div>
-                                ))}
-                            </div>
+                    {!showRescueGuide && !selectedFacility && !showList && (
+                        <div className="absolute bottom-20 right-4 flex flex-col gap-2 z-50">
                             <button
-                                className="w-full mt-2 p-2 bg-orange-100 text-orange-700 rounded-lg text-sm"
-                                onClick={() => setShowNearbyHospitals(false)}
+                                onClick={() => setShowRescueGuide(true)}
+                                className="bg-orange-500 text-white rounded-full p-3 shadow-lg"
                             >
-                                닫기
+                                <AlertCircle size={24} />
                             </button>
                         </div>
                     )}
