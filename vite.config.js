@@ -59,8 +59,7 @@ messaging.onBackgroundMessage(function(payload) {
 export default defineConfig({
   plugins: [
     react(),
-    createServiceWorker() // Add the service worker plugin
-  ],
+    createServiceWorker(), // Add the service worker plugin
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
