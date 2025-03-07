@@ -59,7 +59,7 @@ const App = () => {
           <Route path="/mypage" element={<MyPage />} />
           <Route path="/connect" element={<SocialConnect />} />
           <Route path="/chat" element={<Chat />} />
-          <Route path="/" element={<Map />} />
+          <Route path="/main" element={<Map />} />
           <Route path="/oauth2/redirect" element={<OAuth2RedirectHandler />} />
           <Route path="/protection" element={<Protection />} />
           <Route path="/protection/:id" element={<ProtectionDetail />} />
