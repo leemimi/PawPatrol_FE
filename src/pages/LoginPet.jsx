@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import puppyLogo from '../assets/images/pet.png';
+import SignUpTypeModal from '../components/SignUpTypeModal';
+import naverImage from '../assets/images/naver_simple_icon.png';
 import axios from 'axios';
 import { requestPermission } from '../firebase-config'; // Import from the new firebase-config file
 
@@ -10,6 +12,7 @@ const LoginScreen = () => {
     const socialLoginForNaverUrl = `${import.meta.env.VITE_CORE_API_BASE_URL}/oauth2/authorization/naver`;
     const redirectUrlAfterSocialLogin = `${import.meta.env.VITE_CORE_FRONT_BASE_URL}/oauth2/redirect`;
 
+    const [showSignUpModal, setShowSignUpModal] = useState(false); // 모달 표시 상태
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [rememberMe, setRememberMe] = useState(false);
@@ -83,7 +86,6 @@ const LoginScreen = () => {
                 )
 
                 if (response) {
-                    console.log(response.data.data);
                     const loginUserInfo = {
                         id: response.data.data.id,
                         email: response.data.data.email,
@@ -96,17 +98,39 @@ const LoginScreen = () => {
                     localStorage.setItem('userInfo', JSON.stringify(loginUserInfo));
                     localStorage.setItem('isLoggedIn', 'true');
 
-                    navigate('/', { replace: true });
+                    navigate('/main', { replace: true });
                 }
             }
         } catch (error) {
-            alert(error.response.data.message);
+            alert(error.response.data.msg || error.response.data.message);
         }
     };
 
     const handleClickSignUp = () => {
-        navigate('/sign-up');
+        setShowSignUpModal(true); // 모달 열기
     };
+
+    useEffect(() => {
+        // 로그인 상태 확인
+        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+
+        // 이미 로그인되어 있다면 /main으로 리다이렉트
+        if (isLoggedIn) {
+            navigate('/main', { replace: true });
+        }
+    }, [navigate]);
+
+    // 컴포넌트 마운트 시 로컬 스토리지에서 저장된 이메일 확인
+    useEffect(() => {
+        window.scrollTo(0, 0);
+        const savedEmail = localStorage.getItem('savedEmail');
+        const isRemembered = localStorage.getItem('rememberMe') === 'true';
+
+        if (savedEmail && isRemembered) {
+            setEmail(savedEmail);
+            setRememberMe(true);
+        }
+    }, []);
 
     return (
         <div className="min-h-screen bg-orange-50 flex flex-col items-center justify-center p-4">
@@ -175,24 +199,40 @@ const LoginScreen = () => {
                     </div>
                 </div>
 
-                {/* Social Login Buttons */}
-                <div className="space-y-3">
+                {/* 소설 로그인 버튼 */}
+                <div className="flex justify-center items-center gap-4 my-3">
                     <a
                         href={`${socialLoginForKakaoUrl}?redirectUrl=${redirectUrlAfterSocialLogin}`}
-                        className="w-full bg-yellow-400 text-yellow-900 py-3 rounded-xl font-medium hover:bg-yellow-500 transition-colors flex items-center justify-center gap-2"
+                        className="w-12 h-12 bg-yellow-400 text-yellow-900 rounded-full hover:bg-yellow-500 transition-colors flex items-center justify-center"
+                        aria-label="카카오 로그인"
                     >
-                        카카오로 시작하기
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 3C7.03 3 3 6.14 3 10C3 12.08 4.18 13.94 6.04 15.12L5.5 18.68C5.46 18.88 5.56 19.08 5.74 19.18C5.92 19.28 6.14 19.24 6.28 19.1L9.64 16.56C10.38 16.74 11.18 16.84 12 16.84C16.97 16.84 21 13.7 21 9.84C21 5.98 16.97 3 12 3Z" />
+                        </svg>
                     </a>
                     <a
                         href={`${socialLoginForGoogleUrl}?redirectUrl=${redirectUrlAfterSocialLogin}`}
-                        className="w-full bg-white border border-gray-200 text-gray-700 py-3 rounded-xl font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-2">
-                        Google로 시작하기
+                        className="w-12 h-12 bg-white border border-gray-200 rounded-full hover:bg-gray-50 transition-colors flex items-center justify-center"
+                        aria-label="Google 로그인"
+                    >
+                        <svg width="24" height="24" viewBox="0 0 24 24">
+                            <path d="M12.24 10.285V14.4h6.806c-.275 1.765-2.056 5.174-6.806 5.174-4.095 0-7.439-3.389-7.439-7.574s3.345-7.574 7.439-7.574c2.33 0 3.891.989 4.785 1.849l3.254-3.138C18.189 1.186 15.479 0 12.24 0c-6.635 0-12 5.365-12 12s5.365 12 12 12c6.926 0 11.52-4.869 11.52-11.726 0-.788-.085-1.39-.189-1.989H12.24z" fill="#4285F4" />
+                            <path d="M12.24 10.285V14.4h6.806c-.275 1.765-2.056 5.174-6.806 5.174-4.095 0-7.439-3.389-7.439-7.574s3.345-7.574 7.439-7.574c2.33 0 3.891.989 4.785 1.849l3.254-3.138C18.189 1.186 15.479 0 12.24 0c-6.635 0-12 5.365-12 12s5.365 12 12 12c6.926 0 11.52-4.869 11.52-11.726 0-.788-.085-1.39-.189-1.989H12.24z" fill="#34A853" clip-path="url(#b)" />
+                            <path d="M12.24 10.285V14.4h6.806c-.275 1.765-2.056 5.174-6.806 5.174-4.095 0-7.439-3.389-7.439-7.574s3.345-7.574 7.439-7.574c2.33 0 3.891.989 4.785 1.849l3.254-3.138C18.189 1.186 15.479 0 12.24 0c-6.635 0-12 5.365-12 12s5.365 12 12 12c6.926 0 11.52-4.869 11.52-11.726 0-.788-.085-1.39-.189-1.989H12.24z" fill="#FBBC05" clip-path="url(#c)" />
+                            <path d="M12.24 10.285V14.4h6.806c-.275 1.765-2.056 5.174-6.806 5.174-4.095 0-7.439-3.389-7.439-7.574s3.345-7.574 7.439-7.574c2.33 0 3.891.989 4.785 1.849l3.254-3.138C18.189 1.186 15.479 0 12.24 0c-6.635 0-12 5.365-12 12s5.365 12 12 12c6.926 0 11.52-4.869 11.52-11.726 0-.788-.085-1.39-.189-1.989H12.24z" fill="#EA4335" clip-path="url(#d)" />
+                        </svg>
                     </a>
                     <a
                         href={`${socialLoginForNaverUrl}?redirectUrl=${redirectUrlAfterSocialLogin}`}
-                        className="w-full bg-white border border-gray-200 text-gray-700 py-3 rounded-xl font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-2">
-                        네이버로 시작하기
+                        aria-label="네이버 로그인"
+                    >
+                        <img
+                            src={naverImage}
+                            alt="네이버"
+                            className="w-12 h-12 rounded-full hover:opacity-90 transition-opacity"
+                        />
                     </a>
+
                 </div>
 
                 {/* Bottom Links */}
@@ -211,6 +251,12 @@ const LoginScreen = () => {
                         회원가입
                     </button>
                 </div>
+                {/* 회원가입 유형 선택 모달 */}
+                {showSignUpModal && (
+                    <SignUpTypeModal
+                        onClose={() => setShowSignUpModal(false)}
+                    />
+                )}
             </div>
         </div>
     );

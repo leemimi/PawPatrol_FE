@@ -7,9 +7,46 @@ const AdminDashboard = () => {
     const [users, setUsers] = useState([]);
     const [shelters, setShelters] = useState([]);
     const [reports, setReports] = useState([]);
-    const [searchTerm, setSearchTerm] = useState('');
     const [isLoading, setIsLoading] = useState(true);
     const navigate = useNavigate();
+    const [pagination, setPagination] = useState({
+        totalPages: 0,
+        totalElements: 0,
+        currentPage: 0
+    });
+    const [shelterPagination, setShelterPagination] = useState({
+        totalPages: 0,
+        totalElements: 0,
+        currentPage: 0
+    });
+
+    // 회원 상태 변경 함수
+    const handleStatusChange = async (userId, newStatus) => {
+        try {
+            const response = await axios.patch(
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/admin/members`,
+                {
+                    userId: userId,
+                    status: newStatus
+                },
+                { withCredentials: true }
+            );
+
+            if (response.data.statusCode === 200) {
+                // 성공 메시지 표시
+                alert(`회원 상태가 ${newStatus === 'ACTIVE' ? '정상' :
+                    newStatus === 'BANNED' ? '정지' :
+                        newStatus === 'INACTIVE' ? '휴면' : '탈퇴'
+                    }으로 변경되었습니다.`);
+
+                // 회원 목록 새로고침
+                await fetchUsers();
+            }
+        } catch (error) {
+            console.error('회원 상태 변경 오류:', error);
+            alert('회원 상태 변경에 실패했습니다.');
+        }
+    };
 
     // 로그아웃 함수
     const handleLogout = async () => {
@@ -22,7 +59,7 @@ const AdminDashboard = () => {
                 localStorage.removeItem('accessToken');
                 localStorage.removeItem('userInfo');
                 localStorage.removeItem('isLoggedIn');
-                navigate('/login-pet');
+                navigate('/');
             }
         } catch (error) {
             console.error('Logout error:', error);
@@ -31,15 +68,22 @@ const AdminDashboard = () => {
     };
 
     // 사용자 목록 가져오기
-    const fetchUsers = async () => {
+    const fetchUsers = async (page = 0) => {
         setIsLoading(true);
         try {
             const response = await axios.get(
-                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/admin/users`,
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/admin/members?page=${page}&size=10`,
                 { withCredentials: true }
             );
+
             if (response.data.statusCode === 200) {
-                setUsers(response.data.data);
+                setUsers(response.data.data.content);
+                // 페이지네이션 정보 저장
+                setPagination({
+                    totalPages: response.data.data.totalPages,
+                    totalElements: response.data.data.totalElements,
+                    currentPage: response.data.data.number
+                });
             }
         } catch (error) {
             console.error('사용자 목록 불러오기 오류:', error);
@@ -49,15 +93,22 @@ const AdminDashboard = () => {
     };
 
     // 보호소 목록 가져오기
-    const fetchShelters = async () => {
+    const fetchShelters = async (page = 0) => {
         setIsLoading(true);
         try {
             const response = await axios.get(
-                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/admin/shelters`,
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/admin/shelters?page=${page}&size=10`,
                 { withCredentials: true }
             );
+
             if (response.data.statusCode === 200) {
-                setShelters(response.data.data);
+                setShelters(response.data.data.content);
+                // 페이지네이션 정보 저장
+                setShelterPagination({
+                    totalPages: response.data.data.totalPages,
+                    totalElements: response.data.data.totalElements,
+                    currentPage: response.data.data.number
+                });
             }
         } catch (error) {
             console.error('보호소 목록 불러오기 오류:', error);
@@ -84,41 +135,6 @@ const AdminDashboard = () => {
         }
     };
 
-
-    // 검색 필터링 함수
-    const filteredData = () => {
-        if (!searchTerm) {
-            switch (activeTab) {
-                case 'users': return users;
-                case 'shelters': return shelters;
-                case 'reports': return reports;
-                default: return [];
-            }
-        }
-
-        const term = searchTerm.toLowerCase();
-
-        switch (activeTab) {
-            case 'users':
-                return users.filter(user =>
-                    user.email?.toLowerCase().includes(term) ||
-                    user.nickname?.toLowerCase().includes(term)
-                );
-            case 'shelters':
-                return shelters.filter(shelter =>
-                    shelter.name?.toLowerCase().includes(term) ||
-                    shelter.address?.toLowerCase().includes(term)
-                );
-            case 'reports':
-                return reports.filter(report =>
-                    report.title?.toLowerCase().includes(term) ||
-                    report.content?.toLowerCase().includes(term)
-                );
-            default:
-                return [];
-        }
-    };
-
     useEffect(() => {
         // 관리자 권한 확인
         const userInfoStr = localStorage.getItem('userInfo');
@@ -129,15 +145,15 @@ const AdminDashboard = () => {
                 return;
             }
         } else {
-            navigate('/login-pet');
+            navigate('/');
             return;
         }
 
         window.scrollTo(0, 0);
         // 초기 데이터 로드
-        fetchUsers();
-        fetchShelters();
-        fetchReports();
+        fetchUsers(0);
+        fetchShelters(0);
+        // fetchReports();
     }, [navigate]);
 
     return (
@@ -166,36 +182,33 @@ const AdminDashboard = () => {
                         <nav className="flex -mb-px">
                             <button
                                 className={`py-4 px-6 text-center border-b-2 font-medium text-sm ${activeTab === 'users'
-                                        ? 'border-orange-500 text-orange-600'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                    ? 'border-orange-500 text-orange-600'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                     }`}
                                 onClick={() => {
                                     setActiveTab('users');
-                                    setSearchTerm('');
                                 }}
                             >
                                 사용자 관리
                             </button>
                             <button
                                 className={`py-4 px-6 text-center border-b-2 font-medium text-sm ${activeTab === 'shelters'
-                                        ? 'border-orange-500 text-orange-600'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                    ? 'border-orange-500 text-orange-600'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                     }`}
                                 onClick={() => {
                                     setActiveTab('shelters');
-                                    setSearchTerm('');
                                 }}
                             >
                                 보호소 관리
                             </button>
                             <button
                                 className={`py-4 px-6 text-center border-b-2 font-medium text-sm ${activeTab === 'reports'
-                                        ? 'border-orange-500 text-orange-600'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                    ? 'border-orange-500 text-orange-600'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                     }`}
                                 onClick={() => {
                                     setActiveTab('reports');
-                                    setSearchTerm('');
                                 }}
                             >
                                 신고 관리
@@ -210,20 +223,6 @@ const AdminDashboard = () => {
                                 {activeTab === 'shelters' && '보호소 관리'}
                                 {activeTab === 'reports' && '신고 관리'}
                             </h2>
-                            <div className="relative">
-                                <input
-                                    type="text"
-                                    placeholder="검색..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
-                                />
-                                <div className="absolute left-3 top-2.5">
-                                    <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                    </svg>
-                                </div>
-                            </div>
                         </div>
 
                         {isLoading ? (
@@ -233,65 +232,238 @@ const AdminDashboard = () => {
                         ) : (
                             <>
                                 {activeTab === 'users' && (
-                                    <div className="overflow-x-auto">
-                                        <table className="min-w-full divide-y divide-gray-200">
-                                            <thead className="bg-gray-50">
-                                                <tr>
-                                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">이메일</th>
-                                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">닉네임</th>
-                                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">가입일</th>
-                                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">관리</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="bg-white divide-y divide-gray-200">
-                                                {filteredData().map(user => (
-                                                    <tr key={user.id} className="hover:bg-gray-50">
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.id}</td>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{user.email}</td>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{user.nickname}</td>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                            {new Date(user.createdAt).toLocaleDateString()}
-                                                        </td>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                                            <button className="text-blue-600 hover:text-blue-900 mr-3">상세</button>
-                                                            <button className="text-red-600 hover:text-red-900">정지</button>
-                                                        </td>
+                                    <>
+                                        <div className="overflow-x-auto">
+                                            <table className="min-w-full divide-y divide-gray-200">
+                                                <thead className="bg-gray-50">
+                                                    <tr>
+                                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">이메일</th>
+                                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">닉네임</th>
+                                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">가입일</th>
+                                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">계정유형</th>
+                                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">상태</th>
+                                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">관리</th>
                                                     </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
+                                                </thead>
+                                                <tbody className="bg-white divide-y divide-gray-200">
+                                                    {users.map(user => (
+                                                        <tr key={user.id} className={`hover:bg-gray-50 ${user.role === 'ROLE_SHELTER' ? 'bg-blue-50' : ''
+                                                            }`}>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.id}</td>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{user.email}</td>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{user.nickname}</td>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                                {new Date(user.createdAt).toLocaleDateString()}
+                                                            </td>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                                                <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${user.role === 'ROLE_USER' ? 'bg-gray-100 text-gray-800' :
+                                                                        user.role === 'ROLE_SHELTER' ? 'bg-blue-100 text-blue-800' : ''
+                                                                    }`}>
+                                                                    {user.role === 'ROLE_USER' ? '일반 사용자' :
+                                                                        user.role === 'ROLE_SHELTER' ? '보호소 관리자' : ''}
+                                                                </span>
+                                                            </td>
+                                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${user.status === 'ACTIVE' ? 'bg-green-100 text-green-800' :
+                                                                        user.status === 'INACTIVE' ? 'bg-yellow-100 text-yellow-800' :
+                                                                            user.status === 'BANNED' ? 'bg-red-100 text-red-800' :
+                                                                                'bg-gray-100 text-gray-800'
+                                                                    }`}>
+                                                                    {user.status === 'ACTIVE' ? '정상' :
+                                                                        user.status === 'INACTIVE' ? '휴면' :
+                                                                            user.status === 'BANNED' ? '정지' :
+                                                                                user.status === 'WITHDRAWN' ? '탈퇴' : '알 수 없음'}
+                                                                </span>
+                                                            </td>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                                {user.status === 'BANNED' ? (
+                                                                    <button
+                                                                        onClick={() => handleStatusChange(user.id, 'ACTIVE')}
+                                                                        className="text-green-600 hover:text-green-900 mr-3">
+                                                                        복구
+                                                                    </button>
+                                                                ) : user.status === 'ACTIVE' || user.status === 'INACTIVE' ? (
+                                                                    <button
+                                                                        onClick={() => handleStatusChange(user.id, 'BANNED')}
+                                                                        className="text-red-600 hover:text-red-900 mr-3">
+                                                                        차단
+                                                                    </button>
+                                                                ) : null}
+
+                                                                {user.status === 'WITHDRAWN' && (
+                                                                    <button
+                                                                        onClick={() => handleStatusChange(user.id, 'ACTIVE')}
+                                                                        className="text-blue-600 hover:text-blue-900 mr-3">
+                                                                        복구
+                                                                    </button>
+                                                                )}
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        <div className="mt-4 flex justify-center">
+                                            <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                                                {/* 이전 그룹의 첫 페이지로 이동 */}
+                                                <button
+                                                    onClick={() => {
+                                                        const prevGroup = Math.floor(pagination.currentPage / 10) - 1;
+                                                        const prevGroupFirstPage = prevGroup >= 0 ? prevGroup * 10 : 0;
+                                                        fetchShelters(prevGroupFirstPage);
+                                                    }}
+                                                    disabled={pagination.currentPage < 10}
+                                                    className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium ${pagination.currentPage < 10
+                                                        ? 'text-gray-300 cursor-not-allowed'
+                                                        : 'text-gray-500 hover:bg-gray-50'
+                                                        }`}
+                                                >
+                                                    <span className="sr-only">이전 그룹</span>
+                                                    &laquo;
+                                                </button>
+
+                                                {/* 현재 페이지 그룹의 10개 페이지 버튼 생성 */}
+                                                {(() => {
+                                                    if (!pagination.totalPages) return null;
+
+                                                    // 현재 페이지가 속한 그룹의 시작 페이지 계산
+                                                    const currentGroup = Math.floor(pagination.currentPage / 10);
+                                                    const startPage = currentGroup * 10;
+                                                    const endPage = Math.min(startPage + 9, pagination.totalPages - 1);
+
+                                                    const pageButtons = [];
+                                                    for (let i = startPage; i <= endPage; i++) {
+                                                        pageButtons.push(
+                                                            <button
+                                                                key={i}
+                                                                onClick={() => fetchShelters(i)}
+                                                                className={`relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium ${pagination.currentPage === i
+                                                                    ? 'z-10 bg-orange-50 border-orange-500 text-orange-600'
+                                                                    : 'text-gray-500 hover:bg-gray-50'
+                                                                    }`}
+                                                            >
+                                                                {i + 1}
+                                                            </button>
+                                                        );
+                                                    }
+                                                    return pageButtons;
+                                                })()}
+
+                                                {/* 다음 그룹의 첫 페이지로 이동 */}
+                                                <button
+                                                    onClick={() => {
+                                                        const nextGroup = Math.floor(pagination.currentPage / 10) + 1;
+                                                        const nextGroupFirstPage = nextGroup * 10;
+                                                        fetchShelters(Math.min(nextGroupFirstPage, pagination.totalPages - 1));
+                                                    }}
+                                                    disabled={!pagination.totalPages || Math.floor(pagination.currentPage / 10) === Math.floor((pagination.totalPages - 1) / 10)}
+                                                    className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium ${!pagination.totalPages || Math.floor(pagination.currentPage / 10) === Math.floor((pagination.totalPages - 1) / 10)
+                                                        ? 'text-gray-300 cursor-not-allowed'
+                                                        : 'text-gray-500 hover:bg-gray-50'
+                                                        }`}
+                                                >
+                                                    <span className="sr-only">다음 그룹</span>
+                                                    &raquo;
+                                                </button>
+                                            </nav>
+                                        </div>
+                                    </>
                                 )}
 
                                 {activeTab === 'shelters' && (
-                                    <div className="overflow-x-auto">
-                                        <table className="min-w-full divide-y divide-gray-200">
-                                            <thead className="bg-gray-50">
-                                                <tr>
-                                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">보호소명</th>
-                                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">주소</th>
-                                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">연락처</th>
-                                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">관리</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="bg-white divide-y divide-gray-200">
-                                                {filteredData().map(shelter => (
-                                                    <tr key={shelter.id} className="hover:bg-gray-50">
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{shelter.id}</td>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{shelter.name}</td>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{shelter.address}</td>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{shelter.phone}</td>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                                            <button className="text-blue-600 hover:text-blue-900 mr-3">상세</button>
-                                                            <button className="text-red-600 hover:text-red-900">비활성화</button>
-                                                        </td>
+                                    <>
+                                        <div className="overflow-x-auto">
+                                            <table className="min-w-full divide-y divide-gray-200">
+                                                <thead className="bg-gray-50">
+                                                    <tr>
+                                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">보호소명</th>
+                                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">주소</th>
+                                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">연락처</th>
+                                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">관리</th>
                                                     </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
+                                                </thead>
+                                                <tbody className="bg-white divide-y divide-gray-200">
+                                                    {shelters.map(shelter => (
+                                                        <tr key={shelter.id} className="hover:bg-gray-50">
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{shelter.id}</td>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{shelter.name}</td>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{shelter.address}</td>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{shelter.tel}</td>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                                <button className="text-blue-600 hover:text-blue-900 mr-3">상세</button>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        <div className="mt-4 flex justify-center">
+                                            <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                                                {/* 이전 그룹의 첫 페이지로 이동 */}
+                                                <button
+                                                    onClick={() => {
+                                                        const prevGroup = Math.floor(shelterPagination.currentPage / 10) - 1;
+                                                        const prevGroupFirstPage = prevGroup >= 0 ? prevGroup * 10 : 0;
+                                                        fetchShelters(prevGroupFirstPage);
+                                                    }}
+                                                    disabled={shelterPagination.currentPage < 10}
+                                                    className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium ${shelterPagination.currentPage < 10
+                                                        ? 'text-gray-300 cursor-not-allowed'
+                                                        : 'text-gray-500 hover:bg-gray-50'
+                                                        }`}
+                                                >
+                                                    <span className="sr-only">이전 그룹</span>
+                                                    &laquo;
+                                                </button>
+
+                                                {/* 현재 페이지 그룹의 10개 페이지 버튼 생성 */}
+                                                {(() => {
+                                                    if (!shelterPagination.totalPages) return null;
+
+                                                    // 현재 페이지가 속한 그룹의 시작 페이지 계산
+                                                    const currentGroup = Math.floor(shelterPagination.currentPage / 10);
+                                                    const startPage = currentGroup * 10;
+                                                    const endPage = Math.min(startPage + 9, shelterPagination.totalPages - 1);
+
+                                                    const pageButtons = [];
+                                                    for (let i = startPage; i <= endPage; i++) {
+                                                        pageButtons.push(
+                                                            <button
+                                                                key={i}
+                                                                onClick={() => fetchShelters(i)}
+                                                                className={`relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium ${shelterPagination.currentPage === i
+                                                                    ? 'z-10 bg-orange-50 border-orange-500 text-orange-600'
+                                                                    : 'text-gray-500 hover:bg-gray-50'
+                                                                    }`}
+                                                            >
+                                                                {i + 1}
+                                                            </button>
+                                                        );
+                                                    }
+                                                    return pageButtons;
+                                                })()}
+
+                                                {/* 다음 그룹의 첫 페이지로 이동 */}
+                                                <button
+                                                    onClick={() => {
+                                                        const nextGroup = Math.floor(shelterPagination.currentPage / 10) + 1;
+                                                        const nextGroupFirstPage = nextGroup * 10;
+                                                        fetchShelters(Math.min(nextGroupFirstPage, shelterPagination.totalPages - 1));
+                                                    }}
+                                                    disabled={!shelterPagination.totalPages || Math.floor(shelterPagination.currentPage / 10) === Math.floor((shelterPagination.totalPages - 1) / 10)}
+                                                    className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium ${!shelterPagination.totalPages || Math.floor(shelterPagination.currentPage / 10) === Math.floor((shelterPagination.totalPages - 1) / 10)
+                                                        ? 'text-gray-300 cursor-not-allowed'
+                                                        : 'text-gray-500 hover:bg-gray-50'
+                                                        }`}
+                                                >
+                                                    <span className="sr-only">다음 그룹</span>
+                                                    &raquo;
+                                                </button>
+                                            </nav>
+                                        </div>
+                                    </>
                                 )}
 
                                 {activeTab === 'reports' && (
@@ -308,7 +480,7 @@ const AdminDashboard = () => {
                                                 </tr>
                                             </thead>
                                             <tbody className="bg-white divide-y divide-gray-200">
-                                                {filteredData().map(report => (
+                                                {reports.map(report => (
                                                     <tr key={report.id} className="hover:bg-gray-50">
                                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{report.id}</td>
                                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{report.title}</td>

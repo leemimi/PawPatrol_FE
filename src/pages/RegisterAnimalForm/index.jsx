@@ -1,13 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronLeft, MapPin, Pencil, Camera, X, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { useAnimalForm } from '../../hooks/useProtections';
 
 const RegisterAnimalForm = () => {
     const navigate = useNavigate();
     const fileInputRef = useRef(null);
     const [images, setImages] = useState([]);
     const [previewUrls, setPreviewUrls] = useState([]);
+
+    // useAnimalForm 훅 사용
+    const { submitting, error, registerAnimal } = useAnimalForm();
 
     const [formData, setFormData] = useState({
         title: "",
@@ -59,20 +62,9 @@ const RegisterAnimalForm = () => {
         });
 
         try {
-            const response = await axios.post(
-                "/api/v1/protections",
-                formDataToSend,
-                {
-                    headers: { "Content-Type": "multipart/form-data" }
-                }
-            );
-
-            if (response.data.resultCode === "200") {
-                alert("임시보호 동물이 성공적으로 등록되었습니다.");
-                navigate(-1);
-            } else {
-                alert("등록 실패: " + response.data.message);
-            }
+            await registerAnimal(formDataToSend);
+            alert("임시보호 동물이 성공적으로 등록되었습니다.");
+            navigate(-1);
         } catch (error) {
             console.error("동물 등록 중 오류 발생:", error);
             alert("동물 등록에 실패했습니다." + (error.response?.data?.message || ""));
@@ -304,9 +296,10 @@ const RegisterAnimalForm = () => {
 
                     <button
                         type="submit"
-                        className="w-full px-4 py-3 bg-orange-500 text-white rounded-full hover:bg-orange-600 transition-colors font-medium"
+                        disabled={submitting}
+                        className="w-full px-4 py-3 bg-orange-500 text-white rounded-full hover:bg-orange-600 transition-colors font-medium disabled:bg-orange-300"
                     >
-                        임시보호 동물 등록하기
+                        {submitting ? "등록 중..." : "임시보호 동물 등록하기"}
                     </button>
                 </form>
             </main>

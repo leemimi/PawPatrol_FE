@@ -56,7 +56,7 @@ const PetPostDetail = ({ onClose }) => {
     const userInfo = JSON.parse(localStorage.getItem('userInfo')) || {};
   
     if (userInfo.email) {
-      axios.get(`http://localhost:8090/api/v1/auth/me`, { withCredentials: true })
+      axios.get(`http://localhost:8090/api/v2/auth/me`, { withCredentials: true })
         .then(response => {
           if (response.data?.data) {
             const userId = response.data.data.id;
@@ -71,6 +71,7 @@ const PetPostDetail = ({ onClose }) => {
   useEffect(() => {
     if (post && currentUserId !== null) {
       setIsAuthor(Number(post.userId) === Number(currentUserId));
+      console.log("isAuthor", isAuthor); // isAuthor 값 확인
     }
   }, [post, currentUserId]);
 
@@ -80,7 +81,7 @@ const PetPostDetail = ({ onClose }) => {
 
     const commentData = {
       content: newComment,
-      findPostId: commentType === 'lost' ? postId : null,
+      lostFoundPostId: postId, // findPostId 대신 lostFoundPostId로 수정,
     };
 
     try {
@@ -191,7 +192,7 @@ const renderImages = () => {
           key={index} 
           src={imageUrl} 
           alt={`Post Image ${index + 1}`} 
-          className="w-full h-full object-cover" 
+          className="w-32 h-32 object-cover rounded-lg" 
         />
       );
     });
@@ -273,7 +274,7 @@ const renderImages = () => {
             <div className="p-4 space-y-4">
               <div className="flex items-center gap-3">
                 <div>
-                  <p className="font-medium">독립제보글 글쓴이: {post.nickname}</p>
+                  <p className="font-medium">글쓴이: {post.nickname}</p>
                 </div>
               </div>
 
@@ -291,8 +292,18 @@ const renderImages = () => {
                   <MapPin size={16} />
                   <span>{post.latitude}, {post.longitude}</span>
                 </div>
+                
               </div>
+
               <div className="space-y-2">
+              {post?.pet?.imageUrl && (
+  <img 
+    src={post.pet.imageUrl} 
+    alt={post?.pet?.name || 'Default Pet'} 
+    className="w-40 h-40 object-cover mr-3 rounded-lg"
+  />
+)}
+
                 {post.pet && post.pet.estimatedAge && (
                   <p className="text-gray-500">생년월일: {post.pet.estimatedAge}</p>
                 )}

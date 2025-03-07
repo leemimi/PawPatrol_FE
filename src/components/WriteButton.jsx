@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Search, Eye, X, ArrowRight, Check, Dog, Cat } from 'lucide-react';
+import dogLogo from '../assets/images/dog.png';
+import catLogo from '../assets/images/cat.png';
 import { useNavigate } from 'react-router-dom'; // Import useNavigate hook
 
 
@@ -249,12 +251,8 @@ const WriteButton = ({ onSelectMissingPost, onSelectReportPost }) => {
                     : 'border-gray-200 hover:bg-gray-50'
                 }`}
               >
-                <div className={`rounded-full p-4 mb-3 ${
-                  selectedAnimalType === 'DOG' 
-                    ? 'bg-orange-100' 
-                    : 'bg-gray-100'
-                }`}>
-                  <Dog size={32} className={selectedAnimalType === 'DOG' ? 'text-orange-500' : 'text-gray-500'} />
+                <div className="mb-3">
+                  <img src={dogLogo} alt="DOG" className="w-24 h-24" />
                 </div>
                 <span className={`font-medium ${
                   selectedAnimalType === 'DOG' ? 'text-orange-700' : 'text-gray-700'
@@ -269,12 +267,8 @@ const WriteButton = ({ onSelectMissingPost, onSelectReportPost }) => {
                     : 'border-gray-200 hover:bg-gray-50'
                 }`}
               >
-                <div className={`rounded-full p-4 mb-3 ${
-                  selectedAnimalType === 'CAT' 
-                    ? 'bg-orange-100' 
-                    : 'bg-gray-100'
-                }`}>
-                  <Cat size={32} className={selectedAnimalType === 'CAT' ? 'text-orange-500' : 'text-gray-500'} />
+                <div className="mb-3">
+                  <img src={catLogo} alt="CAT" className="w-24 h-24" />
                 </div>
                 <span className={`font-medium ${
                   selectedAnimalType === 'CAT' ? 'text-orange-700' : 'text-gray-700'

@@ -4,6 +4,7 @@ import Layout from './layout/Layout'
 import Map from './pages/Map'
 import MyPage from './pages/MyPage'
 import SignUp from './pages/SignUpPage'
+import SignUpShelter from './pages/SignUpShelterPage'
 import LoginPet from './pages/LoginPet'
 import Protection from './pages/Protection'
 import ProtectionDetail from './pages/ProtectionDetail'
@@ -11,6 +12,10 @@ import MyApplications from './pages/MyApplications'
 import MyRegisterAnimals from './pages/MyRegisterAnimals'
 import RegisterAnimalForm from './pages/RegisterAnimalForm'
 import EditAnimalForm from './pages/EditAnimalForm'
+import Rescue from './pages/Rescue'
+import RescueProtection from './pages/RescueProtection'
+import RescueReport from './pages/RescueReport'
+// import Layout from './layout/Layout.jsx'
 import SocialConnect from './pages/SocialConnectPage'
 import LostPostForm from './pages/LostPostForm'
 import OAuth2RedirectHandler from './components/OAuth2RedirectHandler';
@@ -72,9 +77,14 @@ const App = () => {
           <Route path="/lostmypetfix/:postId" element={<Lostmypetfix />} />
           <Route path="/shelter-mypage" element={<ShelterMyPage />} />
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
+          <Route path="/sign-up-shelter" element={<SignUpShelter />} />
+        <Route path="/rescue" element={<Rescue />} />
+        <Route path="/rescue-protection" element={<RescueProtection />} />
+        <Route path="/rescue-report" element={<RescueReport />} />
         </Route>
       </Routes>
     </Router>
+
   );
 };
 
