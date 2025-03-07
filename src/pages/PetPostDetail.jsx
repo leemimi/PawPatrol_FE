@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import ImageGallery from './ProtectionDetail/components/ImageGallery'; // ImageGallery 컴포넌트를 import 합니다.
 import axios from 'axios';
 
 import { 
@@ -26,6 +27,8 @@ const PetPostDetail = ({ onClose }) => {
   const [commentType, setCommentType] = useState('lost'); // 'lost' or 'find'
   const [currentUserId, setCurrentUserId] = useState(null);
   const [isAuthor, setIsAuthor] = useState(false);
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
 
   useEffect(() => {
@@ -36,6 +39,7 @@ const PetPostDetail = ({ onClose }) => {
         setPost(response.data.data);
       })
       .catch(error => console.error("Error fetching post data:", error));
+      
 
     axios.get(`http://localhost:8090/api/v1/comments/lost-foundposts/${postId}`)
       .then(response => setComments(response.data.data || []))
@@ -187,16 +191,28 @@ const renderImages = () => {
     return post.images.map((image, index) => {
       const imageUrl = image?.path || '/api/placeholder/160/160';
       return (
-        <img 
-          key={index} 
-          src={imageUrl} 
-          alt={`Post Image ${index + 1}`} 
-          className="w-full h-full object-cover" 
+        <img
+          key={index}
+          src={imageUrl}
+          alt={`Post Image ${index + 1}`}
+          className="w-32 h-32 object-cover rounded-lg cursor-pointer"
+          onClick={() => handleImageClick(index)} // 클릭 시 갤러리 열기
         />
       );
     });
   }
   return null;
+};
+
+// Open the gallery
+const handleImageClick = (index) => {
+  setCurrentImageIndex(index);
+  setIsGalleryOpen(true);
+};
+
+// Close the gallery
+const closeGallery = () => {
+  setIsGalleryOpen(false);
 };
 
   const handleUpdate = () => {
@@ -233,9 +249,9 @@ const renderImages = () => {
               <button onClick={handleEdit} className="w-full px-4 py-2 text-left hover:bg-gray-100">
                 수정하기
               </button>
-              <button onClick={handleDelete} className="w-full px-4 py-2 text-left text-red-500 hover:bg-gray-100">
-                삭제하기
-              </button>
+              <button onClick={() => handleDelete(postId)} className="w-full px-4 py-2 text-left text-red-500 hover:bg-gray-100">
+  삭제하기
+</button>
             </div>
           )}
         </div>
@@ -273,7 +289,7 @@ const renderImages = () => {
             <div className="p-4 space-y-4">
               <div className="flex items-center gap-3">
                 <div>
-                  <p className="font-medium">독립제보글 글쓴이: {post.nickname}</p>
+                  <p className="font-medium">글쓴이: {post.nickname}</p>
                 </div>
               </div>
 
@@ -289,10 +305,21 @@ const renderImages = () => {
                 {/* Location */}
                 <div className="flex items-center gap-2 text-gray-500 text-sm">
                   <MapPin size={16} />
+                  
                   <span>{post.latitude}, {post.longitude}</span>
                 </div>
+                
               </div>
+
               <div className="space-y-2">
+              {post?.pet?.imageUrl && (
+  <img 
+    src={post.pet.imageUrl} 
+    alt={post?.pet?.name || 'Default Pet'} 
+    className="w-40 h-40 object-cover mr-3 rounded-lg"
+  />
+)}
+
                 {post.pet && post.pet.estimatedAge && (
                   <p className="text-gray-500">생년월일: {post.pet.estimatedAge}</p>
                 )}
@@ -313,8 +340,17 @@ const renderImages = () => {
                 )}
               </div>
 
-              {/* Render Images */}
-              {renderImages()}
+               {/* Render Images */}
+               <div className="flex gap-4">{renderImages()}</div>
+               {/* Image Gallery */}
+        {isGalleryOpen && (
+          <ImageGallery
+            images={post?.images || []}
+            currentIndex={currentImageIndex}
+            setCurrentIndex={setCurrentImageIndex}
+            closeGallery={closeGallery}
+          />
+        )}
 
               <div className="flex justify-between py-2 border-t">
                 <button className="flex items-center gap-1 text-gray-500">

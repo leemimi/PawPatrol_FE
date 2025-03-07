@@ -15,7 +15,7 @@ const ReportPostForm = ({ formType = "standalone" }) => {
     content: "강아지를 발견했어요. 제발 도와주세요.",
     latitude: null,
     longitude: null,
-    location: "서울시 강남구",
+    location: null,
     lostTime: null,
     findTime: "2025-02-20T10:30:00",
     status: "SIGHTED", // 상태
@@ -97,16 +97,24 @@ const ReportPostForm = ({ formType = "standalone" }) => {
 
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
+    const maxSize = 5 * 1024 * 1024; // 5MB 제한
     
-    // Combine new files with existing ones (up to 5)
-    const combinedImages = [...images, ...files].slice(0, 5);
+    // 필터링: 크기가 5MB를 넘는 파일은 제외
+    const validFiles = files.filter((file) => file.size <= maxSize);
+  
+    if (validFiles.length !== files.length) {
+      alert("파일 크기가 5MB를 초과한 파일이 있습니다. 5MB 이하의 파일만 업로드 가능합니다.");
+    }
+    
+    // Combine new valid files with existing ones (up to 5)
+    const combinedImages = [...images, ...validFiles].slice(0, 5);
     setImages(combinedImages);
-    
-    // Create and combine preview URLs for all images
-    const newPreviewUrls = files.map((file) => URL.createObjectURL(file));
+  
+    // Create and combine preview URLs for all valid images
+    const newPreviewUrls = validFiles.map((file) => URL.createObjectURL(file));
     const combinedPreviewUrls = [...previewUrls, ...newPreviewUrls].slice(0, 5);
     setPreviewUrls(combinedPreviewUrls);
-    
+  
     // Reset the file input to allow selecting the same file again
     e.target.value = null;
   };
@@ -118,6 +126,12 @@ const ReportPostForm = ({ formType = "standalone" }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+
+    if (!formData.location) {
+      alert("위치를 입력해주세요.");
+      return;
+    }
     const metadataJson = JSON.stringify(formData);
     const formDataToSend = new FormData();
     formDataToSend.append("metadata", metadataJson);
@@ -239,6 +253,22 @@ const ReportPostForm = ({ formType = "standalone" }) => {
               className="w-full h-32 text-orange-900 placeholder-orange-300 focus:outline-none resize-none"
             />
           </div>
+
+          {/* Location */}
+                    <div className="bg-white p-4 rounded-2xl border-2 border-orange-100">
+                      <div className="flex items-center gap-2 text-orange-400 mb-2">
+                        <MapPin size={20} strokeWidth={2.5} />
+                        <span className="font-medium">발견 위치</span>
+                      </div>
+                      <input
+                        type="text"
+                        name="location"
+                        placeholder="위치를 입력하세요"
+                        value={formData.location}
+                        onChange={handleChange}
+                        className="w-full text-orange-900 focus:outline-none p-2 border rounded-md"
+                      />
+                    </div>
 
           {/* Location & Map */}
           <div className="bg-white p-4 rounded-2xl border-2 border-orange-100">

@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MessageSquare, Search, UserCircle, Bell, FileText } from 'lucide-react';
+import { MessageSquare, UserCircle, FileText } from 'lucide-react';
 import axios from 'axios';
 
 const ChatList = () => {
   const navigate = useNavigate();
   const [chatRooms, setChatRooms] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState('ALL'); 
   
   const currentUser = {
     id: JSON.parse(localStorage.getItem('userInfo'))?.id,
@@ -16,7 +16,7 @@ const ChatList = () => {
 
   useEffect(() => {
     fetchChatRooms();
-  }, []);
+  }, [activeTab]);
 
   const fetchChatRooms = async () => {
     if (!currentUser.id) {
@@ -27,7 +27,13 @@ const ChatList = () => {
 
     try {
       setIsLoading(true);
-      const response = await axios.get('/api/v1/chatlist');
+      // 탭에 따라 다른 API 엔드포인트 호출
+      let endpoint = '/api/v1/chatlist';
+      if (activeTab !== 'ALL') {
+        endpoint += `?type=${activeTab}`;
+      }
+      
+      const response = await axios.get(endpoint);
       console.log('Fetched chat rooms:', response.data);
       
       if (response.data && response.data.resultCode === "200") {
@@ -51,8 +57,9 @@ const ChatList = () => {
     sessionStorage.setItem('chatTarget', JSON.stringify({
       userId: otherMember.id,
       nickname: otherMember.nickname,
-      postId: room.post.foundId,
-      postTitle: room.post.content
+      postId: room.post.id,
+      postTitle: room.post.content,
+      type: room.type
     }));
     
     navigate('/chat');
@@ -93,17 +100,7 @@ const ChatList = () => {
     ).length;
   };
 
-  const filteredRooms = chatRooms.filter(room => {
-    const otherMemberName = getOtherMemberName(room);
-    const postTitle = room.post?.title || '';
-    const lastMessage = room.messages && room.messages.length > 0 
-      ? room.messages[room.messages.length - 1].content 
-      : '';
-    
-    return otherMemberName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-           postTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
-           lastMessage.toLowerCase().includes(searchQuery.toLowerCase());
-  });
+  const filteredRooms = chatRooms;
 
   return (
     <div className="flex flex-col h-full bg-gray-50">
@@ -111,13 +108,29 @@ const ChatList = () => {
       <div className="bg-orange-500 p-4 shadow-md">
         <div className="flex items-center justify-between">
           <h1 className="text-white text-xl font-semibold">채팅</h1>
-          <div className="flex items-center space-x-2">
-            <button className="w-8 h-8 rounded-full bg-orange-400 flex items-center justify-center text-white">
-              <Bell size={18} />
-            </button>
-          </div>
         </div>
-        
+      </div>
+      
+      {/* Tab Navigation */}
+      <div className="flex border-b border-gray-200">
+        <button 
+          className={`flex-1 py-3 font-medium text-sm ${activeTab === 'ALL' ? 'text-orange-500 border-b-2 border-orange-500' : 'text-gray-500'}`}
+          onClick={() => setActiveTab('ALL')}
+        >
+          전체
+        </button>
+        <button 
+          className={`flex-1 py-3 font-medium text-sm ${activeTab === 'PROTECTADOPT' ? 'text-orange-500 border-b-2 border-orange-500' : 'text-gray-500'}`}
+          onClick={() => setActiveTab('PROTECTADOPT')}
+        >
+          임보/입양
+        </button>
+        <button 
+          className={`flex-1 py-3 font-medium text-sm ${activeTab === 'LOSTFOUND' ? 'text-orange-500 border-b-2 border-orange-500' : 'text-gray-500'}`}
+          onClick={() => setActiveTab('LOSTFOUND')}
+        >
+          구조/제보
+        </button>
       </div>
       
       {/* Chat List */}
@@ -138,14 +151,12 @@ const ChatList = () => {
             <div className="bg-orange-100 rounded-full p-4 mb-3">
               <MessageSquare className="w-8 h-8 text-orange-500" />
             </div>
-            {searchQuery ? (
-              <p>검색 결과가 없습니다</p>
-            ) : (
-              <>
-                <p>아직 채팅이 없어요</p>
-                <p className="text-sm mt-2">게시글에서 메시지를 보내보세요!</p>
-              </>
-            )}
+            <p>아직 채팅이 없어요</p>
+            <p className="text-sm mt-2">
+              {activeTab === 'ALL' ? '게시글에서 메시지를 보내보세요!' : 
+               activeTab === 'PROTECTADOPT' ? '임보/입양 관련 채팅이 없습니다.' : 
+               '구조/제보 관련 채팅이 없습니다.'}
+            </p>
           </div>
         ) : (
           filteredRooms.map((room) => {
@@ -186,12 +197,17 @@ const ChatList = () => {
                       <div className="flex items-center text-xs text-blue-500 mt-1">
                         <FileText className="w-3 h-3 mr-1 flex-shrink-0" />
                         <span className="truncate">{room.post.content}</span>
+                        {/* 채팅방 타입 표시 */}
+                        <span className="ml-2 px-1.5 py-0.5 text-xs rounded-full bg-gray-100 text-gray-600">
+                          {room.type === 'PROTECTADOPT' ? '임보/입양' : 
+                           room.type === 'LOSTFOUND' ? '구조/제보' : '기타'}
+                        </span>
                       </div>
                     )}
                     
                     {/* Last Message */}
                     <p className={`text-sm mt-1 truncate ${unreadCount > 0 ? 'font-medium text-gray-900' : 'text-gray-500'}`}>
-                      {lastMessage ?lastMessage.content : '새로운 대화를 시작하세요'}
+                      {lastMessage ? lastMessage.content : '새로운 대화를 시작하세요'}
                     </p>
                   </div>
                 </div>
@@ -200,7 +216,6 @@ const ChatList = () => {
           })
         )}
       </div>
-      
     </div>
   );
 };

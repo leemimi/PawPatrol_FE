@@ -1,10 +1,16 @@
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import DaumPostcode from 'react-daum-postcode';
+import ShelterSearchModal from '../components/ShelterSearchModal';
+
 
 
 const SignUpShelter = () => {
+    const [isComposing, setIsComposing] = useState(false);
+    const [searchResults, setSearchResults] = useState([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [showSearchResults, setShowSearchResults] = useState(false);
     const navigate = useNavigate();
     const [openPostcode, setOpenPostcode] = useState(false);
     const [startDate, setStartDate] = useState('');
@@ -21,8 +27,56 @@ const SignUpShelter = () => {
         passwordConfirm: '',
         nickname: '',
         owner: '',
-        startDate: ''    // 개업일자
+        startDate: '',    // 개업일자
+        shelterName: ''
     });
+    // 보호소 검색 모달 상태
+    const [showShelterModal, setShowShelterModal] = useState(false);
+    const [selectedShelter, setSelectedShelter] = useState(null);
+
+    // 보호소 검색 함수
+    // 보호소 검색 함수
+    const searchShelters = async (searchTerm) => {
+        // 인자가 없으면 formData에서 가져옴
+        const term = searchTerm || formData.shelterName.trim();
+        if (!term) return;
+
+        setIsLoading(true);
+        setShowSearchResults(true);
+
+        try {
+            const response = await axios.get(
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/auth/shelters?keyword=${term}`,
+                { withCredentials: true }
+            );
+
+            setSearchResults(response.data.data || []);
+        } catch (error) {
+            console.error('보호소 검색 오류:', error);
+            alert('보호소 검색 중 오류가 발생했습니다.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+
+
+    // 보호소 선택 핸들러
+    const handleSelectShelter = (shelter) => {
+        setSelectedShelter(shelter);
+        setFormData(prev => ({
+            ...prev,
+            shelterName: shelter.name,
+            shelterId: shelter.id,
+            shelterAddress: shelter.address,
+            shelterTel: shelter.tel
+        }));
+        setAddress(shelter.address.split(' ').slice(0, 3).join(' ')); // 주소 기본 부분
+        setDetailAddress(shelter.address.split(' ').slice(3).join(' ')); // 상세 주소 부분
+
+        // 검색 결과창 닫기
+        setShowSearchResults(false);
+    };
 
     // 사업자등록번호 검증 함수
     const handleBusinessRegistrationVerification = async () => {
@@ -67,12 +121,6 @@ const SignUpShelter = () => {
 
         setAddress(selectedAddress);
         setOpenPostcode(false);
-    };
-
-
-    // 버튼 클릭 이벤트, 주소입력
-    const handleToggle = () => {
-        setOpenPostcode(current => !current);
     };
 
     // 이메일 인증
@@ -127,7 +175,7 @@ const SignUpShelter = () => {
         } catch (error) {
             console.error('Verification code error:', error);
             if (error.response && error.response.data) {
-                alert(error.response.data.msg || '인증 코드가 일치하지 않습니다.');
+                alert(error.response.data.message || '인증 코드가 일치하지 않습니다.');
             } else {
                 alert('인증 코드 확인 중 오류가 발생했습니다.');
             }
@@ -167,10 +215,12 @@ const SignUpShelter = () => {
                     email: formData.email,
                     password: formData.password,
                     owner: formData.owner,
-                    nickname: formData.nickname,
+                    nickname: formData.shelterName,
                     address: `${address} ${detailAddress}`.trim(),
                     startDate: startDate.replace(/-/g, ''), // YYYYMMDD 형식으로 변환
                     businessRegistrationNumber: businessRegistrationNumber.replace(/-/g, ''), // '-' 제거
+                    shelterId: formData.shelterId,
+                    shelterTel: formData.shelterTel
                 },
                 {
                     headers: { 'Content-Type': 'application/json' },
@@ -179,17 +229,20 @@ const SignUpShelter = () => {
             );
 
             alert('회원가입이 완료되었습니다.');
-            navigate('/login-pet');
+            navigate('/');
         } catch (error) {
             console.error('SignUp error:', error);
             if (error.response && error.response.data) {
-                alert(error.response.data.msg || '회원가입에 실패했습니다.');
+                alert(error.response.data.message || '회원가입에 실패했습니다.');
             } else {
-                f
                 alert('회원가입 중 오류가 발생했습니다.');
             }
         }
     };
+
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, []);
 
 
     return (
@@ -278,61 +331,108 @@ const SignUpShelter = () => {
                                 required
                             />
                         </div>
-                        <div>
-                            <input
-                                type="text"
-                                name="nickname"
-                                placeholder="회사명"
-                                value={formData.nickname}
-                                onChange={handleChange}
-                                className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:border-orange-500"
-                                required
-                            />
-                        </div>
 
-                        <div className="relative">
-                            <input
-                                type="text"
-                                name="address"
-                                placeholder="주소 검색 (예: 서울 강남구 역삼동)"
-                                value={address}
-                                readOnly
-                                className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:border-orange-500"
-                                required
-                            />
-                            <button
-                                type="button"
-                                onClick={handleToggle}
-                                className="absolute right-3 top-1/2 transform -translate-y-1/2 px-3 py-1 bg-orange-500 text-white rounded-lg text-sm hover:bg-orange-600"
-                            >
-                                검색
-                            </button>
-                        </div>
-                        {/* 우편번호 검색 팝업 */}
-                        {openPostcode && (
-                            <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-                                <div className="bg-white rounded-lg p-4 w-full max-w-md relative">
-                                    <button
-                                        onClick={() => setOpenPostcode(false)}
-                                        className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
-                                    >
-                                        ✕
-                                    </button>
-                                    <DaumPostcode
-                                        onComplete={handleComplete}
-                                        style={{ height: '400px' }}
-                                    />
-                                </div>
+                        {/* 보호소 검색 필드 추가 */}
+                        <div>
+                            <div className="relative mb-4">
+                                <input type="text"
+                                    id="shelterName"
+                                    name="shelterName"
+                                    placeholder="보호소 이름 검색"
+                                    value={formData.shelterName}
+                                    onChange={(e) => {
+                                        // 원래 값 그대로 저장 (trim 적용하지 않음)
+                                        handleChange(e);
+
+                                        // 검색어가 있을 경우에만 디바운스 검색 실행
+                                        const searchTerm = e.target.value;
+
+                                        if (window.searchTimer) clearTimeout(window.searchTimer);
+
+                                        if (searchTerm) {
+                                            window.searchTimer = setTimeout(() => {
+                                                // 검색 실행 시에만 trim 적용
+                                                searchShelters(searchTerm.trim());
+                                            }, 200);
+                                        } else {
+                                            setShowSearchResults(false);
+                                        }
+                                    }}
+                                    // 입력 필드에 다음 속성 추가
+                                    onCompositionStart={() => setIsComposing(true)}
+                                    onCompositionEnd={(e) => {
+                                        setIsComposing(false);
+                                        // 조합이 완료된 후 검색 실행
+                                        if (e.target.value.trim()) {
+                                            searchShelters(e.target.value.trim());
+                                        }
+                                    }}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
+                                            searchShelters(e.target.value.trim());
+                                        }
+                                    }}
+                                    className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:border-orange-500"
+                                    required
+                                />
+                                <button
+                                    onClick={() => searchShelters(formData.shelterName.trim())}
+                                    type="button"
+                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 px-3 py-1 bg-orange-500 text-white rounded-lg text-sm hover:bg-orange-600"
+                                >
+                                    검색
+                                </button>
                             </div>
 
-                        )}
+                            {/* 검색 결과 표시 영역 */}
+                            {showSearchResults && (
+                                <div className="max-h-60 overflow-y-auto mb-4 border border-gray-200 rounded-xl">
+                                    {isLoading ? (
+                                        <p className="text-center py-2">검색 중...</p>
+                                    ) : searchResults.length > 0 ? (
+                                        <div>
+                                            <ul className="divide-y divide-gray-200">
+                                                {searchResults.map((shelter) => (
+                                                    <li
+                                                        key={shelter.id}
+                                                        onClick={() => handleSelectShelter(shelter)}
+                                                        className="py-3 px-2 hover:bg-gray-50 cursor-pointer"
+                                                    >
+                                                        <div className="font-semibold">{shelter.name}</div>
+                                                        <div className="text-sm text-gray-600">{shelter.address}</div>
+                                                        <div className="text-sm text-gray-600">{shelter.tel}</div>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    ) : (
+                                        <div className="text-center py-4">
+                                            <p className="text-gray-500 mb-3">검색 결과가 없습니다.</p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* 원하는 보호소가 없을 경우를 위한 버튼 */}
+                        <div className="text-center py-3 border-t border-gray-200">
+                            <p className="text-gray-500 mb-2">원하는 보호소가 없으신가요?</p>
+                            <button
+                                type="button"
+                                onClick={() => setShowShelterModal(true)}
+                                className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600"
+                            >
+                                보호소 직접 등록
+                            </button>
+                        </div>
                         <input
                             type="text"
-                            name="detailAddress"
-                            placeholder="상세주소"
-                            value={detailAddress}
-                            onChange={(e) => setDetailAddress(e.target.value)}
-                            className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:border-orange-500"
+                            name="address"
+                            placeholder="주소"
+                            value={address + (detailAddress ? ' ' + detailAddress : '')}
+                            readOnly
+                            className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none"
+                            required
                         />
                         {/* 대표자명 입력 필드 */}
                         <div>
@@ -400,6 +500,17 @@ const SignUpShelter = () => {
                             </button>
                         )}
 
+                        <input
+                            type="hidden"
+                            name="shelterId"
+                            value={formData.shelterId || ''}
+                        />
+                        <input
+                            type="hidden"
+                            name="shelterTel"
+                            value={formData.shelterTel || ''}
+                        />
+
 
                         <button
                             type="submit"
@@ -409,9 +520,16 @@ const SignUpShelter = () => {
                         </button>
                     </form>
 
+                    {/* 보호소 등록 모달 */}
+                    <ShelterSearchModal
+                        isOpen={showShelterModal}
+                        onClose={() => setShowShelterModal(false)}
+                        onSelectShelter={handleSelectShelter}
+                    />
+
                     <div className="flex items-center justify-center space-x-4 text-sm text-gray-600">
                         <button
-                            onClick={() => navigate('/login-pet')}
+                            onClick={() => navigate('/')}
                             className="hover:text-orange-500"
                         >
                             이미 계정이 있으신가요? 로그인하기

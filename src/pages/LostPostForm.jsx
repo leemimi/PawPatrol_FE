@@ -14,10 +14,10 @@ const LostPostForm = () => {
   const [selectedPet, setSelectedPet] = useState(null);
   
   const [formData, setFormData] = useState({
-    content: "강아지를 발견했어요. 제발 도와주세요.",
+    content: null,
     latitude: 37.5665,
     longitude: 126.978,
-    location: "서울시 강남구",
+    location: null,
     lostTime: "2025-02-20T10:30:00",
     findTime: null,
     status: "FINDING", // 상태
@@ -102,19 +102,28 @@ const LostPostForm = () => {
 
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
+    const maxSize = 5 * 1024 * 1024; // 5MB 제한
+    
+    // 필터링: 크기가 5MB를 넘는 파일은 제외
+    const validFiles = files.filter((file) => file.size <= maxSize);
   
-  // Combine new files with existing ones (up to 5)
-  const combinedImages = [...images, ...files].slice(0, 5);
-  setImages(combinedImages);
+    if (validFiles.length !== files.length) {
+      alert("파일 크기가 5MB를 초과한 파일이 있습니다. 5MB 이하의 파일만 업로드 가능합니다.");
+    }
+    
+    // Combine new valid files with existing ones (up to 5)
+    const combinedImages = [...images, ...validFiles].slice(0, 5);
+    setImages(combinedImages);
   
-  // Create and combine preview URLs for all images
-  const newPreviewUrls = files.map((file) => URL.createObjectURL(file));
-  const combinedPreviewUrls = [...previewUrls, ...newPreviewUrls].slice(0, 5);
-  setPreviewUrls(combinedPreviewUrls);
+    // Create and combine preview URLs for all valid images
+    const newPreviewUrls = validFiles.map((file) => URL.createObjectURL(file));
+    const combinedPreviewUrls = [...previewUrls, ...newPreviewUrls].slice(0, 5);
+    setPreviewUrls(combinedPreviewUrls);
   
-  // Reset the file input to allow selecting the same file again
-  e.target.value = null;
+    // Reset the file input to allow selecting the same file again
+    e.target.value = null;
   };
+  
 
   const removeImage = (index) => {
     setImages(images.filter((_, i) => i !== index));
@@ -141,6 +150,17 @@ const LostPostForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Ensure a pet is selected and location is provided
+    if (!selectedPet) {
+      alert("반려동물을 선택해주세요.");
+      return;
+    }
+
+    if (!formData.location) {
+      alert("위치를 입력해주세요.");
+      return;
+    }
     const metadataJson = JSON.stringify(formData);
     const formDataToSend = new FormData();
     formDataToSend.append("metadata", metadataJson);
@@ -248,43 +268,68 @@ const LostPostForm = () => {
           </div>
 
           {/* Image Upload */}
-          <div className="bg-white p-4 rounded-2xl border-2 border-orange-100">
-            <div className="flex flex-wrap gap-2">
-              {previewUrls.map((url, index) => (
-                <div key={index} className="relative w-24 h-24">
-                  <img
-                    src={url}
-                    alt={`미리보기 ${index + 1}`}
-                    className="w-full h-full object-cover rounded-xl"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeImage(index)}
-                    className="absolute -top-2 -right-2 bg-orange-500 text-white rounded-full p-1"
-                  >
-                    <X size={16} />
-                  </button>
-                </div>
-              ))}
-              {previewUrls.length < 5 && (
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="w-24 h-24 flex items-center justify-center border-2 border-dashed border-orange-200 rounded-xl text-orange-400 hover:border-orange-300 hover:text-orange-500 transition-colors"
-                >
-                  <Camera size={24} strokeWidth={2.5} />
-                </button>
-              )}
-            </div>
-            <input
-  type="file"
-  ref={fileInputRef}
-  onChange={handleImageUpload}
-  multiple
-  accept="image/*"
-  className="hidden"
-/>
-          </div>
+          {/* Image Upload */}
+<div className="bg-white p-4 rounded-2xl border-2 border-orange-100">
+  <div className="text-center mb-4">
+    <p className="text-gray-700 text-sm">펫의 측면과 옆모습 사진을 업로드해주세요</p>
+  </div>
+  <div className="flex flex-wrap gap-2">
+    {/* 선택된 반려동물 이미지가 있을 경우 우선 표시 */}
+    {selectedPet && selectedPet.imageUrl && (
+      <div className="relative w-24 h-24">
+        <img
+          src={selectedPet.imageUrl}
+          alt={`${selectedPet.name} 기본 이미지`}
+          className="w-full h-full object-cover rounded-xl"
+        />
+        <button
+          type="button"
+          onClick={() => removeDefaultImage()}
+          className="absolute -top-2 -right-2 bg-orange-500 text-white rounded-full p-1"
+        >
+          <X size={16} />
+        </button>
+      </div>
+    )}
+    
+    {/* 추가된 이미지들 표시 */}
+    {previewUrls.map((url, index) => (
+      <div key={index} className="relative w-24 h-24">
+        <img
+          src={url}
+          alt={`미리보기 ${index + 1}`}
+          className="w-full h-full object-cover rounded-xl"
+        />
+        <button
+          type="button"
+          onClick={() => removeImage(index)}
+          className="absolute -top-2 -right-2 bg-orange-500 text-white rounded-full p-1"
+        >
+          <X size={16} />
+        </button>
+      </div>
+    ))}
+    
+    {/* 이미지 추가 버튼 (기본 이미지 + 추가 이미지 합쳐서 5개 미만일 때만 표시) */}
+    {(previewUrls.length + (selectedPet && selectedPet.imageUrl ? 1 : 0)) < 5 && (
+      <button
+        type="button"
+        onClick={() => fileInputRef.current?.click()}
+        className="w-24 h-24 flex items-center justify-center border-2 border-dashed border-orange-200 rounded-xl text-orange-400 hover:border-orange-300 hover:text-orange-500 transition-colors"
+      >
+        <Camera size={24} strokeWidth={2.5} />
+      </button>
+    )}
+  </div>
+  <input 
+    type="file" 
+    ref={fileInputRef} 
+    onChange={handleImageUpload} 
+    multiple 
+    accept="image/*" 
+    className="hidden" 
+  />
+</div>
 
           {/* Title & Content */}
           <div className="bg-white p-4 rounded-2xl border-2 border-orange-100">
@@ -294,6 +339,22 @@ const LostPostForm = () => {
               value={formData.content}
               onChange={handleChange}
               className="w-full h-32 text-orange-900 placeholder-orange-300 focus:outline-none resize-none"
+            />
+          </div>
+
+          {/* Location */}
+          <div className="bg-white p-4 rounded-2xl border-2 border-orange-100">
+            <div className="flex items-center gap-2 text-orange-400 mb-2">
+              <MapPin size={20} strokeWidth={2.5} />
+              <span className="font-medium">발견 위치</span>
+            </div>
+            <input
+              type="text"
+              name="location"
+              placeholder="위치를 입력하세요"
+              value={formData.location}
+              onChange={handleChange}
+              className="w-full text-orange-900 focus:outline-none p-2 border rounded-md"
             />
           </div>
 

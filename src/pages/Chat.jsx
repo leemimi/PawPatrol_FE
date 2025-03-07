@@ -12,7 +12,8 @@ const Chat = () => {
     nickname: null,
     postInfo: {
       id: null,
-      title: null
+      title: null,
+      type: null
     }
   });
   const [currentRoomId, setCurrentRoomId] = useState(null);
@@ -45,7 +46,8 @@ const Chat = () => {
         nickname: parsedData.nickname || "상대방",
         postInfo: parsedData.postId ? {
           id: parsedData.postId,
-          title: parsedData.postTitle
+          title: parsedData.postTitle,
+          type: parsedData.type
         } : null
       });
       console.log('Parsed chat target:', parsedData);
@@ -65,7 +67,10 @@ const Chat = () => {
       console.log('Setting up WebSocket connection...');
       
       const socketFactory = () => {
-        return new SockJS(`${import.meta.env.VITE_CORE_API_BASE_URL}/ws`);
+        return new SockJS(`${import.meta.env.VITE_CORE_API_BASE_URL}/ws`, null, {
+          transports: ['websocket', 'xhr-streaming', 'xhr-polling'],
+          withCredentials: true 
+        });
       };
       
       client = new Client({
@@ -120,7 +125,7 @@ const Chat = () => {
       console.log("방번호", selectedUser.postInfo.id);
       
       // 채팅방 식별자 설정
-      const identifier = `${selectedUser.postInfo.id}_${Math.min(currentUser.id, selectedUser.id)}_${Math.max(currentUser.id, selectedUser.id)}`;
+      const identifier = `${selectedUser.postInfo.id}_${Math.min(currentUser.id, selectedUser.id)}_${Math.max(currentUser.id, selectedUser.id)}_${selectedUser.postInfo.type || 'DEFAULT'}`;
       fetchMessages(identifier);
       setRoomIdentifier(identifier);
       console.log('roomIdentifier:', identifier);
@@ -137,46 +142,48 @@ const Chat = () => {
   }, [selectedUser, currentUser.id, stompClient, isConnected]);
 
   // 채팅방 구독
-  const subscribeToRoom = (identifier) => {
-    if (!stompClient || !identifier) {
-      console.warn('Cannot subscribe to room: Missing stompClient or identifier');
-      return;
+  // 채팅방 구독
+const subscribeToRoom = (identifier) => {
+  if (!stompClient || !identifier) {
+    console.warn('Cannot subscribe to room: Missing stompClient or identifier');
+    return;
+  }
+  
+  console.log(`Subscribing to room: ${identifier}`);
+  
+  // 기존 구독 해제
+  if (window.chatSubscription) {
+    window.chatSubscription.unsubscribe();
+  }
+  
+  // 새 구독 설정
+  window.chatSubscription = stompClient.subscribe(`/queue/chat/${identifier}`, (message) => {
+    console.log('Received message:', message.body);
+    try {
+      // 메시지 형식에 따라 처리 로직 수정
+      const messageData = JSON.parse(message.body);
+      
+      // 메시지가 type/data 구조인지 또는 직접 메시지 객체인지 확인
+      const newMsg = messageData.type === 'MESSAGE' ? messageData.data : messageData;
+      
+      setMessages(prevMessages => {
+        const isDuplicate = prevMessages.some(msg => 
+          msg.id === newMsg.id || 
+          (msg.content === newMsg.content && 
+           msg.sender?.id === newMsg.sender?.id && 
+           Math.abs(new Date(msg.timestamp) - new Date(newMsg.timestamp)) < 1000)
+        );
+        
+        return isDuplicate ? prevMessages : [...prevMessages, newMsg];
+      });
+      
+      // 자동 읽음 처리
+      markMessagesAsRead(identifier);
+    } catch (error) {
+      console.error('Error processing received message:', error);
     }
-    
-    console.log(`Subscribing to room: ${identifier}`);
-    
-    // 기존 구독 해제
-    if (window.chatSubscription) {
-      window.chatSubscription.unsubscribe();
-    }
-    
-    // 새 구독 설정
-    window.chatSubscription = stompClient.subscribe(`/queue/chat/${identifier}`, (message) => {
-      console.log('Received message:', message.body);
-      try {
-        const messageData = JSON.parse(message.body);
-        if (messageData.type === 'MESSAGE') {
-          const newMsg = messageData.data;
-          setMessages(prevMessages => {
-            // 중복 메시지 방지 로직
-            const isDuplicate = prevMessages.some(msg => 
-              msg.id === newMsg.id || 
-              (msg.content === newMsg.content && 
-               msg.sender?.id === newMsg.sender?.id && 
-               Math.abs(new Date(msg.timestamp) - new Date(newMsg.timestamp)) < 1000)
-            );
-            
-            return isDuplicate ? prevMessages : [...prevMessages, newMsg];
-          });
-          
-          // 자동 읽음 처리
-          markMessagesAsRead(identifier);
-        }
-      } catch (error) {
-        console.error('Error processing received message:', error);
-      }
-    });
-  };
+  });
+}; // 이 닫는 괄호가 없었습니다
 
   // 메시지 불러오기
   const fetchMessages = async(identifier) => {
@@ -215,51 +222,68 @@ const Chat = () => {
 
   const sendMessage = () => {
     if ((!newMessage.trim() && selectedImages.length === 0) || !selectedUser || !selectedUser.postInfo) {
-      console.log('Cannot send message:', {
-        hasContent: !!(newMessage.trim() || selectedImages.length > 0),
-        selectedUser: !!selectedUser,
-        postInfo: selectedUser?.postInfo
-      });
-      return;
+        console.log('Cannot send message:', {
+            hasContent: !!(newMessage.trim() || selectedImages.length > 0),
+            selectedUser: !!selectedUser,
+            postInfo: selectedUser?.postInfo,
+        });
+        return;
     }
     
     if (!stompClient || !isConnected) {
-      console.error('Cannot send message: WebSocket not connected');
-      alert('연결 상태를 확인해주세요. 메시지를 전송할 수 없습니다.');
-      return;
+        console.error('Cannot send message: WebSocket not connected');
+        alert('연결 상태를 확인해주세요. 메시지를 전송할 수 없습니다.');
+        return;
     }
   
     // 이미지 있으면 이미지 업로드
     if (selectedImages.length > 0) {
-      uploadImages();
-      return;
+        uploadImages();
+        return;
     }
     
     // 텍스트 메시지 전송
     const postId = selectedUser.postInfo.id;
     
     try {
-      stompClient.publish({
-        destination: `/app/chat/${postId}`,
-        body: JSON.stringify({      
-          content: newMessage,
-          receiverId: selectedUser.id,
-          senderId: currentUser.id
-        })
-      });
-      console.log({      
-        content: newMessage,
-        receiverId: selectedUser.id,
-        senderId: currentUser.id
-      });
-      setNewMessage('');
-    
-      
+        // 즉시 메시지를 화면에 표시
+        const newMsg = {
+            content: newMessage,
+            sender: {
+                id: currentUser.id,
+                nickname: currentUser.nickname
+            },
+            receiver: {
+                id: selectedUser.id,
+                nickname: selectedUser.nickname
+            },
+            timestamp: new Date().toISOString(),
+            read: false,
+            messageType: 'TEXT'
+        };
+        
+        setMessages(prev => [...prev, newMsg]);
+        
+        // WebSocket으로 메시지 전송
+        stompClient.publish({
+            destination: `/app/chat/${postId}`,
+            body: JSON.stringify({      
+                content: newMessage,
+                receiverId: selectedUser.id,
+                senderId: currentUser.id,
+                type: selectedUser.postInfo.type 
+            })
+        });
+        
+        setNewMessage('');
     } catch (error) {
-      console.error('Error sending message:', error);
-      alert('메시지 전송 중 오류가 발생했습니다.');
+        console.error('Error sending message:', error);
+        alert('메시지 전송 중 오류가 발생했습니다.');
+        
+        // 에러 발생 시 마지막 메시지 제거
+        setMessages(prev => prev.slice(0, -1));
     }
-  };
+};
 
   // 이미지 업로드 함수
   const uploadImages = async () => {
@@ -313,7 +337,8 @@ const Chat = () => {
           body: JSON.stringify({
             content: newMessage,
             receiverId: selectedUser.id,
-            senderId: currentUser.id
+            senderId: currentUser.id,
+            type: currentUser.postInfo.type
           })
         });
         setNewMessage('');
@@ -467,7 +492,7 @@ const Chat = () => {
 
   if (!selectedUser) {
     return (
-      <div className="flex flex-col h-full items-center justify-center bg-gray-50">
+      <div className="flex flex-col h-screen w-full items-center justify-center">
         <div className="bg-orange-100 rounded-full p-4 mb-3">
           <MessageSquare className="w-8 h-8 text-orange-500" />
         </div>
@@ -516,7 +541,7 @@ const Chat = () => {
       
       
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
+      <div className="h-full flex-1 overflow-y-auto p-4 bg-gray-50">
         {!Array.isArray(messages) || messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-gray-500 p-4">
             <div className="bg-orange-100 rounded-full p-4 mb-3">
@@ -578,7 +603,7 @@ const Chat = () => {
       )}
 
       {/* Message Input */}
-      <div className="p-4 border-t border-gray-200 flex items-center bg-white">
+      <div className="fixed bottom-16 left-0 right-0 w-full p-4 border-t border-gray-200 flex items-center bg-white">
         <input 
           type="file" 
           multiple
