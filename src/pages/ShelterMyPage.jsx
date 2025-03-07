@@ -304,7 +304,6 @@ const ShelterMyPage = () => {
                 `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/pets/${petToDelete.id}`,
                 {
                     withCredentials: true,
-                    data: { id: petToDelete.id }
                 }
             );
 
@@ -536,15 +535,22 @@ const ShelterMyPage = () => {
 
     // 프로필 이미지 초기화
     const handleProfileImageReset = async () => {
+        const isConfirmed = window.confirm("정말로 프로필 이미지를 초기화하시겠습니까?");
+
+        if (!isConfirmed) return;
+
         const formData = new FormData();
         formData.append('imageUrl', profileImage);
+
         try {
-            const response = await axios.patch(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/profile/images`,
+            const response = await axios.patch(
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/profile/images`,
                 formData,
                 { withCredentials: true }
-            )
+            );
 
             setProfileImage(defaultImage);
+
             // 로컬 스토리지 업데이트
             const userInfoStr = localStorage.getItem('userInfo');
             if (userInfoStr) {
@@ -552,12 +558,11 @@ const ShelterMyPage = () => {
                 userInfo.profileImage = defaultImage;
                 localStorage.setItem('userInfo', JSON.stringify(userInfo));
             }
-
         } catch (error) {
             console.error('Image reset error:', error);
             alert('프로필 이미지 초기화 중 오류가 발생했습니다.');
         }
-    }
+    };
 
     // 내 신고글 불러오기
     const fetchMyReportPosts = async (page = 0) => {
@@ -663,6 +668,8 @@ const ShelterMyPage = () => {
             setShelterAnimals([]); // 기존 데이터 초기화
             setPage(0);
             setHasMore(true);
+
+            window.scrollTo(0, 0);
 
             // setTimeout으로 상태 업데이트 후 데이터 로딩 보장
             setTimeout(() => {
