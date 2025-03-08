@@ -3,7 +3,7 @@ import axios from 'axios'; // axios를 import합니다.
 export const PetApiService = {
   // 위치 기반 펫 데이터 조회
   async fetchPetsByLocation(position, range) {
-    const apiUrl = `http://localhost:8090/api/v1/lost-foundposts/map?latitude=${position.lat}&longitude=${position.lng}&radius=${range * 1000}`;
+    const apiUrl = `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/lost-foundposts/map?latitude=${position.lat}&longitude=${position.lng}&radius=${range * 1000}`;
 
     try {
       const response = await axios.get(apiUrl, {
@@ -61,7 +61,7 @@ export const PetApiService = {
 
   // 커뮤니티 글 조회
   async fetchCommunityPosts(page = 0, size = 10) {
-    const apiUrl = 'http://localhost:8090/api/v1/lost-foundposts';
+    const apiUrl = `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/lost-foundposts`;
 
     try {
       const response = await axios.get(apiUrl, {
@@ -121,7 +121,7 @@ export const PetApiService = {
 
   // 특정 게시글 상세 조회
   async fetchPostDetail(postId) {
-    const apiUrl = `http://localhost:8090/api/v1/lost-foundposts/${postId}`;
+    const apiUrl = `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/lost-foundposts/${postId}`;
 
     try {
       const response = await axios.get(apiUrl, {
