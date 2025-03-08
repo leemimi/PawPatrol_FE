@@ -3,7 +3,7 @@ import axios from 'axios'; // axios를 import합니다.
 export const PetApiService = {
   // 위치 기반 펫 데이터 조회
   async fetchPetsByLocation(position, range) {
-    const apiUrl = `http://localhost:8090/api/v1/lost-foundposts/map?latitude=${position.lat}&longitude=${position.lng}&radius=${range*1000}`;
+    const apiUrl = `http://localhost:8090/api/v1/lost-foundposts/map?latitude=${position.lat}&longitude=${position.lng}&radius=${range * 1000}`;
 
     try {
       const response = await axios.get(apiUrl, {
@@ -13,19 +13,19 @@ export const PetApiService = {
       if (response.data.resultCode === "200") {
         return response.data.data.map(post => {
           const isLostPost = post.lostTime !== null;
-          
+
           const imageUrl = post.images && post.images.length > 0
-              ? post.images[0].path
-              : '/api/placeholder/160/160'; // Fallback if no images are found
+            ? post.images[0].path
+            : '/api/placeholder/160/160'; // Fallback if no images are found
 
           return {
-            id: post.foundId, 
+            id: post.foundId,
             content: post.content,
             status: post.status,
             image: imageUrl,
             time: isLostPost
-                ? post.lostTime 
-                : (post.findTime ? new Date(post.findTime).toLocaleString() : ''),
+              ? post.lostTime
+              : (post.findTime ? new Date(post.findTime).toLocaleString() : ''),
             location: post.location || '위치 정보 없음', // Added fallback
             position: {
               lat: post.latitude,
@@ -49,8 +49,8 @@ export const PetApiService = {
           };
         });
       }
-      
-      return []; 
+
+      return [];
     } catch (error) {
       console.error('Failed to fetch pets:', error);
       return [];
@@ -62,7 +62,7 @@ export const PetApiService = {
   // 커뮤니티 글 조회
   async fetchCommunityPosts(page = 0, size = 10) {
     const apiUrl = 'http://localhost:8090/api/v1/lost-foundposts';
-    
+
     try {
       const response = await axios.get(apiUrl, {
         params: {
@@ -71,16 +71,16 @@ export const PetApiService = {
         },
         credentials: 'include',
       });
-      
+
       if (response.data.resultCode === "200") {
         return {
           content: response.data.data.content.map(post => {
             const isLostPost = post.lostTime !== null;
-            
+
             const imageUrl = post.images && post.images.length > 0
               ? post.images[0].path
               : '/api/placeholder/160/160';
-            
+
             return {
               id: post.id,
               content: post.content,
@@ -111,31 +111,31 @@ export const PetApiService = {
           }
         };
       }
-      
+
       return { content: [], pagination: {} };
     } catch (error) {
       console.error('Failed to fetch community posts:', error);
       throw error;
     }
   },
-  
+
   // 특정 게시글 상세 조회
   async fetchPostDetail(postId) {
     const apiUrl = `http://localhost:8090/api/v1/lost-foundposts/${postId}`;
-    
+
     try {
       const response = await axios.get(apiUrl, {
         credentials: 'include',
       });
-      
+
       if (response.data.resultCode === "200") {
         const post = response.data.data;
         const isLostPost = post.lostTime !== null;
-        
+
         const imageUrls = post.images && post.images.length > 0
           ? post.images.map(img => img.path)
           : ['/api/placeholder/160/160'];
-        
+
         // 중요: foundId와 id 모두 보존
         return {
           id: post.id,
@@ -159,7 +159,7 @@ export const PetApiService = {
           updatedAt: post.updatedAt
         };
       }
-      
+
       throw new Error('Failed to fetch post details');
     } catch (error) {
       console.error('Failed to fetch post details:', error);
@@ -173,20 +173,20 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
   const R = 6371; // 지구 반경 (km)
   const dLat = deg2rad(lat2 - lat1);
   const dLon = deg2rad(lon2 - lon1);
-  
-  const a = 
-    Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
-    Math.sin(dLon/2) * Math.sin(dLon/2);
-  
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  
+
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
   const d = R * c; // 킬로미터 단위 거리
   return d;
 }
 
 function deg2rad(deg) {
-  return deg * (Math.PI/180);
+  return deg * (Math.PI / 180);
 }
 
 // 2. location.service.js - 위치 관련 기능 분리
@@ -217,10 +217,10 @@ export const LocationService = {
   // 지도 중심 위치로 이동
   moveMapToPosition(map, circleRef, position) {
     if (!map) return;
-    
+
     const moveLatLon = new window.kakao.maps.LatLng(position.lat, position.lng);
     map.setCenter(moveLatLon);
-    
+
     if (circleRef.current) {
       circleRef.current.setPosition(moveLatLon);
     }

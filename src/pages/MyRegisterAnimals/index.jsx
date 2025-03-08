@@ -27,8 +27,10 @@ const MyRegisteredAnimals = () => {
     const hasMore = !data.last;
 
     // 상태별 개수는 API에서 제공
+    const memberRole = data.memberRole;
     const waitingCount = data.waitingCount || 0;
     const protectingCount = data.protectingCount || 0;
+    const shelterCount = data.shelterCount || 0;
 
     // 신청 승인/거절 훅
     const {
@@ -252,19 +254,38 @@ const MyRegisteredAnimals = () => {
                 {/* 상태 카운트 카드 */}
                 <div className="bg-white rounded-xl p-4 mb-4 shadow-sm">
                     <div className="flex justify-between">
-                        <div className="flex-1 text-center">
-                            <div className="bg-yellow-50 rounded-lg p-2">
-                                <span className="text-sm text-gray-500">신청가능</span>
-                                <p className="text-lg font-semibold text-yellow-500">{waitingCount}</p>
+                        {/* 일반 사용자 (ROLE_USER) 또는 관리자 (ROLE_ADMIN)인 경우 */}
+                        {(data.memberRole === 'ROLE_USER' || data.memberRole === 'ROLE_ADMIN') && (
+                            <>
+                                {/* 신청가능 카운트 */}
+                                <div className="flex-1 text-center">
+                                    <div className="bg-yellow-50 rounded-lg p-2">
+                                        <span className="text-sm text-gray-500">신청가능</span>
+                                        <p className="text-lg font-semibold text-yellow-500">{waitingCount}</p>
+                                    </div>
+                                </div>
+
+                                <div className="w-4"></div> {/* 간격용 */}
+
+                                {/* 임보중 카운트 */}
+                                <div className="flex-1 text-center">
+                                    <div className="bg-red-50 rounded-lg p-2">
+                                        <span className="text-sm text-gray-500">임보중</span>
+                                        <p className="text-lg font-semibold text-red-500">{protectingCount}</p>
+                                    </div>
+                                </div>
+                            </>
+                        )}
+
+                        {/* 보호소 (ROLE_SHELTER)인 경우 */}
+                        {data.memberRole === 'ROLE_SHELTER' && (
+                            <div className="flex-1 text-center">
+                                <div className="bg-blue-50 rounded-lg p-2">
+                                    <span className="text-sm text-gray-500">보호소</span>
+                                    <p className="text-lg font-semibold text-blue-500">{shelterCount}</p>
+                                </div>
                             </div>
-                        </div>
-                        <div className="w-4"></div> {/* 간격용 */}
-                        <div className="flex-1 text-center">
-                            <div className="bg-red-50 rounded-lg p-2">
-                                <span className="text-sm text-gray-500">임보중</span>
-                                <p className="text-lg font-semibold text-red-500">{protectingCount}</p>
-                            </div>
-                        </div>
+                        )}
                     </div>
                 </div>
 
