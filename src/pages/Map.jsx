@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';  
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { RadiusControl } from '../components/RadiusControl';
 import { ControlButtons } from '../components/ControlButtons';
 import { useKakaoMap } from '@/hooks/UseKakaoMap';
@@ -15,7 +15,7 @@ import SockJS from 'sockjs-client';
 
 // window.global 설정
 if (typeof global === 'undefined') {
-  window.global = window;
+    window.global = window;
 }
 
 const Map = () => {
@@ -27,37 +27,37 @@ const Map = () => {
     const [currentPosition, setCurrentPosition] = useState(centerPosition);
     const [isCardVisible, setIsCardVisible] = useState(false);
     const [isMarkerTransitioning, setIsMarkerTransitioning] = useState(false);
-    
+
     // 알림 관련 상태
     const [notification, setNotification] = useState(null);
     const [showNotification, setShowNotification] = useState(false);
     const [notifications, setNotifications] = useState([]);
     const stompClientRef = useRef(null);
-    
+
     // 초기 렌더링 및 데이터 로딩 추적을 위한 ref
     const initialLoadRef = useRef(false);
     const modeChangeRef = useRef(false);
-    
+
     const { map, setMarkers, circleRef } = useKakaoMap(currentPosition);
-    
+
     // 펫 데이터 관련 훅 사용
-    const { 
-        pets, 
-        fetchPets, 
-        debouncedFetchPets 
+    const {
+        pets,
+        fetchPets,
+        debouncedFetchPets
     } = usePetData(currentPosition, selectedRange);
-    
+
     // 위치 관련 훅 사용
     const { getCurrentLocation } = useGeolocation(map, circleRef, (newPosition) => {
         setCurrentPosition(newPosition);
         fetchPets(newPosition, selectedRange);
     });
-    
+
     // 펫 오버레이 관련 훅 사용
-    const { 
-        customOverlays, 
-        createCustomOverlays, 
-        cleanupOverlays 
+    const {
+        customOverlays,
+        createCustomOverlays,
+        cleanupOverlays
     } = useCustomOverlays({
         map,
         selectedRange,
@@ -71,9 +71,14 @@ const Map = () => {
             if (stompClientRef.current) {
                 stompClientRef.current.deactivate(); // 기존 연결 종료
             }
-    
+
             const client = new Client({
-                webSocketFactory: () => new SockJS('http://localhost:8090/ws'),
+                webSocketFactory: () => {
+                    return new SockJS(`${import.meta.env.VITE_CORE_API_BASE_URL}/ws`, null, {
+                        transports: ['websocket', 'xhr-streaming', 'xhr-polling'],
+                        withCredentials: true
+                    });
+                },
                 connectHeaders: {},
                 debug: function (str) {
                     console.log(str);
@@ -82,33 +87,33 @@ const Map = () => {
                 heartbeatIncoming: 4000,
                 heartbeatOutgoing: 4000
             });
-    
+
             client.onConnect = function (frame) {
                 console.log('Connected to WebSocket: ' + frame);
-    
+
                 // 구독: 실종/발견 게시글
                 client.subscribe('/topic/lost-found-posts', function (message) {
                     try {
                         const lostFoundPost = JSON.parse(message.body);
                         console.log("New notification received:", lostFoundPost);
-                        
+
                         // 알림에 타임스탬프와 읽음 상태 추가
                         const newNotification = {
                             ...lostFoundPost,
                             timestamp: Date.now(),
                             read: false
                         };
-                        
+
                         // 알림 상태 업데이트 (최근 알림이 맨 위로)
                         setNotifications(prev => [newNotification, ...prev]);
-                        
+
                         // 알림 표시
                         displayNotification(newNotification);
                     } catch (error) {
                         console.error("Error parsing message:", error);
                     }
                 });
-    
+
                 // 사용자 위치 기반 구독 등록
                 if (currentPosition) {
                     const subscription = {
@@ -122,23 +127,23 @@ const Map = () => {
                         destination: '/app/location/subscribe',
                         body: JSON.stringify(subscription)
                     });
-    
+
                     // 개인화된 알림 구독
-                    client.subscribe('/user/queue/notifications', function(message) {
+                    client.subscribe('/user/queue/notifications', function (message) {
                         try {
                             const notificationData = JSON.parse(message.body);
                             console.log("Personalized notification received:", notificationData);
-                            
+
                             // 알림에 타임스탬프와 읽음 상태 추가
                             const newNotification = {
                                 ...notificationData,
                                 timestamp: Date.now(),
                                 read: false
                             };
-                            
+
                             // 알림 상태 업데이트 (최근 알림이 맨 위로)
                             setNotifications(prev => [newNotification, ...prev]);
-                            
+
                             // 알림 표시
                             displayNotification(newNotification);
                         } catch (error) {
@@ -147,33 +152,33 @@ const Map = () => {
                     });
                 }
             };
-    
+
             client.onStompError = function (frame) {
                 console.error('STOMP error:', frame.headers['message']);
             };
-    
+
             client.activate();
             stompClientRef.current = client;
-    
+
             return () => {
                 if (stompClientRef.current) {
                     stompClientRef.current.deactivate(); // 컴포넌트 언마운트 시 연결 종료
                 }
             };
         }
-    }, [currentPosition, selectedRange]); 
-    
+    }, [currentPosition, selectedRange]);
+
 
     const getUserId = () => {
         const userInfo = JSON.parse(localStorage.getItem('userInfo')) || {};
-        return userInfo.id || 1; 
+        return userInfo.id || 1;
     };
 
     // 알림 표시 함수
     const displayNotification = (data) => {
         setNotification(data);
         setShowNotification(true);
-        
+
         // 알림 자동 닫기
         setTimeout(() => {
             setShowNotification(false);
@@ -183,20 +188,20 @@ const Map = () => {
     // 알림 처리 핸들러
     const handleViewNotification = (notification) => {
         // 알림을 읽음 상태로 변경
-        setNotifications(prev => 
-            prev.map(notif => 
+        setNotifications(prev =>
+            prev.map(notif =>
                 notif.id === notification.id ? { ...notif, read: true } : notif
             )
         );
-        
+
         // 해당 위치로 지도 이동
         if (notification.latitude && notification.longitude && map) {
             const position = new window.kakao.maps.LatLng(
-                notification.latitude, 
+                notification.latitude,
                 notification.longitude
             );
             map.setCenter(position);
-            
+
             // 현재 위치 업데이트
             setCurrentPosition({
                 lat: notification.latitude,
@@ -207,7 +212,7 @@ const Map = () => {
 
     // 알림 삭제 핸들러
     const handleClearNotification = (notification) => {
-        setNotifications(prev => 
+        setNotifications(prev =>
             prev.filter(notif => notif.id !== notification.id)
         );
     };
@@ -231,7 +236,7 @@ const Map = () => {
         document.body.style.margin = '0';
         document.body.style.padding = '0';
         document.body.style.overflow = 'hidden';
-        
+
         return () => {
             document.documentElement.style.height = '';
             document.body.style.height = '';
@@ -270,9 +275,9 @@ const Map = () => {
                 } else {
                     circleRef.current.setRadius(targetRadius);
                     setIsMarkerTransitioning(false);
-                    
+
                     fetchPets(currentPosition, newRange);
-                    
+
                     // 위치 구독 업데이트
                     if (stompClientRef.current && stompClientRef.current.connected) {
                         const subscription = {
@@ -282,7 +287,7 @@ const Map = () => {
                             radius: newRange * 1000, // 미터 단위로 변환
                             includeMyPosts: true
                         };
-                        
+
                         stompClientRef.current.publish({
                             destination: '/app/location/subscribe',
                             body: JSON.stringify(subscription)
@@ -305,9 +310,9 @@ const Map = () => {
                     lng: center.getLng()
                 };
                 setCurrentPosition(newPosition);
-                
+
                 debouncedFetchPets(newPosition, selectedRange);
-                
+
                 // 위치 구독 업데이트
                 if (stompClientRef.current && stompClientRef.current.connected) {
                     const subscription = {
@@ -317,7 +322,7 @@ const Map = () => {
                         radius: selectedRange * 1000, // 미터 단위로 변환
                         includeMyPosts: true
                     };
-                    
+
                     stompClientRef.current.publish({
                         destination: '/app/location/subscribe',
                         body: JSON.stringify(subscription)
@@ -365,15 +370,15 @@ const Map = () => {
     useEffect(() => {
         if (map && modeChangeRef.current) {
             modeChangeRef.current = false;
-            
+
             cleanupOverlays();
             fetchPets(currentPosition, selectedRange);
         }
     }, [
-        map, 
-        currentPosition, 
-        selectedRange, 
-        fetchPets, 
+        map,
+        currentPosition,
+        selectedRange,
+        fetchPets,
         cleanupOverlays
     ]);
 
@@ -381,31 +386,31 @@ const Map = () => {
     const handleCloseNotification = () => {
         setShowNotification(false);
     };
-    
+
     // 알림 클릭 핸들러 (해당 게시글로 이동)
     const handleNotificationClick = () => {
         if (notification && notification.postId) {
             // 알림을 읽음 상태로 변경
-            setNotifications(prev => 
-                prev.map(notif => 
+            setNotifications(prev =>
+                prev.map(notif =>
                     notif.id === notification.id ? { ...notif, read: true } : notif
                 )
             );
-            
+
             // 또는 게시글이 있는 위치로 맵 이동
             if (notification.latitude && notification.longitude && map) {
                 const position = new window.kakao.maps.LatLng(
-                    notification.latitude, 
+                    notification.latitude,
                     notification.longitude
                 );
                 map.setCenter(position);
-                
+
                 // 새 위치 설정
                 setCurrentPosition({
                     lat: notification.latitude,
                     lng: notification.longitude
                 });
-                
+
                 // 알림 닫기
                 setShowNotification(false);
             }
@@ -421,20 +426,20 @@ const Map = () => {
                         <h4 className="font-bold text-orange-600 text-sm">
                             {notification.status === 'LOST' ? '실종 신고' : '발견 신고'}
                         </h4>
-                        <button 
+                        <button
                             onClick={handleCloseNotification}
                             className="p-1 ml-2 text-gray-400 hover:text-gray-600"
                         >
                             ✕
                         </button>
                     </div>
-                    <div 
-                        className="cursor-pointer" 
+                    <div
+                        className="cursor-pointer"
                         onClick={handleNotificationClick}
                     >
                         <p className="text-sm text-gray-800 font-medium">
-                            {notification.content?.length > 50 
-                                ? notification.content.substring(0, 50) + '...' 
+                            {notification.content?.length > 50
+                                ? notification.content.substring(0, 50) + '...'
                                 : notification.content}
                         </p>
                         <div className="flex items-center mt-2 text-xs text-gray-500">
@@ -460,38 +465,37 @@ const Map = () => {
                         onLocationClick={getCurrentLocation}
                         onListClick={() => setShowList(!showList)}
                     />
-                    
+
                     {/* 알림 버튼 컴포넌트 - 글쓰기 버튼 위에 배치 */}
-                    <NotificationButton 
+                    <NotificationButton
                         notifications={notifications}
                         onViewNotification={handleViewNotification}
                         onClearNotification={handleClearNotification}
                     />
 
-                    <WriteButton 
+                    <WriteButton
                         onSelectMissingPost={handleSelectMissingPost}
                         onSelectReportPost={handleSelectReportPost}
                     />
-                    
+
                     {/* 공통 카드 컴포넌트 */}
                     {selectedPet && !showList && (
-                        <div className={`absolute bottom-16 left-0 right-0 max-h-[70vh] overflow-auto p-4 bg-white rounded-t-3xl shadow-lg border-t-2 border-orange-100 z-50 transition-all duration-300 ease-in-out ${
-                            isCardVisible ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'
-                        }`}>
-                            <CommonCard 
-                                item={selectedPet} 
+                        <div className={`absolute bottom-16 left-0 right-0 max-h-[70vh] overflow-auto p-4 bg-white rounded-t-3xl shadow-lg border-t-2 border-orange-100 z-50 transition-all duration-300 ease-in-out ${isCardVisible ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'
+                            }`}>
+                            <CommonCard
+                                item={selectedPet}
                                 type="pet"
                                 onClose={() => {
                                     setSelectedPet(null);
-                                }} 
+                                }}
                             />
                         </div>
                     )}
-                    
+
                     {/* 공통 리스트 컴포넌트 */}
                     {showList && (
                         <div className="absolute bottom-16 left-0 right-0 max-h-[70vh] overflow-auto z-50 bg-white rounded-t-3xl shadow-lg">
-                            <CommonList 
+                            <CommonList
                                 items={pets}
                                 type="pet"
                                 onItemClick={(item) => {
