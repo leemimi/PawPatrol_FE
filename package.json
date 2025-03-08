@@ -59,6 +59,7 @@
     "vite-plugin-pwa": "^0.21.1"
   },
   "optionalDependencies": {
-    "@rollup/rollup-linux-x64-gnu": "latest"
+    "@rollup/rollup-linux-x64-gnu": "latest",
+    "@esbuild/linux-x64": "latest"
   }
 }

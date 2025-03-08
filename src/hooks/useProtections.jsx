@@ -139,8 +139,10 @@ export const useMyRegisteredAnimals = (initialPage = 0, initialSize = 10) => {
     const [accumulatedContent, setAccumulatedContent] = useState([]);
     const [data, setData] = useState({
         page: { content: [], totalElements: 0, last: true },
+        memberRole: 'ROLE_USER',
         waitingCount: 0,
-        protectingCount: 0
+        protectingCount: 0,
+        shelterCount: 0
     });
     const [page, setPage] = useState(initialPage);
     const [size, setSize] = useState(initialSize);
@@ -155,6 +157,8 @@ export const useMyRegisteredAnimals = (initialPage = 0, initialSize = 10) => {
 
             // 원본 데이터 저장
             setData(result);
+
+            console.log(data);
 
             // 누적 컨텐츠 업데이트 
             if (page === 0) {
@@ -205,7 +209,9 @@ export const useMyRegisteredAnimals = (initialPage = 0, initialSize = 10) => {
             last: data.page.last,
             // 새로운 속성 추가
             waitingCount: data.waitingCount,
-            protectingCount: data.protectingCount
+            protectingCount: data.protectingCount,
+            shelterCount: data.shelterCount,
+            memberRole: data.memberRole
         },
         loading,
         error,
