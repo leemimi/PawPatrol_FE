@@ -1250,7 +1250,7 @@ const MyPage = () => {
                         {/* 실종 신고글 목록 */}
                         <div className="mb-8">
                             <h3 className="text-lg font-semibold mb-4">실종 신고글</h3>
-                            <div className="min-h-[450px]"> {/* 최소 높이 설정 */}
+                            <div className={`${myPosts.reports.length > 0 ? 'max-h-[600px] overflow-y-auto' : ''}`}>
                                 {myPosts.reports.length > 0 ? (
                                     myPosts.reports.map(post => (
                                         <div key={post.createPostTime} className="border-b border-gray-200 py-4">
@@ -1269,7 +1269,7 @@ const MyPage = () => {
                                         </div>
                                     ))
                                 ) : (
-                                    <div className="flex items-center justify-center h-[200px] text-gray-500">
+                                    <div className="flex items-center justify-center h-[100px] text-gray-500">
                                         등록된 실종 신고글이 없습니다.
                                     </div>
                                 )}
@@ -1281,44 +1281,63 @@ const MyPage = () => {
                                 <button
                                     onClick={() => handleReportPageChange(myPosts.reportsCurrentPage - 1)}
                                     disabled={myPosts.reportsCurrentPage === 0}
-                                    className={`px-3 py-1 border rounded mx-1 ${myPosts.reportsCurrentPage === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100'
+                                    className={`px-3 py-1 border rounded mx-1 ${myPosts.reportsCurrentPage === 0
+                                        ? 'opacity-50 cursor-not-allowed'
+                                        : 'hover:bg-gray-100'
                                         }`}
                                 >
                                     이전
                                 </button>
 
-                                {/* 페이지 번호 버튼들 */}
-                                {Array.from({ length: myPosts.reportsTotalPages }, (_, i) => {
-                                    // 현재 페이지 주변의 페이지만 표시
-                                    if (
-                                        i === 0 || // 첫 페이지
-                                        i === myPosts.reportsTotalPages - 1 || // 마지막 페이지
-                                        Math.abs(i - myPosts.reportsCurrentPage) <= 1 // 현재 페이지 주변
-                                    ) {
-                                        return (
+                                {/* 일관된 페이지 수 표시 (최대 5개) */}
+                                {(() => {
+                                    const pageButtons = [];
+                                    const maxVisiblePages = 5; // 표시할 최대 페이지 버튼 수
+                                    let startPage = 0;
+
+                                    // 총 페이지 수가 최대 표시 수보다 작으면 모든 페이지 표시
+                                    if (myPosts.reportsTotalPages <= maxVisiblePages) {
+                                        startPage = 0;
+                                    }
+                                    // 현재 페이지가 앞쪽에 있을 경우
+                                    else if (myPosts.reportsCurrentPage < Math.floor(maxVisiblePages / 2)) {
+                                        startPage = 0;
+                                    }
+                                    // 현재 페이지가 뒤쪽에 있을 경우
+                                    else if (myPosts.reportsCurrentPage >= myPosts.reportsTotalPages - Math.floor(maxVisiblePages / 2)) {
+                                        startPage = myPosts.reportsTotalPages - maxVisiblePages;
+                                    }
+                                    // 현재 페이지가 중간에 있을 경우
+                                    else {
+                                        startPage = myPosts.reportsCurrentPage - Math.floor(maxVisiblePages / 2);
+                                    }
+
+                                    // 페이지 버튼 생성
+                                    for (let i = 0; i < Math.min(maxVisiblePages, myPosts.reportsTotalPages); i++) {
+                                        const pageIndex = startPage + i;
+                                        pageButtons.push(
                                             <button
-                                                key={i}
-                                                onClick={() => handleReportPageChange(i)}
-                                                className={`px-3 py-1 border rounded mx-1 ${myPosts.reportsCurrentPage === i ? 'bg-blue-500 text-white' : 'hover:bg-gray-100'
+                                                key={pageIndex}
+                                                onClick={() => handleReportPageChange(pageIndex)}
+                                                className={`px-3 py-1 border rounded mx-1 ${myPosts.reportsCurrentPage === pageIndex
+                                                    ? 'bg-blue-500 text-white'
+                                                    : 'hover:bg-gray-100'
                                                     }`}
                                             >
-                                                {i + 1}
+                                                {pageIndex + 1}
                                             </button>
                                         );
-                                    } else if (
-                                        i === myPosts.reportsCurrentPage - 2 ||
-                                        i === myPosts.reportsCurrentPage + 2
-                                    ) {
-                                        // 생략 부호 표시
-                                        return <span key={i} className="px-2">...</span>;
                                     }
-                                    return null;
-                                })}
+
+                                    return pageButtons;
+                                })()}
 
                                 <button
                                     onClick={() => handleReportPageChange(myPosts.reportsCurrentPage + 1)}
                                     disabled={myPosts.reportsCurrentPage === myPosts.reportsTotalPages - 1}
-                                    className={`px-3 py-1 border rounded mx-1 ${myPosts.reportsCurrentPage === myPosts.reportsTotalPages - 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100'
+                                    className={`px-3 py-1 border rounded mx-1 ${myPosts.reportsCurrentPage === myPosts.reportsTotalPages - 1
+                                        ? 'opacity-50 cursor-not-allowed'
+                                        : 'hover:bg-gray-100'
                                         }`}
                                 >
                                     다음
@@ -1328,7 +1347,7 @@ const MyPage = () => {
                         {/* 실종 제보글 목록 */}
                         <div className="mb-8">
                             <h3 className="text-lg font-semibold mb-4">실종 제보글</h3>
-                            <div className="min-h-[450px]"> {/* 최소 높이 설정 */}
+                            <div className={`${myPosts.witnesses.length > 0 ? 'max-h-[600px] overflow-y-auto' : ''}`}>
                                 {myPosts.witnesses.length > 0 ? (
                                     myPosts.witnesses.map(post => (
                                         <div key={post.createPostTime} className="border-b border-gray-200 py-4">
@@ -1348,7 +1367,7 @@ const MyPage = () => {
                                         </div>
                                     ))
                                 ) : (
-                                    <div className="flex items-center justify-center h-[200px] text-gray-500">
+                                    <div className="flex items-center justify-center h-[100px] text-gray-500">
                                         등록된 실종 제보글이 없습니다.
                                     </div>
                                 )}
@@ -1360,44 +1379,63 @@ const MyPage = () => {
                                 <button
                                     onClick={() => handleWitnessPageChange(myPosts.witnessCurrentPage - 1)}
                                     disabled={myPosts.witnessCurrentPage === 0}
-                                    className={`px-3 py-1 border rounded mx-1 ${myPosts.witnessCurrentPage === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100'
+                                    className={`px-3 py-1 border rounded mx-1 ${myPosts.witnessCurrentPage === 0
+                                        ? 'opacity-50 cursor-not-allowed'
+                                        : 'hover:bg-gray-100'
                                         }`}
                                 >
                                     이전
                                 </button>
 
-                                {/* 페이지 번호 버튼들 */}
-                                {Array.from({ length: myPosts.witnessTotalPages }, (_, i) => {
-                                    // 현재 페이지 주변의 페이지만 표시
-                                    if (
-                                        i === 0 || // 첫 페이지
-                                        i === myPosts.witnessTotalPages - 1 || // 마지막 페이지
-                                        Math.abs(i - myPosts.witnessCurrentPage) <= 1 // 현재 페이지 주변
-                                    ) {
-                                        return (
+                                {/* 일관된 페이지 수 표시 (최대 5개) */}
+                                {(() => {
+                                    const pageButtons = [];
+                                    const maxVisiblePages = 5; // 표시할 최대 페이지 버튼 수
+                                    let startPage = 0;
+
+                                    // 총 페이지 수가 최대 표시 수보다 작으면 모든 페이지 표시
+                                    if (myPosts.witnessTotalPages <= maxVisiblePages) {
+                                        startPage = 0;
+                                    }
+                                    // 현재 페이지가 앞쪽에 있을 경우
+                                    else if (myPosts.witnessCurrentPage < Math.floor(maxVisiblePages / 2)) {
+                                        startPage = 0;
+                                    }
+                                    // 현재 페이지가 뒤쪽에 있을 경우
+                                    else if (myPosts.witnessCurrentPage >= myPosts.witnessTotalPages - Math.floor(maxVisiblePages / 2)) {
+                                        startPage = myPosts.witnessTotalPages - maxVisiblePages;
+                                    }
+                                    // 현재 페이지가 중간에 있을 경우
+                                    else {
+                                        startPage = myPosts.witnessCurrentPage - Math.floor(maxVisiblePages / 2);
+                                    }
+
+                                    // 페이지 버튼 생성
+                                    for (let i = 0; i < Math.min(maxVisiblePages, myPosts.witnessTotalPages); i++) {
+                                        const pageIndex = startPage + i;
+                                        pageButtons.push(
                                             <button
-                                                key={i}
-                                                onClick={() => handleWitnessPageChange(i)}
-                                                className={`px-3 py-1 border rounded mx-1 ${myPosts.witnessCurrentPage === i ? 'bg-blue-500 text-white' : 'hover:bg-gray-100'
+                                                key={pageIndex}
+                                                onClick={() => handleWitnessPageChange(pageIndex)}
+                                                className={`px-3 py-1 border rounded mx-1 ${myPosts.witnessCurrentPage === pageIndex
+                                                    ? 'bg-blue-500 text-white'
+                                                    : 'hover:bg-gray-100'
                                                     }`}
                                             >
-                                                {i + 1}
+                                                {pageIndex + 1}
                                             </button>
                                         );
-                                    } else if (
-                                        i === myPosts.witnessCurrentPage - 2 ||
-                                        i === myPosts.witnessCurrentPage + 2
-                                    ) {
-                                        // 생략 부호 표시
-                                        return <span key={i} className="px-2">...</span>;
                                     }
-                                    return null;
-                                })}
+
+                                    return pageButtons;
+                                })()}
 
                                 <button
                                     onClick={() => handleWitnessPageChange(myPosts.witnessCurrentPage + 1)}
                                     disabled={myPosts.witnessCurrentPage === myPosts.witnessTotalPages - 1}
-                                    className={`px-3 py-1 border rounded mx-1 ${myPosts.witnessCurrentPage === myPosts.witnessTotalPages - 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100'
+                                    className={`px-3 py-1 border rounded mx-1 ${myPosts.witnessCurrentPage === myPosts.witnessTotalPages - 1
+                                        ? 'opacity-50 cursor-not-allowed'
+                                        : 'hover:bg-gray-100'
                                         }`}
                                 >
                                     다음
