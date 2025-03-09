@@ -142,13 +142,27 @@ const ShelterMyPage = () => {
 
     // 페이지 변경 핸들러 - 신고글
     const handleReportPageChange = (pageNumber) => {
-        setMyPosts(prev => ({ ...prev, reportsCurrentPage: pageNumber }));
+        // 이전 데이터 초기화 (중요!)
+        setMyPosts(prev => ({
+            ...prev,
+            reportsCurrentPage: pageNumber,
+            reports: [] // 데이터 초기화 후 새로 불러오기
+        }));
+
+        // 새 데이터 불러오기
         fetchMyReportPosts(pageNumber);
     };
 
     // 페이지 변경 핸들러 - 제보글
     const handleWitnessPageChange = (pageNumber) => {
-        setMyPosts(prev => ({ ...prev, witnessCurrentPage: pageNumber }));
+        // 이전 데이터 초기화 (중요!)
+        setMyPosts(prev => ({
+            ...prev,
+            witnessCurrentPage: pageNumber,
+            witnesses: [] // 데이터 초기화 후 새로 불러오기
+        }));
+
+        // 새 데이터 불러오기
         fetchMyWitnessPosts(pageNumber);
     };
 
@@ -683,8 +697,8 @@ const ShelterMyPage = () => {
 
 
     return (
-        <div className="min-h-screen bg-[#FFF5E6]">
-            <div className="max-w-4xl mx-auto bg-white rounded-lg shadow p-8">
+        <div className="min-h-screen bg-white flex flex-col items-center justify-start p-4">
+            <div className="w-full max-w-lg bg-[#FFF5E6] rounded-xl shadow overflow-hidden p-6 space-y-6">
                 <div className="flex justify-between items-center mb-4">
                     <h1 className="text-2xl font-bold text-orange-500">마이페이지 (보호소 계정)</h1>
                     <button
@@ -719,7 +733,7 @@ const ShelterMyPage = () => {
                 </div>
 
                 {activeTab === 'profile' && (
-                    <div className="text-center">
+                    <div className="text-center bg-white rounded-xl p-4 shadow hover:shadow-md transition-shadow">
                         {/* 프로필 정보 */}
                         <div className="relative w-32 h-32 mx-auto mb-4">
                             <img
@@ -1029,7 +1043,7 @@ const ShelterMyPage = () => {
                 )}
 
                 {activeTab === 'pets' && (
-                    <div className="space-y-6">
+                    <div className="space-y-6 bg-white rounded-xl p-4 shadow hover:shadow-md transition-shadow">
                         <div className="flex justify-between items-center mb-6">
                             <h2 className="text-2xl font-bold">보호동물 목록</h2>
                             <button
@@ -1149,9 +1163,9 @@ const ShelterMyPage = () => {
                 )}
 
                 {activeTab === 'posts' && (
-                    <div className="space-y-6">
+                    <div className="space-y-6 bg-white rounded-xl p-4 shadow hover:shadow-md transition-shadow overflow-y-auto">
                         {/* 실종 신고글 목록 */}
-                        <div className="mb-8">
+                        <div className="mb-8 border-b pb-4 mb-4 border-gray-200 space-y-4">
                             <h3 className="text-lg font-semibold mb-4">실종 신고글</h3>
                             <div className="min-h-[450px]"> {/* 최소 높이 설정 */}
                                 {myPosts.reports.length > 0 ? (

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import puppyLogo from '../assets/images/pet.png';
+import puppyLogo from '../assets/images/paw.png';
 import axios from 'axios';
 
 const SocialConnectPage = () => {
@@ -76,24 +76,23 @@ const SocialConnectPage = () => {
     };
 
     return (
-        <div className="min-h-screen bg-orange-50 flex flex-col items-center justify-center p-4">
-            {/* Logo Section */}
-            <div className="w-full max-w-md flex flex-col items-center mb-8">
-                <div className="relative mb-2">
-                    <img
-                        src={puppyLogo}
-                        alt="PawPatrol Logo"
-                        className="w-90 h-90"
-                    />
-                    <h1 className="text-2xl font-bold text-orange-900 absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-orange-50 px-2">
-                        PawPatrol
-                    </h1>
-                </div>
-                <p className="text-orange-700 text-sm">우리 모두의 든든한 발자국</p>
-            </div>
-
+        <div className="h-full bg-white flex flex-col items-center justify-center p-4">
             {/* Connect Form */}
-            <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-6 space-y-6">
+            <div className="w-full max-w-md bg-[#FFF5E6] rounded-2xl shadow p-6 space-y-6">
+                {/* Logo Section */}
+                <div className="w-full max-w-md flex flex-col items-center mb-8">
+                    <div className="relative mb-2">
+                        <img
+                            src={puppyLogo}
+                            alt="PawPatrol Logo"
+                            className="w-32 h-32 mb-2"
+                        />
+                        {/* <h1 className="text-2xl font-bold text-orange-900 absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-orange-50 px-2">
+                            PawPatrol
+                        </h1> */}
+                    </div>
+                    {/* <p className="text-orange-700 text-sm">우리 모두의 든든한 발자국</p> */}
+                </div>
                 <div className="text-center">
                     <h2 className="text-xl font-bold text-gray-900">소셜 계정 연동</h2>
                     <p className="mt-2 text-sm text-gray-600">

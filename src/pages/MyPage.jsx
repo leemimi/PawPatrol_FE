@@ -131,13 +131,27 @@ const MyPage = () => {
 
     // 페이지 변경 핸들러 - 신고글
     const handleReportPageChange = (pageNumber) => {
-        setMyPosts(prev => ({ ...prev, reportsCurrentPage: pageNumber }));
+        // 이전 데이터 초기화 (중요!)
+        setMyPosts(prev => ({
+            ...prev,
+            reportsCurrentPage: pageNumber,
+            reports: [] // 데이터 초기화 후 새로 불러오기
+        }));
+
+        // 새 데이터 불러오기
         fetchMyReportPosts(pageNumber);
     };
 
     // 페이지 변경 핸들러 - 제보글
     const handleWitnessPageChange = (pageNumber) => {
-        setMyPosts(prev => ({ ...prev, witnessCurrentPage: pageNumber }));
+        // 이전 데이터 초기화 (중요!)
+        setMyPosts(prev => ({
+            ...prev,
+            witnessCurrentPage: pageNumber,
+            witnesses: [] // 데이터 초기화 후 새로 불러오기
+        }));
+
+        // 새 데이터 불러오기
         fetchMyWitnessPosts(pageNumber);
     };
 
@@ -601,7 +615,8 @@ const MyPage = () => {
                 setMyPosts(prev => ({
                     ...prev,
                     reports: response.data.data.content,
-                    reportsTotalPages: response.data.data.totalPages
+                    reportsTotalPages: response.data.data.totalPages,
+                    reportsCurrentPage: page // 현재 페이지 번호 업데이트
                 }));
             }
         } catch (error) {
@@ -621,7 +636,8 @@ const MyPage = () => {
                 setMyPosts(prev => ({
                     ...prev,
                     witnesses: response.data.data.content,
-                    witnessTotalPages: response.data.data.totalPages
+                    witnessTotalPages: response.data.data.totalPages,
+                    witnessCurrentPage: page // 현재 페이지 번호 업데이트
                 }));
             }
         } catch (error) {
@@ -727,11 +743,9 @@ const MyPage = () => {
         }
     };
 
-
-
     return (
-        <div className="min-h-screen bg-[#FFF5E6]">
-            <div className="max-w-4xl mx-auto bg-white rounded-lg shadow p-8">
+        <div className="min-h-screen bg-white flex flex-col items-center justify-start p-4">
+            <div className="w-full max-w-lg bg-[#FFF5E6] rounded-xl shadow overflow-hidden p-6 space-y-6">
                 <div className="flex justify-between items-center mb-4">
                     <h1 className="text-2xl font-bold text-orange-500">마이페이지</h1>
                     <button
@@ -766,7 +780,7 @@ const MyPage = () => {
                 </div>
 
                 {activeTab === 'profile' && (
-                    <div className="text-center">
+                    <div className="text-center bg-white rounded-xl p-4 shadow hover:shadow-md transition-shadow">
                         {/* 프로필 정보 */}
                         <div className="relative w-32 h-32 mx-auto mb-4">
                             <img
@@ -1090,7 +1104,7 @@ const MyPage = () => {
                 )}
 
                 {activeTab === 'pets' && (
-                    <div className="space-y-6">
+                    <div className="space-y-6 bg-white rounded-xl p-4 shadow hover:shadow-md transition-shadow min-h-[400px]">
                         <div className="flex justify-between items-center mb-6">
                             <h2 className="text-2xl font-bold">내 반려동물 목록</h2>
                             <button
@@ -1189,7 +1203,7 @@ const MyPage = () => {
                             ) : hasMore ? (
                                 <div className="load-more-indicator">더 보기</div>
                             ) : (
-                                <div className="no-more-data">더 이상 데이터가 없습니다</div>
+                                <div className="no-more-data">더 이상 반려동물 데이터가 없습니다</div>
                             )}
                         </div>
 
@@ -1246,22 +1260,23 @@ const MyPage = () => {
                 )}
 
                 {activeTab === 'posts' && (
-                    <div className="space-y-6">
+                    <div className="space-y-6 bg-white rounded-xl p-4 shadow hover:shadow-md transition-shadow overflow-y-auto">
                         {/* 실종 신고글 목록 */}
-                        <div className="mb-8">
+                        <div className="mb-8 border-b pb-4 mb-4 border-gray-200 space-y-4">
                             <h3 className="text-lg font-semibold mb-4">실종 신고글</h3>
                             <div className={`${myPosts.reports.length > 0 ? 'max-h-[600px] overflow-y-auto' : ''}`}>
                                 {myPosts.reports.length > 0 ? (
+                                    // 현재 페이지의 데이터만 표시 (API에서 이미 페이지별로 가져오므로 추가 슬라이싱 불필요)
                                     myPosts.reports.map(post => (
                                         <div key={post.createPostTime} className="border-b border-gray-200 py-4">
                                             <div className="flex justify-between items-center">
-                                                <div>
-                                                    <h3 className="text-lg font-medium">{post.content}</h3>
+                                                <div className="flex-grow mr-4 overflow-hidden">
+                                                    <h3 className="text-lg font-medium truncate">{post.content}</h3>
                                                     <p className="text-sm text-gray-500">
                                                         {new Date(post.createPostTime).toLocaleDateString()}
                                                     </p>
                                                 </div>
-                                                <span className="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs">
+                                                <span className="flex-shrink-0 inline-block w-18 px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs text-center whitespace-nowrap overflow-hidden text-ellipsis">
                                                     {post.status === "FINDING" ? "찾는 중" :
                                                         post.status === "FOUND" ? "주인 찾기 완료" : ""}
                                                 </span>
@@ -1349,16 +1364,17 @@ const MyPage = () => {
                             <h3 className="text-lg font-semibold mb-4">실종 제보글</h3>
                             <div className={`${myPosts.witnesses.length > 0 ? 'max-h-[600px] overflow-y-auto' : ''}`}>
                                 {myPosts.witnesses.length > 0 ? (
+                                    // 현재 페이지의 데이터만 표시 (API에서 이미 페이지별로 가져오므로 추가 슬라이싱 불필요)
                                     myPosts.witnesses.map(post => (
                                         <div key={post.createPostTime} className="border-b border-gray-200 py-4">
                                             <div className="flex justify-between items-center">
-                                                <div>
-                                                    <h3 className="text-lg font-medium">{post.content}</h3>
+                                                <div className="flex-grow mr-4 overflow-hidden">
+                                                    <h3 className="text-lg font-medium truncate">{post.content}</h3>
                                                     <p className="text-sm text-gray-500">
                                                         {new Date(post.createPostTime).toLocaleDateString()}
                                                     </p>
                                                 </div>
-                                                <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
+                                                <span className="flex-shrink-0 inline-block w-24 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs text-center whitespace-nowrap overflow-hidden text-ellipsis">
                                                     {post.status === "SIGHTED" ? "목격" :
                                                         post.status === "SHELTER" ? "보호소" :
                                                             post.status === "FOSTERING" ? "임보 중" : ""}
@@ -1373,6 +1389,7 @@ const MyPage = () => {
                                 )}
                             </div>
                         </div>
+
                         {/* 실종 제보글 페이지네이션 */}
                         {myPosts.witnessTotalPages > 1 && (
                             <div className="flex justify-center mt-6">
