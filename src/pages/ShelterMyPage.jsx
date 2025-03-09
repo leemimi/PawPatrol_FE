@@ -77,7 +77,6 @@ const ShelterMyPage = () => {
                 }
             }
         } catch (error) {
-            console.error('보호 동물 목록 불러오기 오류:', error);
         } finally {
             setIsLoading(false);
         }
@@ -101,7 +100,6 @@ const ShelterMyPage = () => {
                 fetchSocialConnections();
             }
         } catch (error) {
-            console.error(`${providerType} 연동 해제 오류:`, error);
             alert('소셜 계정 연동 해제 중 오류가 발생했습니다.');
         }
     };
@@ -136,7 +134,7 @@ const ShelterMyPage = () => {
                 setSocialConnections(response.data.data);
             }
         } catch (error) {
-            console.error('소셜 연동 정보 불러오기 오류:', error);
+            
         }
     };
 
@@ -300,7 +298,6 @@ const ShelterMyPage = () => {
                 await fetchShelterAnimals(0); // 보호동물 목록 새로고침
             }
         } catch (error) {
-            console.error('Error updating pet:', error);
             alert('반려동물 정보 수정 중 오류가 발생했습니다.');
         }
     };
@@ -328,7 +325,6 @@ const ShelterMyPage = () => {
                 setPetToDelete(null);
             }
         } catch (error) {
-            console.error('Error deleting pet:', error);
             alert('반려동물 삭제 중 오류가 발생했습니다.');
         }
     };
@@ -353,7 +349,6 @@ const ShelterMyPage = () => {
                 setIsEditing(false); // 편집 모드 종료
             }
         } catch (error) {
-            console.error('Profile update error:', error);
             alert('프로필 업데이트 중 오류가 발생했습니다.');
         }
     };
@@ -385,7 +380,7 @@ const ShelterMyPage = () => {
 
             if (response.data.statusCode === 200) {
                 // 성공 시 처리
-                alert('비밀번호가 성공적으로 변경되었습니다.');
+                alert(response.data.message);
                 setIsPasswordEditing(false);
                 setPersonalInfo({
                     ...personalInfo,
@@ -395,8 +390,7 @@ const ShelterMyPage = () => {
                 });
             }
         } catch (error) {
-            console.error('Password update error:', error);
-            alert('비밀번호 변경 중 오류가 발생했습니다.');
+            alert(error.response.data.msg);
         }
     };
 
@@ -410,7 +404,6 @@ const ShelterMyPage = () => {
             alert('전화번호가 성공적으로 변경되었습니다.');
             setIsPhoneEditing(false);
         } catch (error) {
-            console.error('Phone update error:', error);
             alert('전화번호 변경 중 오류가 발생했습니다.');
         }
     };
@@ -467,7 +460,6 @@ const ShelterMyPage = () => {
             });
 
         } catch (error) {
-            console.error('Error:', error);
             alert('반려동물 등록 중 오류가 발생했습니다.');
         }
     };
@@ -498,7 +490,6 @@ const ShelterMyPage = () => {
                 navigate('/');
             }
         } catch (error) {
-            console.error('Logout error:', error);
             alert('로그아웃 중 오류가 발생했습니다.');
         }
     };
@@ -514,7 +505,7 @@ const ShelterMyPage = () => {
 
         try {
             const response = await axios.patch(
-                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/profile`,
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/profile/pic`,
                 formData,
                 {
                     headers: {
@@ -542,7 +533,6 @@ const ShelterMyPage = () => {
                 alert('프로필 이미지가 성공적으로 업데이트되었습니다.');
             }
         } catch (error) {
-            console.error('Image upload error:', error);
             alert('이미지 업로드 중 오류가 발생했습니다.');
         }
     };
@@ -573,7 +563,6 @@ const ShelterMyPage = () => {
                 localStorage.setItem('userInfo', JSON.stringify(userInfo));
             }
         } catch (error) {
-            console.error('Image reset error:', error);
             alert('프로필 이미지 초기화 중 오류가 발생했습니다.');
         }
     };
@@ -594,7 +583,6 @@ const ShelterMyPage = () => {
                 }));
             }
         } catch (error) {
-            console.error('신고글 불러오기 오류:', error);
         }
     };
 
@@ -741,7 +729,6 @@ const ShelterMyPage = () => {
                                 alt="Profile"
                                 className="w-full h-full rounded-full object-cover"
                                 onError={(e) => {
-                                    console.error("이미지 로드 실패:", e);
                                     e.target.src = defaultImage;
                                 }}
                             />

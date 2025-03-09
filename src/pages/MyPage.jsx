@@ -68,7 +68,6 @@ const MyPage = () => {
                 navigate('/', { replace: true });
             }
         } catch (error) {
-            console.error('회원 탈퇴 오류:', error);
             alert('회원 탈퇴 처리 중 오류가 발생했습니다.');
         }
     };
@@ -90,7 +89,6 @@ const MyPage = () => {
                 fetchSocialConnections();
             }
         } catch (error) {
-            console.error(`${providerType} 연동 해제 오류:`, error);
             alert('소셜 계정 연동 해제 중 오류가 발생했습니다.');
         }
     };
@@ -125,7 +123,6 @@ const MyPage = () => {
                 setSocialConnections(response.data.data);
             }
         } catch (error) {
-            console.error('소셜 연동 정보 불러오기 오류:', error);
         }
     };
 
@@ -289,7 +286,6 @@ const MyPage = () => {
                 await fetchMyPets(); // 반려동물 목록 새로고침
             }
         } catch (error) {
-            console.error('Error updating pet:', error);
             alert('반려동물 정보 수정 중 오류가 발생했습니다.');
         }
     };
@@ -317,7 +313,6 @@ const MyPage = () => {
                 setShouldReload(true); // 리로드 플래그 설정
             }
         } catch (error) {
-            console.error('Error deleting pet:', error);
             alert('반려동물 삭제 중 오류가 발생했습니다.');
         }
     };
@@ -342,7 +337,6 @@ const MyPage = () => {
                 setIsEditing(false); // 편집 모드 종료
             }
         } catch (error) {
-            console.error('Profile update error:', error);
             alert('프로필 업데이트 중 오류가 발생했습니다.');
         }
     };
@@ -374,7 +368,7 @@ const MyPage = () => {
 
             if (response.data.statusCode === 200) {
                 // 성공 시 처리
-                alert('비밀번호가 성공적으로 변경되었습니다.');
+                alert(response.data.message);
                 setIsPasswordEditing(false);
                 setPersonalInfo({
                     ...personalInfo,
@@ -384,8 +378,7 @@ const MyPage = () => {
                 });
             }
         } catch (error) {
-            console.error('Password update error:', error);
-            alert('비밀번호 변경 중 오류가 발생했습니다.');
+            alert(error.response.data.msg);
         }
     };
 
@@ -399,7 +392,6 @@ const MyPage = () => {
             alert('전화번호가 성공적으로 변경되었습니다.');
             setIsPhoneEditing(false);
         } catch (error) {
-            console.error('Phone update error:', error);
             alert('전화번호 변경 중 오류가 발생했습니다.');
         }
     };
@@ -456,7 +448,6 @@ const MyPage = () => {
             });
 
         } catch (error) {
-            console.error('Error:', error);
             alert('반려동물 등록 중 오류가 발생했습니다.');
         }
     };
@@ -487,7 +478,6 @@ const MyPage = () => {
                 navigate('/');
             }
         } catch (error) {
-            console.error('Logout error:', error);
             alert('로그아웃 중 오류가 발생했습니다.');
         }
     };
@@ -503,7 +493,7 @@ const MyPage = () => {
 
         try {
             const response = await axios.patch(
-                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/profile`,
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/profile/pic`,
                 formData,
                 {
                     headers: {
@@ -531,7 +521,6 @@ const MyPage = () => {
                 alert('프로필 이미지가 성공적으로 업데이트되었습니다.');
             }
         } catch (error) {
-            console.error('Image upload error:', error);
             alert('이미지 업로드 중 오류가 발생했습니다.');
         }
     };
@@ -562,7 +551,6 @@ const MyPage = () => {
                 localStorage.setItem('userInfo', JSON.stringify(userInfo));
             }
         } catch (error) {
-            console.error('Image reset error:', error);
             alert('프로필 이미지 초기화 중 오류가 발생했습니다.');
         }
     };
@@ -597,7 +585,6 @@ const MyPage = () => {
                 }
             }
         } catch (error) {
-            console.error('보호 동물 목록 불러오기 오류:', error);
         } finally {
             setIsLoading(false);
         }
@@ -620,7 +607,6 @@ const MyPage = () => {
                 }));
             }
         } catch (error) {
-            console.error('신고글 불러오기 오류:', error);
         }
     };
 
@@ -641,7 +627,6 @@ const MyPage = () => {
                 }));
             }
         } catch (error) {
-            console.error('제보글 불러오기 오류:', error);
         }
     };
 
@@ -734,11 +719,9 @@ const MyPage = () => {
                 // Navigate to AnimalDetail page with the animalCaseId
                 navigate(`/protection/${animalCaseId}`);
             } else {
-                console.error('Failed to get animal case ID:', response.data);
                 alert('동물 케이스 정보를 불러오는데 실패했습니다.');
             }
         } catch (error) {
-            console.error('Error fetching animal case ID:', error);
             alert('동물 케이스 정보를 불러오는데 오류가 발생했습니다.');
         }
     };
@@ -788,7 +771,6 @@ const MyPage = () => {
                                 alt="Profile"
                                 className="w-full h-full rounded-full object-cover"
                                 onError={(e) => {
-                                    console.error("이미지 로드 실패:", e);
                                     e.target.src = defaultImage;
                                 }}
                             />
