@@ -1138,12 +1138,8 @@ const MyPage = () => {
                                         </div>
 
                                         <div className="grid grid-cols-2 gap-2 text-sm text-gray-600">
-                                            <div>
-                                                <span className="font-medium">품종:</span> {pet.breed}
-                                            </div>
-                                            <div>
-                                                <span className="font-medium">크기:</span> {pet.size}
-                                            </div>
+                                            <span className="font-medium">품종:</span> {pet.breed}
+                                            <span className="font-medium">크기:</span> {pet.size}
                                         </div>
 
                                         <div className="text-sm text-gray-600">
