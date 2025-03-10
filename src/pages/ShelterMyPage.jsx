@@ -607,6 +607,26 @@ const ShelterMyPage = () => {
         }
     };
 
+    // 반려동물 클릭 시 상세화면으로 전환
+    const handlePetClick = async (pet) => {
+        try {
+            const response = await axios.get(
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/animal-cases/animals/${pet.id}`,
+                { withCredentials: true }
+            );
+
+            if (response.data.resultCode === "200") {
+                const animalCaseId = response.data.data;
+                // Navigate to AnimalDetail page with the animalCaseId
+                navigate(`/protection/${animalCaseId}`);
+            } else {
+                alert('동물 케이스 정보를 불러오는데 실패했습니다.');
+            }
+        } catch (error) {
+            alert('동물 케이스 정보를 불러오는데 오류가 발생했습니다.');
+        }
+    };
+
     useEffect(() => {
         if (shouldReload) {
             setShelterAnimals([]);
@@ -1057,6 +1077,7 @@ const ShelterMyPage = () => {
                                 <div
                                     key={pet.id}
                                     className="bg-white border rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200"
+                                    onClick={() => handlePetClick(pet)}
                                 >
                                     {/* 고정된 비율의 이미지 컨테이너 */}
                                     <div className="relative w-full pb-[75%]"> {/* 4:3 비율 유지 */}
@@ -1072,10 +1093,10 @@ const ShelterMyPage = () => {
                                             <h3 className="text-xl font-bold text-gray-800">{pet.name}</h3>
                                             <span
                                                 className={`text-sm font-medium px-2 py-1 rounded-full ${pet.animalType === '강아지'
-                                                        ? 'bg-blue-100 text-blue-800'
-                                                        : pet.animalType === '고양이'
-                                                            ? 'bg-pink-100 text-pink-800'
-                                                            : 'bg-gray-100 text-gray-800'
+                                                    ? 'bg-blue-100 text-blue-800'
+                                                    : pet.animalType === '고양이'
+                                                        ? 'bg-pink-100 text-pink-800'
+                                                        : 'bg-gray-100 text-gray-800'
                                                     }`}
                                             >
                                                 {pet.animalType || '동물 종류'}
