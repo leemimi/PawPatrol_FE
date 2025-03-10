@@ -501,7 +501,7 @@ const Map = () => {
             petName: '멍이',
             breed: '골든 리트리버',
             lastSeenLocation: '서울시 강남구 역삼동',
-            imageUrl: '',
+            imageUrl: 'https://animal.seoul.go.kr/comm/getImage?srvcId=MEDIA&upperNo=4282&fileTy=ADOPTIMG&fileNo=4&thumbTy=L',
             contactNumber: '010-1234-5678',
             reward: 500000,
             templateType: 'DOG' // 'DOG', 'CAT', 'WANTED' 중 선택
