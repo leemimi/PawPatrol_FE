@@ -3,6 +3,7 @@ import { RadiusControl } from '../components/RadiusControl';
 import { ControlButtons } from '../components/ControlButtons';
 import { useKakaoMap } from '@/hooks/UseKakaoMap';
 import { usePetData } from '../hooks/UsePetData';
+import { useShelterAnimalsData } from '../hooks/useShelterAnimalsData';
 import { useGeolocation } from '../hooks/UseGeolocation.jsx';
 import { useCustomOverlays } from '../hooks/UseCustomOverlays';
 import { CommonList } from '../components/CommonList';
@@ -43,14 +44,25 @@ const Map = () => {
     // 펫 데이터 관련 훅 사용
     const {
         pets,
-        fetchPets,
-        debouncedFetchPets
+        fetchPets
     } = usePetData(currentPosition, selectedRange);
+
+    // 보호소 동물 데이터 관련 훅 사용
+    const {
+        shelters,
+        fetchShelters
+    } = useShelterAnimalsData(currentPosition, selectedRange);
+
+    // 데이터 통합 로딩 함수
+    const fetchAllData = useCallback((position, range) => {
+        fetchPets(position, range);
+        fetchShelters(position, range);
+    }, [fetchPets, fetchShelters]);
 
     // 위치 관련 훅 사용
     const { getCurrentLocation } = useGeolocation(map, circleRef, (newPosition) => {
         setCurrentPosition(newPosition);
-        fetchPets(newPosition, selectedRange);
+        fetchAllData(newPosition, selectedRange);
     });
 
     // 펫 오버레이 관련 훅 사용
@@ -276,7 +288,7 @@ const Map = () => {
                     circleRef.current.setRadius(targetRadius);
                     setIsMarkerTransitioning(false);
 
-                    fetchPets(currentPosition, newRange);
+                    fetchAllData(currentPosition, newRange);
 
                     // 위치 구독 업데이트
                     if (stompClientRef.current && stompClientRef.current.connected) {
@@ -298,7 +310,7 @@ const Map = () => {
 
             animate();
         }
-    }, [circleRef, currentPosition, fetchPets]);
+    }, [circleRef, currentPosition, fetchAllData]);
 
     // 맵 드래그 종료 이벤트 useEffect
     useEffect(() => {
@@ -311,7 +323,8 @@ const Map = () => {
                 };
                 setCurrentPosition(newPosition);
 
-                debouncedFetchPets(newPosition, selectedRange);
+                // 드래그 후 바로 데이터 가져오기 (debounce 제거)
+                fetchAllData(newPosition, selectedRange);
 
                 // 위치 구독 업데이트
                 if (stompClientRef.current && stompClientRef.current.connected) {
@@ -335,7 +348,7 @@ const Map = () => {
                 window.kakao.maps.event.removeListener(map, 'dragend', handleDragEnd);
             };
         }
-    }, [map, selectedRange, debouncedFetchPets]);
+    }, [map, selectedRange, fetchAllData]);
 
     // 선택된 항목에 따른 카드 가시성 useEffect
     useEffect(() => {
@@ -353,18 +366,21 @@ const Map = () => {
 
     // 펫 데이터 변경 시 오버레이 업데이트
     useEffect(() => {
-        if (map && pets.length > 0) {
-            createCustomOverlays(pets);
+        if (map) {
+            const allData = [...pets, ...shelters];
+            if (allData.length > 0) {
+                createCustomOverlays(allData);
+            }
         }
-    }, [map, pets, createCustomOverlays]);
+    }, [map, pets, shelters, createCustomOverlays]);
 
     // 초기 데이터 로딩 useEffect
     useEffect(() => {
         if (map && !initialLoadRef.current) {
             initialLoadRef.current = true;
-            fetchPets(currentPosition, selectedRange);
+            fetchAllData(currentPosition, selectedRange);
         }
-    }, [map, currentPosition, selectedRange, fetchPets]);
+    }, [map, currentPosition, selectedRange, fetchAllData]);
 
     // 모드 변경 시 오버레이 및 데이터 관리
     useEffect(() => {
@@ -372,13 +388,13 @@ const Map = () => {
             modeChangeRef.current = false;
 
             cleanupOverlays();
-            fetchPets(currentPosition, selectedRange);
+            fetchAllData(currentPosition, selectedRange);
         }
     }, [
         map,
         currentPosition,
         selectedRange,
-        fetchPets,
+        fetchAllData,
         cleanupOverlays
     ]);
 
@@ -496,7 +512,7 @@ const Map = () => {
                     {showList && (
                         <div className="absolute bottom-16 left-0 right-0 max-h-[70vh] overflow-auto z-50 bg-white rounded-t-3xl shadow-lg">
                             <CommonList
-                                items={pets}
+                                items={[...pets, ...shelters]}
                                 type="pet"
                                 onItemClick={(item) => {
                                     setSelectedPet(item);
