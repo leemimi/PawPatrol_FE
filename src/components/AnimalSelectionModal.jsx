@@ -16,7 +16,15 @@ const AnimalSelectionModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+      onClick={(e) => {
+        // 모달 바깥 영역(배경)을 클릭했을 때만 닫기
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
+    >
       <div className="bg-white rounded-xl shadow-xl w-4/5 max-w-md overflow-hidden">
         <div className="p-4 border-b border-gray-200 flex justify-between items-center">
           <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
@@ -33,8 +41,8 @@ const AnimalSelectionModal = ({
             <button
               onClick={() => onSelect('DOG')}
               className={`flex flex-col items-center justify-center p-4 border rounded-lg transition-colors ${selectedAnimalType === 'DOG'
-                  ? 'border-orange-500 bg-orange-50'
-                  : 'border-gray-200 hover:bg-gray-50'
+                ? 'border-orange-500 bg-orange-50'
+                : 'border-gray-200 hover:bg-gray-50'
                 }`}
             >
               <div className="mb-3">
@@ -47,8 +55,8 @@ const AnimalSelectionModal = ({
             <button
               onClick={() => onSelect('CAT')}
               className={`flex flex-col items-center justify-center p-4 border rounded-lg transition-colors ${selectedAnimalType === 'CAT'
-                  ? 'border-orange-500 bg-orange-50'
-                  : 'border-gray-200 hover:bg-gray-50'
+                ? 'border-orange-500 bg-orange-50'
+                : 'border-gray-200 hover:bg-gray-50'
                 }`}
             >
               <div className="mb-3">
@@ -64,8 +72,8 @@ const AnimalSelectionModal = ({
               onClick={onConfirm}
               disabled={!selectedAnimalType}
               className={`w-full py-3 rounded-lg flex items-center justify-center gap-2 ${selectedAnimalType
-                  ? 'bg-orange-500 text-white hover:bg-orange-600'
-                  : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                ? 'bg-orange-500 text-white hover:bg-orange-600'
+                : 'bg-gray-200 text-gray-500 cursor-not-allowed'
                 }`}
             >
               <span>{confirmButtonText}</span>

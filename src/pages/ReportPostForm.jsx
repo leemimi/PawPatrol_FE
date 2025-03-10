@@ -1,4 +1,4 @@
-import React, { useState, useRef ,useEffect} from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { ChevronLeft, MapPin, Calendar, Camera, X, Plus, Link } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -38,11 +38,11 @@ const ReportPostForm = ({ formType = "standalone" }) => {
   useEffect(() => {
     const script = document.createElement("script");
     script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${import.meta.env.VITE_KAKAO_MAP_API_KEY}&autoload=true`;
-  
+
     script.onerror = () => {
       console.error("Failed to load Kakao Maps API.");
     };
-  
+
     script.onload = () => {
       if (window.kakao && window.kakao.maps) {
         window.kakao.maps.load(() => {
@@ -52,28 +52,28 @@ const ReportPostForm = ({ formType = "standalone" }) => {
             level: 3, // 줌 레벨
           };
           const map = new window.kakao.maps.Map(mapContainer, mapOption);
-  
+
           // 마커 초기화
           const marker = new window.kakao.maps.Marker({
             map: map,
             position: map.getCenter(), // 초기 위치 설정 (지도 중심)
           });
-  
+
           // 지도 클릭 시 마커 위치 갱신
           window.kakao.maps.event.addListener(map, "click", function (mouseEvent) {
             const lat = mouseEvent.latLng.getLat();
             const lng = mouseEvent.latLng.getLng();
-  
+
             // 클릭된 위치로 마커 이동
             marker.setPosition(mouseEvent.latLng);
-  
+
             // formData 상태 업데이트 (주소 없이 위도, 경도만 저장)
             setFormData((prevState) => ({
               ...prevState,
               latitude: lat,
               longitude: lng,
             }));
-  
+
             console.log("Latitude:", lat, "Longitude:", lng);
           });
         });
@@ -81,14 +81,14 @@ const ReportPostForm = ({ formType = "standalone" }) => {
         console.error("Kakao Maps is not available.");
       }
     };
-  
+
     document.body.appendChild(script);
-  
+
     return () => {
       document.body.removeChild(script);
     };
   }, []);
-  
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -98,23 +98,23 @@ const ReportPostForm = ({ formType = "standalone" }) => {
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
     const maxSize = 5 * 1024 * 1024; // 5MB 제한
-    
+
     // 필터링: 크기가 5MB를 넘는 파일은 제외
     const validFiles = files.filter((file) => file.size <= maxSize);
-  
+
     if (validFiles.length !== files.length) {
       alert("파일 크기가 5MB를 초과한 파일이 있습니다. 5MB 이하의 파일만 업로드 가능합니다.");
     }
-    
+
     // Combine new valid files with existing ones (up to 5)
     const combinedImages = [...images, ...validFiles].slice(0, 5);
     setImages(combinedImages);
-  
+
     // Create and combine preview URLs for all valid images
     const newPreviewUrls = validFiles.map((file) => URL.createObjectURL(file));
     const combinedPreviewUrls = [...previewUrls, ...newPreviewUrls].slice(0, 5);
     setPreviewUrls(combinedPreviewUrls);
-  
+
     // Reset the file input to allow selecting the same file again
     e.target.value = null;
   };
@@ -139,7 +139,7 @@ const ReportPostForm = ({ formType = "standalone" }) => {
 
     // API endpoint selection based on formType
     let apiUrl = "http://localhost:8090/api/v1/lost-foundposts"; // 독립게시글
-   
+
 
     try {
       const response = await axios.post(
@@ -151,7 +151,14 @@ const ReportPostForm = ({ formType = "standalone" }) => {
       );
       alert("발견 신고가 성공적으로 등록되었습니다.");
       console.log(response.data);
-      navigate("/");
+      if (location.state?.returnPath) {
+        localStorage.setItem('reportSubmitted', 'true');
+        navigate(location.state.returnPath, {
+          state: location.state.returnState || {}
+        });
+      } else {
+        navigate("/");
+      }
     } catch (error) {
       console.error("게시글 등록 중 오류 발생:", error);
       alert("게시글 등록에 실패했습니다.");
@@ -164,7 +171,7 @@ const ReportPostForm = ({ formType = "standalone" }) => {
 
   return (
     <div className="min-h-screen bg-orange-50">
-      
+
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 bg-white shadow-sm z-10">
         <div className="flex items-center justify-between px-4 py-3">
@@ -202,7 +209,7 @@ const ReportPostForm = ({ formType = "standalone" }) => {
             </div>
           )}
 
-<p>동물 타입: {formData.animalType}</p>
+          <p>동물 타입: {formData.animalType}</p>
 
           {/* Image Upload */}
           <div className="bg-white p-4 rounded-2xl border-2 border-orange-100">
@@ -234,13 +241,13 @@ const ReportPostForm = ({ formType = "standalone" }) => {
               )}
             </div>
             <input
-  type="file"
-  ref={fileInputRef}
-  onChange={handleImageUpload}
-  multiple
-  accept="image/*"
-  className="hidden"
-/>
+              type="file"
+              ref={fileInputRef}
+              onChange={handleImageUpload}
+              multiple
+              accept="image/*"
+              className="hidden"
+            />
           </div>
 
           {/* Title & Content */}
@@ -255,20 +262,20 @@ const ReportPostForm = ({ formType = "standalone" }) => {
           </div>
 
           {/* Location */}
-                    <div className="bg-white p-4 rounded-2xl border-2 border-orange-100">
-                      <div className="flex items-center gap-2 text-orange-400 mb-2">
-                        <MapPin size={20} strokeWidth={2.5} />
-                        <span className="font-medium">발견 위치</span>
-                      </div>
-                      <input
-                        type="text"
-                        name="location"
-                        placeholder="위치를 입력하세요"
-                        value={formData.location}
-                        onChange={handleChange}
-                        className="w-full text-orange-900 focus:outline-none p-2 border rounded-md"
-                      />
-                    </div>
+          <div className="bg-white p-4 rounded-2xl border-2 border-orange-100">
+            <div className="flex items-center gap-2 text-orange-400 mb-2">
+              <MapPin size={20} strokeWidth={2.5} />
+              <span className="font-medium">발견 위치</span>
+            </div>
+            <input
+              type="text"
+              name="location"
+              placeholder="위치를 입력하세요"
+              value={formData.location}
+              onChange={handleChange}
+              className="w-full text-orange-900 focus:outline-none p-2 border rounded-md"
+            />
+          </div>
 
           {/* Location & Map */}
           <div className="bg-white p-4 rounded-2xl border-2 border-orange-100">
@@ -278,12 +285,12 @@ const ReportPostForm = ({ formType = "standalone" }) => {
             </div>
             <div id="kakaoMap" style={{ width: "100%", height: "300px" }}></div>
             <button
-        type="button"
-        onClick={() => alert(`위도: ${formData.latitude}, 경도: ${formData.longitude}, 주소: ${formData.location}`)}
-        className="mt-4 px-4 py-2 bg-orange-500 text-white rounded-lg shadow-md hover:bg-orange-600 transition"
-      >
-        위치 등록하기
-      </button>
+              type="button"
+              onClick={() => alert(`위도: ${formData.latitude}, 경도: ${formData.longitude}, 주소: ${formData.location}`)}
+              className="mt-4 px-4 py-2 bg-orange-500 text-white rounded-lg shadow-md hover:bg-orange-600 transition"
+            >
+              위치 등록하기
+            </button>
           </div>
 
           <div className="bg-white p-4 rounded-2xl border-2 border-orange-100">
@@ -305,7 +312,7 @@ const ReportPostForm = ({ formType = "standalone" }) => {
             <div className="flex items-center gap-2 text-orange-400 mb-2">
               <span className="font-medium">상태 선택</span>
             </div>
-            <select 
+            <select
               name="status"
               value={formData.status}
               onChange={handleChange}
