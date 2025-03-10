@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { AlertCircle, Phone, ChevronUp, ChevronDown, MapPin, Bookmark, Info, CheckCircle } from 'lucide-react';
 import { EmergencyContacts } from './EmergencyContacts';
 import AnimalSelectionModal from '../../../components/AnimalSelectionModal';
+import { useLocalStorageWithExpiry } from '../../../hooks/UserLocalStorageWithExpiry';
 
 export const StepContent = ({
     currentStep,
@@ -22,11 +23,8 @@ export const StepContent = ({
     setSelectedAnimalType,
     navigate
 }) => {
-    const [isReportSubmitted, setIsReportSubmitted] = useState(false);
-    useEffect(() => {
-        const reportSubmitted = localStorage.getItem('reportSubmitted') === 'true';
-        setIsReportSubmitted(reportSubmitted);
-    }, [currentStep]);
+    const [isReportSubmitted, setIsReportSubmitted] = useLocalStorageWithExpiry('reportSubmitted', 1800);
+
 
     switch (currentStep) {
         case 0: // 인트로
@@ -178,7 +176,7 @@ export const StepContent = ({
                         <p className="text-base text-gray-700">구조자는 구조 동물에 대해 주인을 찾을 수 있도록 노력해 주시기 바랍니다. 동물이 버려진 것이 아니라 집을 나왔다가 길을 잃은 것이라면 주인이 애타게 찾고 있을 겁니다. 동물 입장에서도 입양보다는 주인을 찾는 것이 우선이며 더 좋은 일입니다.</p>
                     </div>
 
-                    {isReportSubmitted ? (
+                    {isReportSubmitted === 'true' ? (
                         // 제보글 작성 완료한 경우
                         <div className="w-full p-4 bg-green-500 text-white rounded-lg flex items-center justify-center">
                             <CheckCircle size={18} className="mr-2" />

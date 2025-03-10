@@ -739,53 +739,50 @@ const MyPage = () => {
 
     return (
         <div className="min-h-screen bg-[#FFF5E6] flex flex-col items-center justify-start p-4">
-            <div className="w-full max-w-lg bg-white rounded-xl shadow overflow-hidden p-6 space-y-6">
+            <div className="w-full max-w-lg bg-white rounded-2xl shadow-lg overflow-hidden p-6 space-y-6">
                 <div className="flex justify-between items-center mb-4">
-                    <h1 className="text-2xl font-bold text-orange-500">마이페이지</h1>
+                    <h1 className="text-2xl font-bold text-amber-700">마이페이지</h1>
                     <button
                         onClick={handleLogout}
-                        className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                        className="px-4 py-2 bg-red-100 text-red-600 rounded-full hover:bg-red-200 transition-colors"
                     >
                         로그아웃
                     </button>
                 </div>
-                <div className="flex gap-4 mb-6">
-                    <button
-                        className={`px-4 py-2 rounded ${activeTab === 'profile'
-                            ? 'bg-orange-500 text-white' // primary.main
-                            : 'bg-gray-200' // primary.light
+                {/* 탭 버튼 스타일 수정 */}
+                <div className="flex gap-3 mb-6">
+                    {[
+                        { id: 'profile', label: '내 정보' },
+                        { id: 'pets', label: '반려동물' },
+                        { id: 'posts', label: '게시글' }
+                    ].map((tab) => (
+                        <button
+                            key={tab.id}
+                            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                                activeTab === tab.id
+                                ? 'bg-orange-500 text-white shadow-md'
+                                : 'bg-orange-50 text-orange-600 hover:bg-orange-100'
                             }`}
-                        onClick={() => setActiveTab('profile')}
-                    >
-                        프로필
-                    </button>
-                    <button
-                        className={`px-4 py-2 rounded ${activeTab === 'pets' ? 'bg-orange-500 text-white' : 'bg-gray-200'}`}
-                        onClick={() => setActiveTab('pets')}
-                    >
-                        반려동물 관리
-                    </button>
-                    <button
-                        className={`px-4 py-2 rounded ${activeTab === 'posts' ? 'bg-orange-500 text-white' : 'bg-gray-200'}`}
-                        onClick={() => setActiveTab('posts')}
-                    >
-                        게시글 관리
-                    </button>
+                            onClick={() => setActiveTab(tab.id)}
+                        >
+                            {tab.label}
+                        </button>
+                    ))}
                 </div>
 
                 {activeTab === 'profile' && (
-                    <div className="text-center rounded-xl p-4">
+                    <div className="text-center rounded-2xl p-6 bg-amber-50/50">
                         {/* 프로필 정보 */}
-                        <div className="relative w-32 h-32 mx-auto mb-4">
+                        <div className="relative w-32 h-32 mx-auto mb-6">
                             <img
                                 src={profileImage || defaultImage}
                                 alt="Profile"
-                                className="w-full h-full rounded-full object-cover"
+                                className="w-full h-full rounded-full object-cover border-4 border-amber-200"
                                 onError={(e) => {
                                     e.target.src = defaultImage;
                                 }}
                             />
-                            <label className="absolute bottom-0 right-0 bg-orange-500 p-2 rounded-full cursor-pointer">
+                            <label className="absolute bottom-0 right-0 bg-amber-500 p-2 rounded-full cursor-pointer shadow-md hover:bg-amber-600 transition-colors">
                                 <input
                                     type="file"
                                     className="hidden"
@@ -837,18 +834,18 @@ const MyPage = () => {
                                     type="text"
                                     value={nickname}
                                     onChange={(e) => setNickname(e.target.value)}
-                                    className="px-3 py-2 border rounded-md"
+                                    className="px-4 py-2 border-2 border-amber-200 rounded-full focus:outline-none focus:border-amber-400 text-amber-800"
                                 />
                                 <div className="space-x-2">
                                     <button
                                         onClick={handleUpdateProfile}
-                                        className="px-4 py-2 bg-orange-500 text-white rounded-md"
+                                        className="px-6 py-2 bg-amber-500 text-white rounded-full hover:bg-amber-600 transition-colors"
                                     >
                                         저장
                                     </button>
                                     <button
                                         onClick={() => setIsEditing(false)}
-                                        className="px-4 py-2 bg-gray-300 rounded-md"
+                                        className="px-6 py-2 bg-gray-100 text-gray-600 rounded-full hover:bg-gray-200 transition-colors"
                                     >
                                         취소
                                     </button>
@@ -856,18 +853,19 @@ const MyPage = () => {
                             </div>
                         ) : (
                             <div>
-                                <h2 className="text-xl font-bold mb-2">{userInfo?.nickname}</h2>
+                                <h2 className="text-xl font-bold text-amber-800 mb-3">{userInfo?.nickname}</h2>
                                 <button
                                     onClick={() => setIsEditing(true)}
-                                    className="px-4 py-2 bg-gray-100 rounded-md"
+                                    className="px-6 py-2 bg-amber-100 text-amber-600 rounded-full hover:bg-amber-200 transition-colors"
                                 >
                                     닉네임 변경
                                 </button>
                             </div>
                         )}
                         {/* 소셜 계정 연동 정보 */}
-                        <div className="mt-4">
-                            <div className="grid grid-cols-3 gap-2 max-w-xs mx-auto">
+                        <div className="mt-8 p-6 bg-white rounded-2xl shadow-sm">
+                            <h3 className="text-lg font-semibold text-amber-700 mb-4">소셜 계정 연동</h3>
+                            <div className="grid grid-cols-3 gap-4 max-w-xs mx-auto">
                                 <div className="flex flex-col items-center">
                                     <img src={kakaoImage} alt="카카오" className="w-6 h-6 mb-1" />
                                     {socialConnections.kakao ? (
@@ -1097,12 +1095,12 @@ const MyPage = () => {
                 )}
 
                 {activeTab === 'pets' && (
-                    <div className="space-y-6 bg-white rounded-xl p-4 shadow hover:shadow-md transition-shadow min-h-[400px]">
+                    <div className="space-y-6 bg-amber-50/30 rounded-2xl p-6 shadow-md">
                         <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-2xl font-bold">내 반려동물 목록</h2>
+                            <h2 className="text-2xl font-bold text-amber-800">내 반려동물 목록</h2>
                             <button
                                 onClick={handlePetRegistrationClick}
-                                className="px-4 py-2 bg-orange-500 text-white rounded hover:bg-[#FB8C00]"
+                                className="px-6 py-2.5 bg-amber-500 text-white rounded-full hover:bg-amber-600 transition-colors shadow-sm"
                             >
                                 반려동물 등록
                             </button>
@@ -1112,7 +1110,7 @@ const MyPage = () => {
                             {myPets.map(pet => (
                                 <div
                                     key={pet.id}
-                                    className="bg-white border rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200"
+                                    className="bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 border border-amber-100"
                                     onClick={() => handlePetClick(pet)}
                                 >
                                     {/* 고정된 비율의 이미지 컨테이너 */}

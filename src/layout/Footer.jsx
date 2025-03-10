@@ -1,17 +1,33 @@
 import { useState, useEffect } from 'react';
-import { Home, Users, User, LifeBuoy, MessageSquare  } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Home, Users, User, LifeBuoy, MessageSquare } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 
 const Footer = () => {
     const navigate = useNavigate();
+    const location = useLocation(); // 현재 경로 정보 가져오기
     const [isAuthenticated, setIsAuthenticated] = useState(false);
-    
-    // 컴포넌트 마운트 시 인증 상태 확인
+    const [activeTab, setActiveTab] = useState(''); // 현재 활성화된 탭 상태
+
+    // 컴포넌트 마운트 시 인증 상태 확인 및 현재 경로에 따라 활성 탭 설정
     useEffect(() => {
         checkAuthStatus();
-    }, []);
-    
+
+        // 현재 경로에 따라 활성 탭 설정
+        const path = location.pathname;
+        if (path === '/main') {
+            setActiveTab('home');
+        } else if (path === '/rescue') {
+            setActiveTab('rescue');
+        } else if (path === '/protection') {
+            setActiveTab('protection');
+        } else if (path === '/chatlist') {
+            setActiveTab('chat');
+        } else if (path.includes('/mypage') || path.includes('/admin-dashboard') || path.includes('/shelter-mypage')) {
+            setActiveTab('mypage');
+        }
+    }, [location.pathname]);
+
     // API를 통한 인증 상태 확인
     const checkAuthStatus = async () => {
         try {
@@ -19,7 +35,7 @@ const Footer = () => {
             const response = await axios.get(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/auth/me`, {
                 withCredentials: true
             });
-            
+
             // 응답이 성공적이고 사용자 데이터가 있는 경우에만 인증 상태로 설정
             if (response.data.data.email) {
                 setIsAuthenticated(true);
@@ -36,7 +52,7 @@ const Footer = () => {
             return false;
         }
     };
-    
+
     const handleMyPageClick = async () => {
         const isAuth = await checkAuthStatus();
 
@@ -66,7 +82,7 @@ const Footer = () => {
 
     const handleChatClick = async () => {
         const isAuth = await checkAuthStatus();
-        
+
         if (isAuth) {
             navigate('/chatlist');
         } else {
@@ -74,53 +90,76 @@ const Footer = () => {
             navigate('/');
         }
     };
-    
+
+    // 탭 스타일 함수: 활성화된 탭에 따라 스타일 반환
+    const getTabStyle = (tabName) => {
+        return "flex flex-col items-center text-orange-400 hover:text-orange-500 transition-colors";
+    };
+
+    // 아이콘 컨테이너 스타일
+    const getIconContainerStyle = (tabName) => {
+        if (activeTab === tabName) {
+            return "flex items-center justify-center bg-orange-500 rounded-full p-1";
+        }
+        return "";
+    };
+
     return (
         <div className="fixed bottom-0 left-0 right-0 z-20 bg-white border-t border-orange-100">
-            <div className="flex justify-between items-center w-full px-5"> {/* px-4에서 px-5로 변경 */}
-                <div className="flex-1 flex flex-col items-center py-2.5"> {/* py-2에서 py-2.5로 변경 */}
+            <div className="flex justify-between items-center w-full px-5">
+                <div className="flex-1 flex flex-col items-center py-2">
                     <button
                         onClick={() => navigate('/main')}
-                        className="flex flex-col items-center text-orange-400 hover:text-orange-500 transition-colors"
+                        className={getTabStyle('home')}
                     >
-                        <Home size={22} strokeWidth={2.5} /> {/* size={20}에서 size={22}로 변경 */}
-                        <span className="text-[12px] font-medium mt-1.5">홈</span> {/* text-[11px]에서 text-[12px]로, mt-1에서 mt-1.5로 변경 */}
+                        <div className={getIconContainerStyle('home')}>
+                            <Home size={22} strokeWidth={2.5} className={activeTab === 'home' ? 'text-white' : ''} />
+                        </div>
+                        <span className="text-[12px] font-medium mt-1">홈</span>
                     </button>
                 </div>
-                <div className="flex-1 flex flex-col items-center py-2.5"> {/* py-2에서 py-2.5로 변경 */}
+                <div className="flex-1 flex flex-col items-center py-2.5">
                     <button
                         onClick={() => navigate('/rescue')}
-                        className="flex flex-col items-center text-orange-400 hover:text-orange-500 transition-colors"
+                        className={getTabStyle('rescue')}
                     >
-                        <LifeBuoy size={22} strokeWidth={2.5} /> {/* size={20}에서 size={22}로 변경 */}
-                        <span className="text-[12px] font-medium mt-1.5">구조</span> {/* text-[11px]에서 text-[12px]로, mt-1에서 mt-1.5로 변경 */}
+                        <div className={getIconContainerStyle('rescue')}>
+                            <LifeBuoy size={22} strokeWidth={2.5} className={activeTab === 'rescue' ? 'text-white' : ''} />
+                        </div>
+                        <span className="text-[12px] font-medium mt-1">구조</span>
                     </button>
                 </div>
-                <div className="flex-1 flex flex-col items-center py-2.5"> {/* py-2에서 py-2.5로 변경 */}
+                <div className="flex-1 flex flex-col items-center py-2.5">
                     <button
                         onClick={() => navigate('/protection')}
-                        className="flex flex-col items-center text-orange-400 hover:text-orange-500 transition-colors"
+                        className={getTabStyle('protection')}
                     >
-                        <Users size={22} strokeWidth={2.5} /> {/* size={20}에서 size={22}로 변경 */}
-                        <span className="text-[12px] font-medium mt-1.5">새로운 가족</span> {/* text-[11px]에서 text-[12px]로, mt-1에서 mt-1.5로 변경 */}
+                        <div className={getIconContainerStyle('protection')}>
+                            <Users size={22} strokeWidth={2.5} className={activeTab === 'protection' ? 'text-white' : ''} />
+                        </div>
+                        <span className="text-[12px] font-medium mt-1">입양/임시보호</span>
                     </button>
                 </div>
-                <div className="flex-1 flex flex-col items-center py-2.5"> {/* py-2에서 py-2.5로 변경 */}
+                <div className="flex-1 flex flex-col items-center py-2.5">
                     <button
-                    onClick={handleChatClick}
-                    className="flex flex-col items-center text-orange-400 hover:text-orange-500 transition-colors"
-                >
-                    <MessageSquare size={22} strokeWidth={2.5} /> {/* size={20}에서 size={22}로 변경 */}
-                    <span className="text-[12px] font-medium mt-1.5">채팅</span> {/* text-[11px]에서 text-[12px]로, mt-1에서 mt-1.5로 변경 */}
-                </button>
+                        onClick={handleChatClick}
+                        className={getTabStyle('chat')}
+                    >
+                        <div className={getIconContainerStyle('chat')}>
+                            <MessageSquare size={22} strokeWidth={2.5} className={activeTab === 'chat' ? 'text-white' : ''} />
+                        </div>
+                        <span className="text-[12px] font-medium mt-1">채팅</span>
+                    </button>
                 </div>
-                <div className="flex-1 flex flex-col items-center py-2.5"> {/* py-2에서 py-2.5로 변경 */}
+                <div className="flex-1 flex flex-col items-center py-2.5">
                     <button
                         onClick={handleMyPageClick}
-                        className="flex flex-col items-center text-orange-400 hover:text-orange-500 transition-colors"
+                        className={getTabStyle('mypage')}
                     >
-                        <User size={22} strokeWidth={2.5} /> {/* size={20}에서 size={22}로 변경 */}
-                        <span className="text-[12px] font-medium mt-1.5">마이페이지</span> {/* text-[11px]에서 text-[12px]로, mt-1에서 mt-1.5로 변경 */}
+                        <div className={getIconContainerStyle('mypage')}>
+                            <User size={22} strokeWidth={2.5} className={activeTab === 'mypage' ? 'text-white' : ''} />
+                        </div>
+                        <span className="text-[12px] font-medium mt-1">마이페이지</span>
                     </button>
                 </div>
             </div>
