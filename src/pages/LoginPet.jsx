@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import pawPatrolLogo from '../assets/images/hanlogogo.png';
+import pawPatrolLogo from '../assets/images/hanlogo.png';
 import SignUpTypeModal from '../components/SignUpTypeModal';
 import naverImage from '../assets/images/naver_simple_icon.png';
 import axios from 'axios';
