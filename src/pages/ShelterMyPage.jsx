@@ -77,7 +77,6 @@ const ShelterMyPage = () => {
                 }
             }
         } catch (error) {
-            console.error('보호 동물 목록 불러오기 오류:', error);
         } finally {
             setIsLoading(false);
         }
@@ -101,7 +100,6 @@ const ShelterMyPage = () => {
                 fetchSocialConnections();
             }
         } catch (error) {
-            console.error(`${providerType} 연동 해제 오류:`, error);
             alert('소셜 계정 연동 해제 중 오류가 발생했습니다.');
         }
     };
@@ -136,19 +134,33 @@ const ShelterMyPage = () => {
                 setSocialConnections(response.data.data);
             }
         } catch (error) {
-            console.error('소셜 연동 정보 불러오기 오류:', error);
+
         }
     };
 
     // 페이지 변경 핸들러 - 신고글
     const handleReportPageChange = (pageNumber) => {
-        setMyPosts(prev => ({ ...prev, reportsCurrentPage: pageNumber }));
+        // 이전 데이터 초기화 (중요!)
+        setMyPosts(prev => ({
+            ...prev,
+            reportsCurrentPage: pageNumber,
+            reports: [] // 데이터 초기화 후 새로 불러오기
+        }));
+
+        // 새 데이터 불러오기
         fetchMyReportPosts(pageNumber);
     };
 
     // 페이지 변경 핸들러 - 제보글
     const handleWitnessPageChange = (pageNumber) => {
-        setMyPosts(prev => ({ ...prev, witnessCurrentPage: pageNumber }));
+        // 이전 데이터 초기화 (중요!)
+        setMyPosts(prev => ({
+            ...prev,
+            witnessCurrentPage: pageNumber,
+            witnesses: [] // 데이터 초기화 후 새로 불러오기
+        }));
+
+        // 새 데이터 불러오기
         fetchMyWitnessPosts(pageNumber);
     };
 
@@ -286,7 +298,6 @@ const ShelterMyPage = () => {
                 await fetchShelterAnimals(0); // 보호동물 목록 새로고침
             }
         } catch (error) {
-            console.error('Error updating pet:', error);
             alert('반려동물 정보 수정 중 오류가 발생했습니다.');
         }
     };
@@ -314,7 +325,6 @@ const ShelterMyPage = () => {
                 setPetToDelete(null);
             }
         } catch (error) {
-            console.error('Error deleting pet:', error);
             alert('반려동물 삭제 중 오류가 발생했습니다.');
         }
     };
@@ -339,7 +349,6 @@ const ShelterMyPage = () => {
                 setIsEditing(false); // 편집 모드 종료
             }
         } catch (error) {
-            console.error('Profile update error:', error);
             alert('프로필 업데이트 중 오류가 발생했습니다.');
         }
     };
@@ -371,7 +380,7 @@ const ShelterMyPage = () => {
 
             if (response.data.statusCode === 200) {
                 // 성공 시 처리
-                alert('비밀번호가 성공적으로 변경되었습니다.');
+                alert(response.data.message);
                 setIsPasswordEditing(false);
                 setPersonalInfo({
                     ...personalInfo,
@@ -381,8 +390,7 @@ const ShelterMyPage = () => {
                 });
             }
         } catch (error) {
-            console.error('Password update error:', error);
-            alert('비밀번호 변경 중 오류가 발생했습니다.');
+            alert(error.response.data.msg);
         }
     };
 
@@ -396,7 +404,6 @@ const ShelterMyPage = () => {
             alert('전화번호가 성공적으로 변경되었습니다.');
             setIsPhoneEditing(false);
         } catch (error) {
-            console.error('Phone update error:', error);
             alert('전화번호 변경 중 오류가 발생했습니다.');
         }
     };
@@ -453,7 +460,6 @@ const ShelterMyPage = () => {
             });
 
         } catch (error) {
-            console.error('Error:', error);
             alert('반려동물 등록 중 오류가 발생했습니다.');
         }
     };
@@ -484,7 +490,6 @@ const ShelterMyPage = () => {
                 navigate('/');
             }
         } catch (error) {
-            console.error('Logout error:', error);
             alert('로그아웃 중 오류가 발생했습니다.');
         }
     };
@@ -500,7 +505,7 @@ const ShelterMyPage = () => {
 
         try {
             const response = await axios.patch(
-                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/profile`,
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/profile/pic`,
                 formData,
                 {
                     headers: {
@@ -528,7 +533,6 @@ const ShelterMyPage = () => {
                 alert('프로필 이미지가 성공적으로 업데이트되었습니다.');
             }
         } catch (error) {
-            console.error('Image upload error:', error);
             alert('이미지 업로드 중 오류가 발생했습니다.');
         }
     };
@@ -559,7 +563,6 @@ const ShelterMyPage = () => {
                 localStorage.setItem('userInfo', JSON.stringify(userInfo));
             }
         } catch (error) {
-            console.error('Image reset error:', error);
             alert('프로필 이미지 초기화 중 오류가 발생했습니다.');
         }
     };
@@ -580,7 +583,6 @@ const ShelterMyPage = () => {
                 }));
             }
         } catch (error) {
-            console.error('신고글 불러오기 오류:', error);
         }
     };
 
@@ -681,10 +683,20 @@ const ShelterMyPage = () => {
         }
     }, []);
 
+    // 상세 페이지로 이동하는 함수
+    const handleDetailNavigation = (e, postId) => {
+        if (e) e.stopPropagation();
+
+        if (postId) {
+            navigate(`/PetPostDetail/${postId.id}`);
+        } else {
+        }
+    };
+
 
     return (
-        <div className="min-h-screen bg-[#FFF5E6]">
-            <div className="max-w-4xl mx-auto bg-white rounded-lg shadow p-8">
+        <div className="min-h-screen bg-[#FFF5E6] flex flex-col items-center justify-start p-4">
+            <div className="w-full max-w-lg bg-white rounded-xl shadow overflow-hidden p-6 space-y-6">
                 <div className="flex justify-between items-center mb-4">
                     <h1 className="text-2xl font-bold text-orange-500">마이페이지 (보호소 계정)</h1>
                     <button
@@ -719,7 +731,7 @@ const ShelterMyPage = () => {
                 </div>
 
                 {activeTab === 'profile' && (
-                    <div className="text-center">
+                    <div className="text-center rounded-xl p-4">
                         {/* 프로필 정보 */}
                         <div className="relative w-32 h-32 mx-auto mb-4">
                             <img
@@ -727,7 +739,6 @@ const ShelterMyPage = () => {
                                 alt="Profile"
                                 className="w-full h-full rounded-full object-cover"
                                 onError={(e) => {
-                                    console.error("이미지 로드 실패:", e);
                                     e.target.src = defaultImage;
                                 }}
                             />
@@ -1029,7 +1040,7 @@ const ShelterMyPage = () => {
                 )}
 
                 {activeTab === 'pets' && (
-                    <div className="space-y-6">
+                    <div className="space-y-6 bg-white rounded-xl p-4 shadow hover:shadow-md transition-shadow">
                         <div className="flex justify-between items-center mb-6">
                             <h2 className="text-2xl font-bold">보호동물 목록</h2>
                             <button
@@ -1149,14 +1160,18 @@ const ShelterMyPage = () => {
                 )}
 
                 {activeTab === 'posts' && (
-                    <div className="space-y-6">
+                    <div className="space-y-6 bg-white rounded-xl p-4 shadow hover:shadow-md transition-shadow overflow-y-auto">
                         {/* 실종 신고글 목록 */}
-                        <div className="mb-8">
+                        <div className="mb-8 border-b pb-4 mb-4 border-gray-200 space-y-4">
                             <h3 className="text-lg font-semibold mb-4">실종 신고글</h3>
                             <div className="min-h-[450px]"> {/* 최소 높이 설정 */}
                                 {myPosts.reports.length > 0 ? (
                                     myPosts.reports.map(post => (
-                                        <div key={post.createPostTime} className="border-b border-gray-200 py-4">
+                                        <div
+                                            key={post.createPostTime}
+                                            className="border-b border-gray-200 py-4 cursor-pointer hover:bg-gray-50"
+                                            onClick={(e) => handleDetailNavigation(e, post)}
+                                        >
                                             <div className="flex justify-between items-center">
                                                 <div>
                                                     <h3 className="text-lg font-medium">{post.content}</h3>
@@ -1234,7 +1249,11 @@ const ShelterMyPage = () => {
                             <div className="min-h-[450px]"> {/* 최소 높이 설정 */}
                                 {myPosts.witnesses.length > 0 ? (
                                     myPosts.witnesses.map(post => (
-                                        <div key={post.createPostTime} className="border-b border-gray-200 py-4">
+                                        <div
+                                            key={post.createPostTime}
+                                            className="border-b border-gray-200 py-4 cursor-pointer hover:bg-gray-50"
+                                            onClick={(e) => handleDetailNavigation(e, post)}
+                                        >
                                             <div className="flex justify-between items-center">
                                                 <div>
                                                     <h3 className="text-lg font-medium">{post.content}</h3>

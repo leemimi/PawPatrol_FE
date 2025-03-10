@@ -31,7 +31,6 @@ const Footer = () => {
                 return false;
             }
         } catch (error) {
-            console.error('인증 확인 중 오류 발생:', error);
             setIsAuthenticated(false);
             localStorage.removeItem('isLoggedIn');
             return false;
