@@ -1123,13 +1123,19 @@ const ShelterMyPage = () => {
 
                                         <div className="flex justify-end space-x-2 pt-3 border-t mt-3">
                                             <button
-                                                onClick={() => handleEditPet(pet)}
+                                                onClick={(e) => {
+                                                    e.stopPropagation(); // Prevent navigation when clicking the buttons
+                                                    handleEditPet(pet);
+                                                }}
                                                 className="px-3 py-1.5 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors text-sm"
                                             >
                                                 수정
                                             </button>
                                             <button
-                                                onClick={() => handleDeleteConfirm(pet)}
+                                                onClick={(e) => {
+                                                    e.stopPropagation(); // Prevent navigation when clicking the buttons
+                                                    handleDeleteConfirm(pet);
+                                                }}
                                                 className="px-3 py-1.5 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors text-sm"
                                             >
                                                 삭제
