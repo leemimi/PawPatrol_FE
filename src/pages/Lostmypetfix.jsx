@@ -118,7 +118,7 @@ const Lostmypetfix = () => {
     images.forEach((image) => formDataToSend.append("images", image));
   
     // Ensure postId is correctly being passed as a string or number
-    const postUrl = `http://localhost:8090/api/v1/lost-foundposts/${postId}`;
+    const postUrl = `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/lost-foundposts/${postId}`;
   
     try {
       const response = await axios.put(postUrl, formDataToSend, {
