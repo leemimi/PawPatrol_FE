@@ -134,7 +134,7 @@ const ShelterMyPage = () => {
                 setSocialConnections(response.data.data);
             }
         } catch (error) {
-            
+
         }
     };
 
@@ -683,10 +683,20 @@ const ShelterMyPage = () => {
         }
     }, []);
 
+    // 상세 페이지로 이동하는 함수
+    const handleDetailNavigation = (e, postId) => {
+        if (e) e.stopPropagation();
+
+        if (postId) {
+            navigate(`/PetPostDetail/${postId.id}`);
+        } else {
+        }
+    };
+
 
     return (
-        <div className="min-h-screen bg-white flex flex-col items-center justify-start p-4">
-            <div className="w-full max-w-lg bg-[#FFF5E6] rounded-xl shadow overflow-hidden p-6 space-y-6">
+        <div className="min-h-screen bg-[#FFF5E6] flex flex-col items-center justify-start p-4">
+            <div className="w-full max-w-lg bg-white rounded-xl shadow overflow-hidden p-6 space-y-6">
                 <div className="flex justify-between items-center mb-4">
                     <h1 className="text-2xl font-bold text-orange-500">마이페이지 (보호소 계정)</h1>
                     <button
@@ -721,7 +731,7 @@ const ShelterMyPage = () => {
                 </div>
 
                 {activeTab === 'profile' && (
-                    <div className="text-center bg-white rounded-xl p-4 shadow hover:shadow-md transition-shadow">
+                    <div className="text-center rounded-xl p-4">
                         {/* 프로필 정보 */}
                         <div className="relative w-32 h-32 mx-auto mb-4">
                             <img
@@ -1157,7 +1167,11 @@ const ShelterMyPage = () => {
                             <div className="min-h-[450px]"> {/* 최소 높이 설정 */}
                                 {myPosts.reports.length > 0 ? (
                                     myPosts.reports.map(post => (
-                                        <div key={post.createPostTime} className="border-b border-gray-200 py-4">
+                                        <div
+                                            key={post.createPostTime}
+                                            className="border-b border-gray-200 py-4 cursor-pointer hover:bg-gray-50"
+                                            onClick={(e) => handleDetailNavigation(e, post)}
+                                        >
                                             <div className="flex justify-between items-center">
                                                 <div>
                                                     <h3 className="text-lg font-medium">{post.content}</h3>
@@ -1235,7 +1249,11 @@ const ShelterMyPage = () => {
                             <div className="min-h-[450px]"> {/* 최소 높이 설정 */}
                                 {myPosts.witnesses.length > 0 ? (
                                     myPosts.witnesses.map(post => (
-                                        <div key={post.createPostTime} className="border-b border-gray-200 py-4">
+                                        <div
+                                            key={post.createPostTime}
+                                            className="border-b border-gray-200 py-4 cursor-pointer hover:bg-gray-50"
+                                            onClick={(e) => handleDetailNavigation(e, post)}
+                                        >
                                             <div className="flex justify-between items-center">
                                                 <div>
                                                     <h3 className="text-lg font-medium">{post.content}</h3>

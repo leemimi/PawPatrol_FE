@@ -118,11 +118,9 @@ const ForgotPasswordScreen = () => {
     };
 
     return (
-        <div className="min-h-screen bg-white flex flex-col items-center justify-center p-4">
-
-
+        <div className="min-h-screen bg-[#FFF5E6] flex flex-col items-center justify-center p-4">
             {/* Form Container */}
-            <div className="w-full max-w-md bg-[#FFF5E6] rounded-xl shadow overflow-hidden p-6 space-y-6">
+            <div className="w-full max-w-md overflow-hidden p-6 space-y-6">
                 {/* Logo Section */}
                 <div className="w-full max-w-md flex flex-col items-center mb-8">
                     <div className="relative mb-2">

@@ -221,7 +221,7 @@ const closeGallery = () => {
   };
 
   const handleGoTocommunity = () => {
-    navigate('/');
+    navigate(-1); // 이전 페이지로 이동
     setIsActionMenuVisible(false);
   };
 

@@ -133,9 +133,9 @@ const LoginScreen = () => {
     }, []);
 
     return (
-        <div className="h-full bg-white flex flex-col items-center justify-center p-4">
+        <div className="min-h-screen bg-[#FFF5E6] flex flex-col items-center justify-center p-4">
             {/* Login Container */}
-            <div className="w-full max-w-md bg-[#FFF5E6] rounded-xl shadow overflow-hidden">
+            <div className="w-full max-w-md overflow-hidden">
                 {/* Logo Section */}
                 <div className="w-full flex flex-col items-center mt-6 mb-4">
                     <img

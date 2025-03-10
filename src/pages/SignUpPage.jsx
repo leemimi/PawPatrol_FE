@@ -151,9 +151,9 @@ const SignUp = () => {
     }, []);
 
     return (
-        <div className="min-h-screen bg-white flex flex-col items-center justify-center p-4">
+        <div className="min-h-screen bg-[#FFF5E6] flex flex-col items-center justify-center p-4">
             <div className="w-full max-w-md">
-                <div className="bg-[#FFF5E6] rounded-xl shadow overflow-hidden p-6 space-y-6">
+                <div className="overflow-hidden p-6 space-y-6">
                     <h2 className="text-3xl font-bold text-orange-900 text-center mb-8">회원가입</h2>
                     <form onSubmit={handleSubmit} className="space-y-4">
                         {/* 사용할 아이디, 이메일 인증 필드 */}

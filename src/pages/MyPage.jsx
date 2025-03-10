@@ -726,9 +726,19 @@ const MyPage = () => {
         }
     };
 
+    // 상세 페이지로 이동하는 함수
+    const handleDetailNavigation = (e, postId) => {
+        if (e) e.stopPropagation();
+        
+        if (postId) {
+            navigate(`/PetPostDetail/${postId.id}`);
+        } else {
+        }
+    };
+
     return (
-        <div className="min-h-screen bg-white flex flex-col items-center justify-start p-4">
-            <div className="w-full max-w-lg bg-[#FFF5E6] rounded-xl shadow overflow-hidden p-6 space-y-6">
+        <div className="min-h-screen bg-[#FFF5E6] flex flex-col items-center justify-start p-4">
+            <div className="w-full max-w-lg bg-white rounded-xl shadow overflow-hidden p-6 space-y-6">
                 <div className="flex justify-between items-center mb-4">
                     <h1 className="text-2xl font-bold text-orange-500">마이페이지</h1>
                     <button
@@ -763,7 +773,7 @@ const MyPage = () => {
                 </div>
 
                 {activeTab === 'profile' && (
-                    <div className="text-center bg-white rounded-xl p-4 shadow hover:shadow-md transition-shadow">
+                    <div className="text-center rounded-xl p-4">
                         {/* 프로필 정보 */}
                         <div className="relative w-32 h-32 mx-auto mb-4">
                             <img
@@ -1250,7 +1260,10 @@ const MyPage = () => {
                                 {myPosts.reports.length > 0 ? (
                                     // 현재 페이지의 데이터만 표시 (API에서 이미 페이지별로 가져오므로 추가 슬라이싱 불필요)
                                     myPosts.reports.map(post => (
-                                        <div key={post.createPostTime} className="border-b border-gray-200 py-4">
+                                        <div key={post.id}
+                                            className="border-b border-gray-200 py-4 cursor-pointer hover:bg-gray-50"
+                                            onClick={() => handleDetailNavigation({ stopPropagation: () => { } }, { id: post.id, type: 'pet' })}>
+                                            <input type="hidden" name="postId" value={post.id} />
                                             <div className="flex justify-between items-center">
                                                 <div className="flex-grow mr-4 overflow-hidden">
                                                     <h3 className="text-lg font-medium truncate">{post.content}</h3>
@@ -1266,7 +1279,7 @@ const MyPage = () => {
                                         </div>
                                     ))
                                 ) : (
-                                    <div className="flex items-center justify-center h-[100px] text-gray-500">
+                                    <div className="flex items-center justify-center h-[200px] text-gray-500">
                                         등록된 실종 신고글이 없습니다.
                                     </div>
                                 )}
@@ -1348,7 +1361,10 @@ const MyPage = () => {
                                 {myPosts.witnesses.length > 0 ? (
                                     // 현재 페이지의 데이터만 표시 (API에서 이미 페이지별로 가져오므로 추가 슬라이싱 불필요)
                                     myPosts.witnesses.map(post => (
-                                        <div key={post.createPostTime} className="border-b border-gray-200 py-4">
+                                        <div key={post.id || post.createPostTime}
+                                            className="border-b border-gray-200 py-4 cursor-pointer hover:bg-gray-50"
+                                            onClick={() => handleDetailNavigation({ stopPropagation: () => { } }, { id: post.id, type: 'pet' })}>
+                                            <input type="hidden" name="postId" value={post.id} />
                                             <div className="flex justify-between items-center">
                                                 <div className="flex-grow mr-4 overflow-hidden">
                                                     <h3 className="text-lg font-medium truncate">{post.content}</h3>
@@ -1356,7 +1372,7 @@ const MyPage = () => {
                                                         {new Date(post.createPostTime).toLocaleDateString()}
                                                     </p>
                                                 </div>
-                                                <span className="flex-shrink-0 inline-block w-24 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs text-center whitespace-nowrap overflow-hidden text-ellipsis">
+                                                <span className="flex-shrink-0 inline-block w-18 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs text-center whitespace-nowrap overflow-hidden text-ellipsis">
                                                     {post.status === "SIGHTED" ? "목격" :
                                                         post.status === "SHELTER" ? "보호소" :
                                                             post.status === "FOSTERING" ? "임보 중" : ""}
@@ -1365,7 +1381,7 @@ const MyPage = () => {
                                         </div>
                                     ))
                                 ) : (
-                                    <div className="flex items-center justify-center h-[100px] text-gray-500">
+                                    <div className="flex items-center justify-center h-[200px] text-gray-500">
                                         등록된 실종 제보글이 없습니다.
                                     </div>
                                 )}
