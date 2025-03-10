@@ -138,7 +138,7 @@ const ReportPostForm = ({ formType = "standalone" }) => {
     images.forEach((image) => formDataToSend.append("images", image));
 
     // API endpoint selection based on formType
-    let apiUrl = "http://localhost:8090/api/v1/lost-foundposts"; // 독립게시글
+    let apiUrl = `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/lost-foundposts`; // 독립게시글
    
 
     try {

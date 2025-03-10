@@ -29,7 +29,7 @@ const LostPostForm = () => {
   useEffect(() => {
     const fetchPets = async () => {
       try {
-        const response = await axios.get("http://localhost:8090/api/v1/animals/list");
+        const response = await axios.get(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/animals/list`);
         setPetsData(response.data.data); // This accesses the actual list of pets
         //console.log(petsData);  // Add this to check the response in the console
 
@@ -167,7 +167,7 @@ const LostPostForm = () => {
     images.forEach((image) => formDataToSend.append("images", image));
 
     // API endpoint selection based on formType
-    let apiUrl = "http://localhost:8090/api/v1/lost-foundposts"; 
+    let apiUrl = `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/lost-foundposts`;
 
     try {
       const response = await axios.post(
