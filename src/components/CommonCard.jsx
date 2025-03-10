@@ -11,6 +11,7 @@ export const CommonCard = ({ item, type, onClose }) => {
             case 'FOSTERING': return '임보 중';
             case 'SIGHTED': return '목격';  // API 응답에 따라 SIGHTING 또는 SIGHTED로 올 수 있음
             case 'SHELTER': return '보호중';
+            case 'SHELTER_ANIMAL': return '보호소';
             default: return status;
         }
     };
@@ -58,7 +59,7 @@ export const CommonCard = ({ item, type, onClose }) => {
 
         const petInfo = item?.pet ? (
             <h3 className="text-lg font-bold text-orange-900 mb-1">
-                {getAnimalTypeText(item.animalType)} 
+                {getAnimalTypeText(item.animalType)}
                 / {item.pet.name || item.pet.breed || ''}
                 {item.pet.gender ? ` / ${item.pet.gender}` : ''}
             </h3>
@@ -128,7 +129,7 @@ export const CommonCard = ({ item, type, onClose }) => {
                 {process.env.NODE_ENV === 'development' && (
                     <div className="mt-2 pt-2 border-t border-gray-200 w-full">
                         <p className="text-xs text-gray-400">
-                            
+
                             {item?.id ? ` id: ${item.id}` : ' (id 없음)'}
                         </p>
                     </div>
