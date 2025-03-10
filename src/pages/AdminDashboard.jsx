@@ -43,7 +43,6 @@ const AdminDashboard = () => {
                 await fetchUsers();
             }
         } catch (error) {
-            console.error('회원 상태 변경 오류:', error);
             alert('회원 상태 변경에 실패했습니다.');
         }
     };
@@ -62,7 +61,6 @@ const AdminDashboard = () => {
                 navigate('/');
             }
         } catch (error) {
-            console.error('Logout error:', error);
             alert('로그아웃 중 오류가 발생했습니다.');
         }
     };
@@ -86,7 +84,6 @@ const AdminDashboard = () => {
                 });
             }
         } catch (error) {
-            console.error('사용자 목록 불러오기 오류:', error);
         } finally {
             setIsLoading(false);
         }
@@ -111,7 +108,6 @@ const AdminDashboard = () => {
                 });
             }
         } catch (error) {
-            console.error('보호소 목록 불러오기 오류:', error);
         } finally {
             setIsLoading(false);
         }
@@ -129,7 +125,6 @@ const AdminDashboard = () => {
                 setReports(response.data.data);
             }
         } catch (error) {
-            console.error('신고 목록 불러오기 오류:', error);
         } finally {
             setIsLoading(false);
         }

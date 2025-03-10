@@ -27,7 +27,6 @@ const LoginScreen = () => {
                 const storedToken = localStorage.getItem('fcmToken');
 
                 if (storedToken) {
-                    console.log('저장된 FCM 토큰:', storedToken);
                     setFcmToken(storedToken);
                 } else {
                     // 새로운 토큰 요청
@@ -37,7 +36,6 @@ const LoginScreen = () => {
                     }
                 }
             } catch (error) {
-                console.error('FCM 토큰 가져오기 오류:', error);
             }
         };
 
