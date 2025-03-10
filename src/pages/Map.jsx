@@ -3,7 +3,7 @@ import { RadiusControl } from '../components/RadiusControl';
 import { ControlButtons } from '../components/ControlButtons';
 import { useKakaoMap } from '@/hooks/UseKakaoMap';
 import { usePetData } from '../hooks/UsePetData';
-import { useShelterAnimalsData } from '../hooks/useShelterAnimalsData';
+import { useShelterAnimalsData } from '../hooks/UseShelterAnimalsData';
 import { useGeolocation } from '../hooks/UseGeolocation.jsx';
 import { useCustomOverlays } from '../hooks/UseCustomOverlays';
 import { CommonList } from '../components/CommonList';
@@ -21,7 +21,7 @@ if (typeof global === 'undefined') {
 
 const Map = () => {
     const defaultPosition = { lat: 37.497939, lng: 127.027587 };
-    
+
     // localStorage에서 마지막 위치 정보 불러오기
     const getSavedPosition = () => {
         const savedPosition = localStorage.getItem('lastMapPosition');
@@ -57,7 +57,7 @@ const Map = () => {
     const updatePosition = useCallback((newPosition) => {
         setCurrentPosition(newPosition);
         updateCenterMarker(newPosition);
-        
+
         // 새 위치를 localStorage에 저장
         localStorage.setItem('lastMapPosition', JSON.stringify(newPosition));
     }, [updateCenterMarker]);
@@ -82,11 +82,11 @@ const Map = () => {
 
     // 위치 관련 훅 사용
     const { getCurrentLocation } = useGeolocation(
-        map, 
-        circleRef, 
+        map,
+        circleRef,
         (newPosition) => {
-          updatePosition(newPosition);
-          fetchAllData(newPosition, selectedRange);
+            updatePosition(newPosition);
+            fetchAllData(newPosition, selectedRange);
         },
         updateCenterMarker // 마커 업데이트 함수 직접 전달
     );
@@ -322,7 +322,7 @@ const Map = () => {
     const handleRangeChange = useCallback((newRange) => {
         setIsMarkerTransitioning(true);
         setSelectedRange(newRange);
-        
+
         // 선택한 반경을 localStorage에 저장
         localStorage.setItem('lastMapRange', newRange.toString());
 
@@ -344,7 +344,7 @@ const Map = () => {
 
                     // 마커 위치 확인 및 업데이트
                     updateCenterMarker(currentPosition);
-                    
+
                     fetchAllData(currentPosition, newRange);
 
                     // 위치 구독 업데이트
