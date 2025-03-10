@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import StatusBadge from '../../components/StatusBadge';
 import InfiniteScroll from '../../components/InfiniteScroll';
 import { useProtections } from '../../hooks/useProtections';
+import AnimalSelectionModal from '../../components/AnimalSelectionModal'; // AnimalSelectionModal 컴포넌트 import
+
 
 const Protection = () => {
   const navigate = useNavigate();
@@ -12,6 +14,8 @@ const Protection = () => {
   const [location, setLocation] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(true);
+  const [showAnimalTypeModal, setShowAnimalTypeModal] = useState(false);
+  const [selectedAnimalType, setSelectedAnimalType] = useState(null);
 
   // 수정된 커스텀 훅 사용
   const {
@@ -254,7 +258,7 @@ const Protection = () => {
               className="w-full px-4 py-3 text-sm font-bold text-orange-400 text-left hover:bg-orange-50 text-gray-700 transition-colors border-b border-gray-100"
               onClick={() => {
                 setIsMenuOpen(false);
-                navigate('/register-animal'); // 동물 등록 페이지로 이동
+                setShowAnimalTypeModal(true);
               }}
             >
               동물 등록하기
@@ -280,6 +284,26 @@ const Protection = () => {
           </div>
         )}
       </div>
+
+      <AnimalSelectionModal
+        isOpen={showAnimalTypeModal}
+        onClose={() => setShowAnimalTypeModal(false)}
+        onSelect={setSelectedAnimalType}
+        selectedAnimalType={selectedAnimalType}
+        title="어떤 동물을 등록하시나요?"
+        confirmButtonText="동물 등록하기"
+        onConfirm={() => {
+          setShowAnimalTypeModal(false);
+
+          // 동물 등록 페이지로 이동하면서 선택한 동물 타입 전달
+          navigate("/register-animal", {
+            state: {
+              animalType: selectedAnimalType
+            }
+          });
+        }}
+      />
+
     </div>
   );
 };
