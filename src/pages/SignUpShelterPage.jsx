@@ -52,7 +52,6 @@ const SignUpShelter = () => {
 
             setSearchResults(response.data.data || []);
         } catch (error) {
-            console.error('보호소 검색 오류:', error);
             alert('보호소 검색 중 오류가 발생했습니다.');
         } finally {
             setIsLoading(false);
@@ -101,8 +100,7 @@ const SignUpShelter = () => {
                 setIsBusinessVerified(false);
             }
         } catch (error) {
-            console.error('사업자등록번호 검증 오류:', error);
-            alert('검증 중 오류가 발생했습니다.');
+            alert('사업자 등록번호 검증 중 오류가 발생했습니다.');
             setIsBusinessVerified(false);
         }
     };
@@ -148,7 +146,6 @@ const SignUpShelter = () => {
                 alert('이메일 인증 발송에 실패했습니다.');
             }
         } catch (error) {
-            console.error('Email verification error:', error);
             alert('이메일 인증 중 오류가 발생했습니다.');
         }
     };
@@ -173,7 +170,6 @@ const SignUpShelter = () => {
             alert('이메일 인증이 완료되었습니다.');
             setIsEmailVerified(true);
         } catch (error) {
-            console.error('Verification code error:', error);
             if (error.response && error.response.data) {
                 alert(error.response.data.message || '인증 코드가 일치하지 않습니다.');
             } else {
@@ -246,11 +242,10 @@ const SignUpShelter = () => {
 
 
     return (
-        <div className="min-h-screen bg-orange-50 flex flex-col items-center justify-center p-4">
+        <div className="min-h-screen bg-[#FFF5E6] flex flex-col items-center justify-center p-4">
             <div className="w-full max-w-md">
-                <h2 className="text-3xl font-bold text-orange-900 text-center mb-8">보호소 회원가입</h2>
-
-                <div className="bg-white rounded-2xl shadow-lg p-6 space-y-6">
+                <div className="overflow-hidden p-6 space-y-6">
+                    <h2 className="text-3xl font-bold text-orange-900 text-center mb-8">보호소 회원가입</h2>
                     <form onSubmit={handleSubmit} className="space-y-4">
                         {/* 사용할 아이디, 이메일 인증 필드 */}
                         <div className="flex space-x-2 relative">
@@ -386,7 +381,7 @@ const SignUpShelter = () => {
 
                             {/* 검색 결과 표시 영역 */}
                             {showSearchResults && (
-                                <div className="max-h-60 overflow-y-auto mb-4 border border-gray-200 rounded-xl">
+                                <div className="max-h-60 bg-white overflow-y-auto mb-4 border border-gray-200 rounded-xl">
                                     {isLoading ? (
                                         <p className="text-center py-2">검색 중...</p>
                                     ) : searchResults.length > 0 ? (

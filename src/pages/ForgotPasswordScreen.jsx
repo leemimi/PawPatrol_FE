@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import puppyLogo from '../assets/images/pet.png';
+import puppyLogo from '../assets/images/paw.png';
 import axios from 'axios';
 
 const ForgotPasswordScreen = () => {
@@ -25,7 +25,7 @@ const ForgotPasswordScreen = () => {
         try {
             setIsLoading(true);
             setError('');
-            
+
             const response = await axios.post(
                 `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/auth/password/reset`,
                 { email }
@@ -53,16 +53,16 @@ const ForgotPasswordScreen = () => {
         try {
             setIsLoading(true);
             setError('');
-            
+
             const response = await axios.post(
                 `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/auth/password/reset/verify`,
-                { 
+                {
                     email,
                     verificationCode,
                     continuationToken
                 }
             );
-            
+
             if (response.data.statusCode === 200) {
                 setContinuationToken(response.data.data.continuationToken);
                 setStep(3);
@@ -77,17 +77,17 @@ const ForgotPasswordScreen = () => {
     // 새 비밀번호 설정
     const handleResetPassword = async (e) => {
         e.preventDefault();
-        
+
         if (!newPassword || !confirmPassword) {
             setError('모든 필드를 입력해주세요.');
             return;
         }
-        
+
         if (newPassword !== confirmPassword) {
             setError('비밀번호가 일치하지 않습니다.');
             return;
         }
-        
+
         if (newPassword.length < 8) {
             setError('비밀번호는 8자 이상이어야 합니다.');
             return;
@@ -96,17 +96,17 @@ const ForgotPasswordScreen = () => {
         try {
             setIsLoading(true);
             setError('');
-            
+
             const response = await axios.post(
                 `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/auth/password/reset/new`,
-                { 
+                {
                     email,
                     newPassword,
                     confirmPassword,
                     continuationToken
                 }
             );
-            
+
             if (response.data.statusCode === 200) {
                 setStep(4);
             }
@@ -118,24 +118,23 @@ const ForgotPasswordScreen = () => {
     };
 
     return (
-        <div className="min-h-screen bg-orange-50 flex flex-col items-center justify-center p-4">
-            {/* Logo Section */}
-            <div className="w-full max-w-md flex flex-col items-center mb-8">
-                <div className="relative mb-2">
-                    <img
-                        src={puppyLogo}
-                        alt="PawPatrol Logo"
-                        className="w-90 h-90"
-                    />
-                    <h1 className="text-2xl font-bold text-orange-900 absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-orange-50 px-2">
-                        PawPatrol
-                    </h1>
-                </div>
-                <p className="text-orange-700 text-sm">우리 모두의 든든한 발자국</p>
-            </div>
-
+        <div className="min-h-screen bg-[#FFF5E6] flex flex-col items-center justify-center p-4">
             {/* Form Container */}
-            <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-6 space-y-6">
+            <div className="w-full max-w-md overflow-hidden p-6 space-y-6">
+                {/* Logo Section */}
+                <div className="w-full max-w-md flex flex-col items-center mb-8">
+                    <div className="relative mb-2">
+                        <img
+                            src={puppyLogo}
+                            alt="PawPatrol Logo"
+                            className="w-32 h-32 mb-2"
+                        />
+                        {/* <h1 className="text-2xl font-bold text-orange-900 absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-orange-50 px-2">
+                        PawPatrol
+                    </h1> */}
+                    </div>
+                    {/* <p className="text-orange-700 text-sm">우리 모두의 든든한 발자국</p> */}
+                </div>
                 <h2 className="text-2xl font-bold text-center text-gray-800">
                     {step === 1 && '비밀번호 찾기'}
                     {step === 2 && '인증 코드 확인'}
@@ -155,11 +154,11 @@ const ForgotPasswordScreen = () => {
                                 className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:border-orange-500"
                             />
                         </div>
-                        
+
                         {error && (
                             <div className="text-red-500 text-sm">{error}</div>
                         )}
-                        
+
                         <button
                             type="submit"
                             disabled={isLoading}
@@ -167,10 +166,10 @@ const ForgotPasswordScreen = () => {
                         >
                             {isLoading ? '처리 중...' : '인증 코드 받기'}
                         </button>
-                        
+
                         <div className="text-center">
-                            <button 
-                                type="button" 
+                            <button
+                                type="button"
                                 onClick={() => navigate('/')}
                                 className="text-sm text-gray-600 hover:text-orange-500"
                             >
@@ -186,7 +185,7 @@ const ForgotPasswordScreen = () => {
                         <p className="text-sm text-gray-600 text-center">
                             {email}로 전송된 인증 코드를 입력해주세요.
                         </p>
-                        
+
                         <div>
                             <input
                                 type="text"
@@ -197,11 +196,11 @@ const ForgotPasswordScreen = () => {
                                 className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:border-orange-500"
                             />
                         </div>
-                        
+
                         {error && (
                             <div className="text-red-500 text-sm">{error}</div>
                         )}
-                        
+
                         <button
                             type="submit"
                             disabled={isLoading}
@@ -209,10 +208,10 @@ const ForgotPasswordScreen = () => {
                         >
                             {isLoading ? '처리 중...' : '인증 코드 확인'}
                         </button>
-                        
+
                         <div className="text-center">
-                            <button 
-                                type="button" 
+                            <button
+                                type="button"
                                 onClick={() => setStep(1)}
                                 className="text-sm text-gray-600 hover:text-orange-500"
                             >
@@ -234,7 +233,7 @@ const ForgotPasswordScreen = () => {
                                 className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:border-orange-500"
                             />
                         </div>
-                        
+
                         <div>
                             <input
                                 type="password"
@@ -244,11 +243,11 @@ const ForgotPasswordScreen = () => {
                                 className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:border-orange-500"
                             />
                         </div>
-                        
+
                         {error && (
                             <div className="text-red-500 text-sm">{error}</div>
                         )}
-                        
+
                         <button
                             type="submit"
                             disabled={isLoading}
@@ -267,11 +266,11 @@ const ForgotPasswordScreen = () => {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                             </svg>
                         </div>
-                        
+
                         <p className="text-gray-700">
                             비밀번호가 성공적으로 변경되었습니다.
                         </p>
-                        
+
                         <button
                             onClick={() => navigate('/')}
                             className="w-full bg-orange-500 text-white py-3 rounded-xl font-medium hover:bg-orange-600 transition-colors"
