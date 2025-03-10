@@ -20,12 +20,24 @@ if (typeof global === 'undefined') {
 }
 
 const Map = () => {
-    const centerPosition = { lat: 37.497939, lng: 127.027587 };
+    const defaultPosition = { lat: 37.497939, lng: 127.027587 };
+    
+    // localStorage에서 마지막 위치 정보 불러오기
+    const getSavedPosition = () => {
+        const savedPosition = localStorage.getItem('lastMapPosition');
+        return savedPosition ? JSON.parse(savedPosition) : defaultPosition;
+    };
 
-    const [selectedRange, setSelectedRange] = useState(3);
+    // localStorage에서 마지막 선택한 반경 불러오기
+    const getSavedRange = () => {
+        const savedRange = localStorage.getItem('lastMapRange');
+        return savedRange ? Number(savedRange) : 3;
+    };
+
+    const [selectedRange, setSelectedRange] = useState(getSavedRange());
     const [selectedPet, setSelectedPet] = useState(null);
     const [showList, setShowList] = useState(false);
-    const [currentPosition, setCurrentPosition] = useState(centerPosition);
+    const [currentPosition, setCurrentPosition] = useState(getSavedPosition());
     const [isCardVisible, setIsCardVisible] = useState(false);
     const [isMarkerTransitioning, setIsMarkerTransitioning] = useState(false);
 
@@ -39,7 +51,16 @@ const Map = () => {
     const initialLoadRef = useRef(false);
     const modeChangeRef = useRef(false);
 
-    const { map, setMarkers, circleRef } = useKakaoMap(currentPosition);
+    const { map, setMarkers, circleRef, updateCenterMarker } = useKakaoMap(currentPosition);
+
+    // 위치와 마커를 동시에 업데이트하는 함수 생성
+    const updatePosition = useCallback((newPosition) => {
+        setCurrentPosition(newPosition);
+        updateCenterMarker(newPosition);
+        
+        // 새 위치를 localStorage에 저장
+        localStorage.setItem('lastMapPosition', JSON.stringify(newPosition));
+    }, [updateCenterMarker]);
 
     // 펫 데이터 관련 훅 사용
     const {
@@ -60,10 +81,15 @@ const Map = () => {
     }, [fetchPets, fetchShelters]);
 
     // 위치 관련 훅 사용
-    const { getCurrentLocation } = useGeolocation(map, circleRef, (newPosition) => {
-        setCurrentPosition(newPosition);
-        fetchAllData(newPosition, selectedRange);
-    });
+    const { getCurrentLocation } = useGeolocation(
+        map, 
+        circleRef, 
+        (newPosition) => {
+          updatePosition(newPosition);
+          fetchAllData(newPosition, selectedRange);
+        },
+        updateCenterMarker // 마커 업데이트 함수 직접 전달
+    );
 
     // 펫 오버레이 관련 훅 사용
     const {
@@ -215,7 +241,7 @@ const Map = () => {
             map.setCenter(position);
 
             // 현재 위치 업데이트
-            setCurrentPosition({
+            updatePosition({
                 lat: notification.latitude,
                 lng: notification.longitude
             });
@@ -263,14 +289,42 @@ const Map = () => {
         if (map && circleRef.current) {
             const moveLatLon = new window.kakao.maps.LatLng(currentPosition.lat, currentPosition.lng);
             circleRef.current.setPosition(moveLatLon);
+            circleRef.current.setRadius(selectedRange * 1000); // 초기 원 반경 설정
             circleRef.current.setMap(map);
         }
-    }, [currentPosition, map, circleRef]);
+    }, [currentPosition, map, circleRef, selectedRange]);
+
+    // 페이지 이탈 감지
+    useEffect(() => {
+        // 사용자가 페이지를 떠날 때 최종 위치 저장
+        const handleBeforeUnload = () => {
+            if (map) {
+                const center = map.getCenter();
+                const finalPosition = {
+                    lat: center.getLat(),
+                    lng: center.getLng()
+                };
+                localStorage.setItem('lastMapPosition', JSON.stringify(finalPosition));
+                localStorage.setItem('lastMapRange', selectedRange.toString());
+            }
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+            // 컴포넌트 언마운트 시에도 현재 위치 저장
+            localStorage.setItem('lastMapPosition', JSON.stringify(currentPosition));
+            localStorage.setItem('lastMapRange', selectedRange.toString());
+        };
+    }, [map, currentPosition, selectedRange]);
 
     // 반경 변경 핸들러
     const handleRangeChange = useCallback((newRange) => {
         setIsMarkerTransitioning(true);
         setSelectedRange(newRange);
+        
+        // 선택한 반경을 localStorage에 저장
+        localStorage.setItem('lastMapRange', newRange.toString());
 
         if (circleRef.current) {
             const currentRadius = circleRef.current.getRadius();
@@ -288,6 +342,9 @@ const Map = () => {
                     circleRef.current.setRadius(targetRadius);
                     setIsMarkerTransitioning(false);
 
+                    // 마커 위치 확인 및 업데이트
+                    updateCenterMarker(currentPosition);
+                    
                     fetchAllData(currentPosition, newRange);
 
                     // 위치 구독 업데이트
@@ -310,7 +367,7 @@ const Map = () => {
 
             animate();
         }
-    }, [circleRef, currentPosition, fetchAllData]);
+    }, [circleRef, currentPosition, fetchAllData, updateCenterMarker]);
 
     // 맵 드래그 종료 이벤트 useEffect
     useEffect(() => {
@@ -321,7 +378,7 @@ const Map = () => {
                     lat: center.getLat(),
                     lng: center.getLng()
                 };
-                setCurrentPosition(newPosition);
+                updatePosition(newPosition);
 
                 // 드래그 후 바로 데이터 가져오기 (debounce 제거)
                 fetchAllData(newPosition, selectedRange);
@@ -348,7 +405,7 @@ const Map = () => {
                 window.kakao.maps.event.removeListener(map, 'dragend', handleDragEnd);
             };
         }
-    }, [map, selectedRange, fetchAllData]);
+    }, [map, selectedRange, fetchAllData, updatePosition]);
 
     // 선택된 항목에 따른 카드 가시성 useEffect
     useEffect(() => {
@@ -422,7 +479,7 @@ const Map = () => {
                 map.setCenter(position);
 
                 // 새 위치 설정
-                setCurrentPosition({
+                updatePosition({
                     lat: notification.latitude,
                     lng: notification.longitude
                 });
