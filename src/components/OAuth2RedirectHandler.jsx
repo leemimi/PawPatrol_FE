@@ -27,7 +27,6 @@ const OAuth2RedirectHandler = () => {
                     await navigate('/', { replace: true });
                 }
             } catch (error) {
-                console.error('소셜 로그인 처리 중 오류 발생:', error);
                 await navigate('/', { replace: true });
             }
         };

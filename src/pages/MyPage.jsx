@@ -68,7 +68,6 @@ const MyPage = () => {
                 navigate('/', { replace: true });
             }
         } catch (error) {
-            console.error('회원 탈퇴 오류:', error);
             alert('회원 탈퇴 처리 중 오류가 발생했습니다.');
         }
     };
@@ -90,7 +89,6 @@ const MyPage = () => {
                 fetchSocialConnections();
             }
         } catch (error) {
-            console.error(`${providerType} 연동 해제 오류:`, error);
             alert('소셜 계정 연동 해제 중 오류가 발생했습니다.');
         }
     };
@@ -125,19 +123,32 @@ const MyPage = () => {
                 setSocialConnections(response.data.data);
             }
         } catch (error) {
-            console.error('소셜 연동 정보 불러오기 오류:', error);
         }
     };
 
     // 페이지 변경 핸들러 - 신고글
     const handleReportPageChange = (pageNumber) => {
-        setMyPosts(prev => ({ ...prev, reportsCurrentPage: pageNumber }));
+        // 이전 데이터 초기화 (중요!)
+        setMyPosts(prev => ({
+            ...prev,
+            reportsCurrentPage: pageNumber,
+            reports: [] // 데이터 초기화 후 새로 불러오기
+        }));
+
+        // 새 데이터 불러오기
         fetchMyReportPosts(pageNumber);
     };
 
     // 페이지 변경 핸들러 - 제보글
     const handleWitnessPageChange = (pageNumber) => {
-        setMyPosts(prev => ({ ...prev, witnessCurrentPage: pageNumber }));
+        // 이전 데이터 초기화 (중요!)
+        setMyPosts(prev => ({
+            ...prev,
+            witnessCurrentPage: pageNumber,
+            witnesses: [] // 데이터 초기화 후 새로 불러오기
+        }));
+
+        // 새 데이터 불러오기
         fetchMyWitnessPosts(pageNumber);
     };
 
@@ -275,7 +286,6 @@ const MyPage = () => {
                 await fetchMyPets(); // 반려동물 목록 새로고침
             }
         } catch (error) {
-            console.error('Error updating pet:', error);
             alert('반려동물 정보 수정 중 오류가 발생했습니다.');
         }
     };
@@ -303,7 +313,6 @@ const MyPage = () => {
                 setShouldReload(true); // 리로드 플래그 설정
             }
         } catch (error) {
-            console.error('Error deleting pet:', error);
             alert('반려동물 삭제 중 오류가 발생했습니다.');
         }
     };
@@ -328,7 +337,6 @@ const MyPage = () => {
                 setIsEditing(false); // 편집 모드 종료
             }
         } catch (error) {
-            console.error('Profile update error:', error);
             alert('프로필 업데이트 중 오류가 발생했습니다.');
         }
     };
@@ -360,7 +368,7 @@ const MyPage = () => {
 
             if (response.data.statusCode === 200) {
                 // 성공 시 처리
-                alert('비밀번호가 성공적으로 변경되었습니다.');
+                alert(response.data.message);
                 setIsPasswordEditing(false);
                 setPersonalInfo({
                     ...personalInfo,
@@ -370,8 +378,7 @@ const MyPage = () => {
                 });
             }
         } catch (error) {
-            console.error('Password update error:', error);
-            alert('비밀번호 변경 중 오류가 발생했습니다.');
+            alert(error.response.data.msg);
         }
     };
 
@@ -385,7 +392,6 @@ const MyPage = () => {
             alert('전화번호가 성공적으로 변경되었습니다.');
             setIsPhoneEditing(false);
         } catch (error) {
-            console.error('Phone update error:', error);
             alert('전화번호 변경 중 오류가 발생했습니다.');
         }
     };
@@ -442,7 +448,6 @@ const MyPage = () => {
             });
 
         } catch (error) {
-            console.error('Error:', error);
             alert('반려동물 등록 중 오류가 발생했습니다.');
         }
     };
@@ -473,7 +478,6 @@ const MyPage = () => {
                 navigate('/');
             }
         } catch (error) {
-            console.error('Logout error:', error);
             alert('로그아웃 중 오류가 발생했습니다.');
         }
     };
@@ -489,7 +493,7 @@ const MyPage = () => {
 
         try {
             const response = await axios.patch(
-                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/profile`,
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/members/profile/pic`,
                 formData,
                 {
                     headers: {
@@ -517,7 +521,6 @@ const MyPage = () => {
                 alert('프로필 이미지가 성공적으로 업데이트되었습니다.');
             }
         } catch (error) {
-            console.error('Image upload error:', error);
             alert('이미지 업로드 중 오류가 발생했습니다.');
         }
     };
@@ -548,7 +551,6 @@ const MyPage = () => {
                 localStorage.setItem('userInfo', JSON.stringify(userInfo));
             }
         } catch (error) {
-            console.error('Image reset error:', error);
             alert('프로필 이미지 초기화 중 오류가 발생했습니다.');
         }
     };
@@ -583,7 +585,6 @@ const MyPage = () => {
                 }
             }
         } catch (error) {
-            console.error('보호 동물 목록 불러오기 오류:', error);
         } finally {
             setIsLoading(false);
         }
@@ -601,11 +602,11 @@ const MyPage = () => {
                 setMyPosts(prev => ({
                     ...prev,
                     reports: response.data.data.content,
-                    reportsTotalPages: response.data.data.totalPages
+                    reportsTotalPages: response.data.data.totalPages,
+                    reportsCurrentPage: page // 현재 페이지 번호 업데이트
                 }));
             }
         } catch (error) {
-            console.error('신고글 불러오기 오류:', error);
         }
     };
 
@@ -621,11 +622,11 @@ const MyPage = () => {
                 setMyPosts(prev => ({
                     ...prev,
                     witnesses: response.data.data.content,
-                    witnessTotalPages: response.data.data.totalPages
+                    witnessTotalPages: response.data.data.totalPages,
+                    witnessCurrentPage: page // 현재 페이지 번호 업데이트
                 }));
             }
         } catch (error) {
-            console.error('제보글 불러오기 오류:', error);
         }
     };
 
@@ -718,20 +719,26 @@ const MyPage = () => {
                 // Navigate to AnimalDetail page with the animalCaseId
                 navigate(`/protection/${animalCaseId}`);
             } else {
-                console.error('Failed to get animal case ID:', response.data);
                 alert('동물 케이스 정보를 불러오는데 실패했습니다.');
             }
         } catch (error) {
-            console.error('Error fetching animal case ID:', error);
             alert('동물 케이스 정보를 불러오는데 오류가 발생했습니다.');
         }
     };
 
-
+    // 상세 페이지로 이동하는 함수
+    const handleDetailNavigation = (e, postId) => {
+        if (e) e.stopPropagation();
+        
+        if (postId) {
+            navigate(`/PetPostDetail/${postId.id}`);
+        } else {
+        }
+    };
 
     return (
-        <div className="min-h-screen bg-[#FFF5E6]">
-            <div className="max-w-4xl mx-auto bg-white rounded-lg shadow p-8">
+        <div className="min-h-screen bg-[#FFF5E6] flex flex-col items-center justify-start p-4">
+            <div className="w-full max-w-lg bg-white rounded-xl shadow overflow-hidden p-6 space-y-6">
                 <div className="flex justify-between items-center mb-4">
                     <h1 className="text-2xl font-bold text-orange-500">마이페이지</h1>
                     <button
@@ -766,7 +773,7 @@ const MyPage = () => {
                 </div>
 
                 {activeTab === 'profile' && (
-                    <div className="text-center">
+                    <div className="text-center rounded-xl p-4">
                         {/* 프로필 정보 */}
                         <div className="relative w-32 h-32 mx-auto mb-4">
                             <img
@@ -774,7 +781,6 @@ const MyPage = () => {
                                 alt="Profile"
                                 className="w-full h-full rounded-full object-cover"
                                 onError={(e) => {
-                                    console.error("이미지 로드 실패:", e);
                                     e.target.src = defaultImage;
                                 }}
                             />
@@ -1090,7 +1096,7 @@ const MyPage = () => {
                 )}
 
                 {activeTab === 'pets' && (
-                    <div className="space-y-6">
+                    <div className="space-y-6 bg-white rounded-xl p-4 shadow hover:shadow-md transition-shadow min-h-[400px]">
                         <div className="flex justify-between items-center mb-6">
                             <h2 className="text-2xl font-bold">내 반려동물 목록</h2>
                             <button
@@ -1189,7 +1195,7 @@ const MyPage = () => {
                             ) : hasMore ? (
                                 <div className="load-more-indicator">더 보기</div>
                             ) : (
-                                <div className="no-more-data">더 이상 데이터가 없습니다</div>
+                                <div className="no-more-data">더 이상 반려동물 데이터가 없습니다</div>
                             )}
                         </div>
 
@@ -1246,22 +1252,26 @@ const MyPage = () => {
                 )}
 
                 {activeTab === 'posts' && (
-                    <div className="space-y-6">
+                    <div className="space-y-6 bg-white rounded-xl p-4 shadow hover:shadow-md transition-shadow overflow-y-auto">
                         {/* 실종 신고글 목록 */}
-                        <div className="mb-8">
+                        <div className="mb-8 border-b pb-4 mb-4 border-gray-200 space-y-4">
                             <h3 className="text-lg font-semibold mb-4">실종 신고글</h3>
-                            <div className="min-h-[450px]"> {/* 최소 높이 설정 */}
+                            <div className={`${myPosts.reports.length > 0 ? 'max-h-[600px] overflow-y-auto' : ''}`}>
                                 {myPosts.reports.length > 0 ? (
+                                    // 현재 페이지의 데이터만 표시 (API에서 이미 페이지별로 가져오므로 추가 슬라이싱 불필요)
                                     myPosts.reports.map(post => (
-                                        <div key={post.createPostTime} className="border-b border-gray-200 py-4">
+                                        <div key={post.id}
+                                            className="border-b border-gray-200 py-4 cursor-pointer hover:bg-gray-50"
+                                            onClick={() => handleDetailNavigation({ stopPropagation: () => { } }, { id: post.id, type: 'pet' })}>
+                                            <input type="hidden" name="postId" value={post.id} />
                                             <div className="flex justify-between items-center">
-                                                <div>
-                                                    <h3 className="text-lg font-medium">{post.content}</h3>
+                                                <div className="flex-grow mr-4 overflow-hidden">
+                                                    <h3 className="text-lg font-medium truncate">{post.content}</h3>
                                                     <p className="text-sm text-gray-500">
                                                         {new Date(post.createPostTime).toLocaleDateString()}
                                                     </p>
                                                 </div>
-                                                <span className="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs">
+                                                <span className="flex-shrink-0 inline-block w-18 px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs text-center whitespace-nowrap overflow-hidden text-ellipsis">
                                                     {post.status === "FINDING" ? "찾는 중" :
                                                         post.status === "FOUND" ? "주인 찾기 완료" : ""}
                                                 </span>
@@ -1281,44 +1291,63 @@ const MyPage = () => {
                                 <button
                                     onClick={() => handleReportPageChange(myPosts.reportsCurrentPage - 1)}
                                     disabled={myPosts.reportsCurrentPage === 0}
-                                    className={`px-3 py-1 border rounded mx-1 ${myPosts.reportsCurrentPage === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100'
+                                    className={`px-3 py-1 border rounded mx-1 ${myPosts.reportsCurrentPage === 0
+                                        ? 'opacity-50 cursor-not-allowed'
+                                        : 'hover:bg-gray-100'
                                         }`}
                                 >
                                     이전
                                 </button>
 
-                                {/* 페이지 번호 버튼들 */}
-                                {Array.from({ length: myPosts.reportsTotalPages }, (_, i) => {
-                                    // 현재 페이지 주변의 페이지만 표시
-                                    if (
-                                        i === 0 || // 첫 페이지
-                                        i === myPosts.reportsTotalPages - 1 || // 마지막 페이지
-                                        Math.abs(i - myPosts.reportsCurrentPage) <= 1 // 현재 페이지 주변
-                                    ) {
-                                        return (
+                                {/* 일관된 페이지 수 표시 (최대 5개) */}
+                                {(() => {
+                                    const pageButtons = [];
+                                    const maxVisiblePages = 5; // 표시할 최대 페이지 버튼 수
+                                    let startPage = 0;
+
+                                    // 총 페이지 수가 최대 표시 수보다 작으면 모든 페이지 표시
+                                    if (myPosts.reportsTotalPages <= maxVisiblePages) {
+                                        startPage = 0;
+                                    }
+                                    // 현재 페이지가 앞쪽에 있을 경우
+                                    else if (myPosts.reportsCurrentPage < Math.floor(maxVisiblePages / 2)) {
+                                        startPage = 0;
+                                    }
+                                    // 현재 페이지가 뒤쪽에 있을 경우
+                                    else if (myPosts.reportsCurrentPage >= myPosts.reportsTotalPages - Math.floor(maxVisiblePages / 2)) {
+                                        startPage = myPosts.reportsTotalPages - maxVisiblePages;
+                                    }
+                                    // 현재 페이지가 중간에 있을 경우
+                                    else {
+                                        startPage = myPosts.reportsCurrentPage - Math.floor(maxVisiblePages / 2);
+                                    }
+
+                                    // 페이지 버튼 생성
+                                    for (let i = 0; i < Math.min(maxVisiblePages, myPosts.reportsTotalPages); i++) {
+                                        const pageIndex = startPage + i;
+                                        pageButtons.push(
                                             <button
-                                                key={i}
-                                                onClick={() => handleReportPageChange(i)}
-                                                className={`px-3 py-1 border rounded mx-1 ${myPosts.reportsCurrentPage === i ? 'bg-blue-500 text-white' : 'hover:bg-gray-100'
+                                                key={pageIndex}
+                                                onClick={() => handleReportPageChange(pageIndex)}
+                                                className={`px-3 py-1 border rounded mx-1 ${myPosts.reportsCurrentPage === pageIndex
+                                                    ? 'bg-blue-500 text-white'
+                                                    : 'hover:bg-gray-100'
                                                     }`}
                                             >
-                                                {i + 1}
+                                                {pageIndex + 1}
                                             </button>
                                         );
-                                    } else if (
-                                        i === myPosts.reportsCurrentPage - 2 ||
-                                        i === myPosts.reportsCurrentPage + 2
-                                    ) {
-                                        // 생략 부호 표시
-                                        return <span key={i} className="px-2">...</span>;
                                     }
-                                    return null;
-                                })}
+
+                                    return pageButtons;
+                                })()}
 
                                 <button
                                     onClick={() => handleReportPageChange(myPosts.reportsCurrentPage + 1)}
                                     disabled={myPosts.reportsCurrentPage === myPosts.reportsTotalPages - 1}
-                                    className={`px-3 py-1 border rounded mx-1 ${myPosts.reportsCurrentPage === myPosts.reportsTotalPages - 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100'
+                                    className={`px-3 py-1 border rounded mx-1 ${myPosts.reportsCurrentPage === myPosts.reportsTotalPages - 1
+                                        ? 'opacity-50 cursor-not-allowed'
+                                        : 'hover:bg-gray-100'
                                         }`}
                                 >
                                     다음
@@ -1328,18 +1357,22 @@ const MyPage = () => {
                         {/* 실종 제보글 목록 */}
                         <div className="mb-8">
                             <h3 className="text-lg font-semibold mb-4">실종 제보글</h3>
-                            <div className="min-h-[450px]"> {/* 최소 높이 설정 */}
+                            <div className={`${myPosts.witnesses.length > 0 ? 'max-h-[600px] overflow-y-auto' : ''}`}>
                                 {myPosts.witnesses.length > 0 ? (
+                                    // 현재 페이지의 데이터만 표시 (API에서 이미 페이지별로 가져오므로 추가 슬라이싱 불필요)
                                     myPosts.witnesses.map(post => (
-                                        <div key={post.createPostTime} className="border-b border-gray-200 py-4">
+                                        <div key={post.id || post.createPostTime}
+                                            className="border-b border-gray-200 py-4 cursor-pointer hover:bg-gray-50"
+                                            onClick={() => handleDetailNavigation({ stopPropagation: () => { } }, { id: post.id, type: 'pet' })}>
+                                            <input type="hidden" name="postId" value={post.id} />
                                             <div className="flex justify-between items-center">
-                                                <div>
-                                                    <h3 className="text-lg font-medium">{post.content}</h3>
+                                                <div className="flex-grow mr-4 overflow-hidden">
+                                                    <h3 className="text-lg font-medium truncate">{post.content}</h3>
                                                     <p className="text-sm text-gray-500">
                                                         {new Date(post.createPostTime).toLocaleDateString()}
                                                     </p>
                                                 </div>
-                                                <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
+                                                <span className="flex-shrink-0 inline-block w-18 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs text-center whitespace-nowrap overflow-hidden text-ellipsis">
                                                     {post.status === "SIGHTED" ? "목격" :
                                                         post.status === "SHELTER" ? "보호소" :
                                                             post.status === "FOSTERING" ? "임보 중" : ""}
@@ -1354,50 +1387,70 @@ const MyPage = () => {
                                 )}
                             </div>
                         </div>
+
                         {/* 실종 제보글 페이지네이션 */}
                         {myPosts.witnessTotalPages > 1 && (
                             <div className="flex justify-center mt-6">
                                 <button
                                     onClick={() => handleWitnessPageChange(myPosts.witnessCurrentPage - 1)}
                                     disabled={myPosts.witnessCurrentPage === 0}
-                                    className={`px-3 py-1 border rounded mx-1 ${myPosts.witnessCurrentPage === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100'
+                                    className={`px-3 py-1 border rounded mx-1 ${myPosts.witnessCurrentPage === 0
+                                        ? 'opacity-50 cursor-not-allowed'
+                                        : 'hover:bg-gray-100'
                                         }`}
                                 >
                                     이전
                                 </button>
 
-                                {/* 페이지 번호 버튼들 */}
-                                {Array.from({ length: myPosts.witnessTotalPages }, (_, i) => {
-                                    // 현재 페이지 주변의 페이지만 표시
-                                    if (
-                                        i === 0 || // 첫 페이지
-                                        i === myPosts.witnessTotalPages - 1 || // 마지막 페이지
-                                        Math.abs(i - myPosts.witnessCurrentPage) <= 1 // 현재 페이지 주변
-                                    ) {
-                                        return (
+                                {/* 일관된 페이지 수 표시 (최대 5개) */}
+                                {(() => {
+                                    const pageButtons = [];
+                                    const maxVisiblePages = 5; // 표시할 최대 페이지 버튼 수
+                                    let startPage = 0;
+
+                                    // 총 페이지 수가 최대 표시 수보다 작으면 모든 페이지 표시
+                                    if (myPosts.witnessTotalPages <= maxVisiblePages) {
+                                        startPage = 0;
+                                    }
+                                    // 현재 페이지가 앞쪽에 있을 경우
+                                    else if (myPosts.witnessCurrentPage < Math.floor(maxVisiblePages / 2)) {
+                                        startPage = 0;
+                                    }
+                                    // 현재 페이지가 뒤쪽에 있을 경우
+                                    else if (myPosts.witnessCurrentPage >= myPosts.witnessTotalPages - Math.floor(maxVisiblePages / 2)) {
+                                        startPage = myPosts.witnessTotalPages - maxVisiblePages;
+                                    }
+                                    // 현재 페이지가 중간에 있을 경우
+                                    else {
+                                        startPage = myPosts.witnessCurrentPage - Math.floor(maxVisiblePages / 2);
+                                    }
+
+                                    // 페이지 버튼 생성
+                                    for (let i = 0; i < Math.min(maxVisiblePages, myPosts.witnessTotalPages); i++) {
+                                        const pageIndex = startPage + i;
+                                        pageButtons.push(
                                             <button
-                                                key={i}
-                                                onClick={() => handleWitnessPageChange(i)}
-                                                className={`px-3 py-1 border rounded mx-1 ${myPosts.witnessCurrentPage === i ? 'bg-blue-500 text-white' : 'hover:bg-gray-100'
+                                                key={pageIndex}
+                                                onClick={() => handleWitnessPageChange(pageIndex)}
+                                                className={`px-3 py-1 border rounded mx-1 ${myPosts.witnessCurrentPage === pageIndex
+                                                    ? 'bg-blue-500 text-white'
+                                                    : 'hover:bg-gray-100'
                                                     }`}
                                             >
-                                                {i + 1}
+                                                {pageIndex + 1}
                                             </button>
                                         );
-                                    } else if (
-                                        i === myPosts.witnessCurrentPage - 2 ||
-                                        i === myPosts.witnessCurrentPage + 2
-                                    ) {
-                                        // 생략 부호 표시
-                                        return <span key={i} className="px-2">...</span>;
                                     }
-                                    return null;
-                                })}
+
+                                    return pageButtons;
+                                })()}
 
                                 <button
                                     onClick={() => handleWitnessPageChange(myPosts.witnessCurrentPage + 1)}
                                     disabled={myPosts.witnessCurrentPage === myPosts.witnessTotalPages - 1}
-                                    className={`px-3 py-1 border rounded mx-1 ${myPosts.witnessCurrentPage === myPosts.witnessTotalPages - 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100'
+                                    className={`px-3 py-1 border rounded mx-1 ${myPosts.witnessCurrentPage === myPosts.witnessTotalPages - 1
+                                        ? 'opacity-50 cursor-not-allowed'
+                                        : 'hover:bg-gray-100'
                                         }`}
                                 >
                                     다음
