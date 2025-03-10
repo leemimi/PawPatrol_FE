@@ -283,7 +283,8 @@ const MyPage = () => {
             if (response.data.statusCode === 200) {
                 alert('반려동물 정보가 성공적으로 수정되었습니다.');
                 setIsEditOpen(false);
-                await fetchMyPets(); // 반려동물 목록 새로고침
+                setPage(0); // 페이지를 0으로 초기화
+                await fetchMyPets(0); // 반려동물 목록 새로고침
             }
         } catch (error) {
             alert('반려동물 정보 수정 중 오류가 발생했습니다.');
@@ -1127,12 +1128,12 @@ const MyPage = () => {
                                         <div className="flex justify-between items-center">
                                             <h3 className="text-xl font-bold text-gray-800">{pet.name}</h3>
                                             <span
-                                                className={`text-sm font-medium px-2 py-1 rounded-full ${pet.animalType === 'DOG'
+                                                className={`text-sm font-medium px-2 py-1 rounded-full ${pet.animalType === '강아지'
                                                     ? 'bg-blue-100 text-blue-800' // 강아지 스타일
                                                     : 'bg-pink-100 text-pink-800' // 고양이 스타일
                                                     }`}
                                             >
-                                                {pet.animalType === 'DOG' ? '강아지' : '고양이'}
+                                                {pet.animalType === '강아지' ? '강아지' : '고양이'}
                                             </span>
                                         </div>
 
