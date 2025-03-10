@@ -150,25 +150,32 @@ const LostPostForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+  
     // Ensure a pet is selected and location is provided
     if (!selectedPet) {
       alert("반려동물을 선택해주세요.");
       return;
     }
-
+  
     if (!formData.location) {
       alert("위치를 입력해주세요.");
       return;
     }
+  
     const metadataJson = JSON.stringify(formData);
     const formDataToSend = new FormData();
     formDataToSend.append("metadata", metadataJson);
-    images.forEach((image) => formDataToSend.append("images", image));
-
-    // API endpoint selection based on formType
+  
+    // Check if images are selected before appending
+    if (images.length > 0) {
+      images.forEach((image) => formDataToSend.append("images", image));
+    }
+  
+    // If no images are selected, don't append the "images" field
+    // No need to append empty arrays or null values
+  
     let apiUrl = `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/lost-foundposts`;
-
+  
     try {
       const response = await axios.post(
         apiUrl,
@@ -185,6 +192,9 @@ const LostPostForm = () => {
       alert("게시글 등록에 실패했습니다.");
     }
   };
+  
+  
+
 
   return (
     <div className="min-h-screen bg-orange-50">
