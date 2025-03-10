@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, AlertCircle, Phone, ChevronUp, ChevronDown, MapPin, Bookmark, Info } from 'lucide-react';
 import { EmergencyContacts } from './EmergencyContacts';
 import { StepContent } from './StepContent';
+import { useLocation } from 'react-router-dom';
 
 export const RescueGuide = ({
     onClose,
@@ -13,10 +14,13 @@ export const RescueGuide = ({
     currentPosition,
     selectedRange
 }) => {
+    const location = useLocation();
     const [currentStep, setCurrentStep] = useState(0);
     const [animalInjured, setAnimalInjured] = useState(null);
     const [showEmergencyContacts, setShowEmergencyContacts] = useState(false);
     const [visitedSteps, setVisitedSteps] = useState([0]);
+    const [showAnimalTypeModal, setShowAnimalTypeModal] = useState(false);
+    const [selectedAnimalType, setSelectedAnimalType] = useState(null);
 
     // 구조 단계 상태 정의
     const steps = [
@@ -101,6 +105,16 @@ export const RescueGuide = ({
         </svg>
     );
 
+
+    useEffect(() => {
+        // returnToStep이 있으면 해당 단계로 이동
+        if (location.state?.returnToStep !== undefined) {
+            setCurrentStep(location.state.returnToStep);
+            // 방문한 단계에도 추가 (필요한 경우)
+            setVisitedSteps(prev => [...prev, location.state.returnToStep]);
+        }
+    }, [location.state]);
+
     return (
         <div
             className="absolute inset-x-0 bottom-0 bg-white rounded-t-3xl shadow-xl border-t-2 border-orange-100 z-50 transition-all duration-300"
@@ -162,6 +176,11 @@ export const RescueGuide = ({
                     goToReportPage={goToReportPage}
                     goToTempCarePage={goToTempCarePage}
                     onClose={onClose}
+                    showAnimalTypeModal={showAnimalTypeModal}
+                    setShowAnimalTypeModal={setShowAnimalTypeModal}
+                    selectedAnimalType={selectedAnimalType}
+                    setSelectedAnimalType={setSelectedAnimalType}
+                    navigate={navigate}
                 />
             </div>
         </div>

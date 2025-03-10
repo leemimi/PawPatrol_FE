@@ -34,14 +34,14 @@ const [currentImageIndex, setCurrentImageIndex] = useState(0);
   useEffect(() => {
     if (!postId) return;
 
-    axios.get(`http://localhost:8090/api/v1/lost-foundposts/${postId}`)
+    axios.get(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/lost-foundposts/${postId}`)
       .then(response => {
         setPost(response.data.data);
       })
       .catch(error => console.error("Error fetching post data:", error));
       
 
-    axios.get(`http://localhost:8090/api/v1/comments/lost-foundposts/${postId}`)
+    axios.get(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/comments/lost-foundposts/${postId}`)
       .then(response => setComments(response.data.data || []))
       .catch(error => console.error("Error fetching comments:", error));
   }, [postId]);
@@ -50,7 +50,7 @@ const [currentImageIndex, setCurrentImageIndex] = useState(0);
     if (!postId) return;
 
     // 게시글 데이터 가져오기
-    axios.get(`http://localhost:8090/api/v1/lost-foundposts/${postId}`)
+    axios.get(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/lost-foundposts/${postId}`)
       .then(response => {
         setPost(response.data.data);
       })
@@ -60,7 +60,7 @@ const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const userInfo = JSON.parse(localStorage.getItem('userInfo')) || {};
   
     if (userInfo.email) {
-      axios.get(`http://localhost:8090/api/v2/auth/me`, { withCredentials: true })
+      axios.get(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/auth/me`, { withCredentials: true })
         .then(response => {
           if (response.data?.data) {
             const userId = response.data.data.id;
@@ -89,7 +89,7 @@ const [currentImageIndex, setCurrentImageIndex] = useState(0);
     };
 
     try {
-      const response = await axios.post('http://localhost:8090/api/v1/comments', commentData);
+      const response = await axios.post(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/comments`, commentData);
       if (response.data.resultCode === "200") {
         setComments([...comments, response.data.data]);
         setNewComment('');
@@ -113,7 +113,7 @@ const [currentImageIndex, setCurrentImageIndex] = useState(0);
     };
 
     try {
-      const response = await axios.put(`http://localhost:8090/api/v1/comments/${editingCommentId}`, updatedComment);
+      const response = await axios.put(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/comments/${editingCommentId}`, updatedComment);
       if (response.data.resultCode === "200") {
         setComments(comments.map(comment => 
           comment.id === editingCommentId ? { ...comment, content: newComment } : comment
@@ -129,7 +129,7 @@ const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const handleDeleteComment = async (commentId) => {
     if (window.confirm('정말로 삭제하시겠습니까?')) {
       try {
-        const response = await axios.delete(`http://localhost:8090/api/v1/comments/${commentId}`);
+        const response = await axios.delete(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/comments/${commentId}`);
         if (response.data.resultCode === "200") {
           setComments(comments.filter(comment => comment.id !== commentId));
         }
@@ -153,7 +153,7 @@ const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const handleDelete = async (postId) => {
     if (window.confirm('정말로 삭제하시겠습니까?')) {
       try {
-        const response = await axios.delete(`http://localhost:8090/api/v1/lost-foundposts/${postId}`);
+        const response = await axios.delete(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/lost-foundposts/${postId}`);
         if (response.data.resultCode === "200") {
           console.log('Post deleted');
           alert('게시글이 성공적으로 삭제되었습니다.');

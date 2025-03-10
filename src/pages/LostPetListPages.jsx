@@ -102,7 +102,7 @@ const LostPetListPages = () => {
 
     const fetchLostPetPosts = async () => {
         try {
-            const response = await axios.get(`http://localhost:8090/api/v1/lost-foundposts?page=${currentPage}&size=5`);
+            const response = await axios.get(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/lost-foundposts?page=${currentPage}&size=5`);
             setPosts(response.data.data.content);  // API 응답 형식에 따라 수정
             setTotalPages(response.data.data.totalPages);  // 전체 페이지 수 설정
             console.log(response.data.data.content);
