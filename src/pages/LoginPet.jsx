@@ -100,7 +100,8 @@ const LoginScreen = () => {
                 }
             }
         } catch (error) {
-            alert(error.response.data.msg || error.response.data.message);
+            console.log(error);
+            alert(error.response.data.msg || '비밀번호가 일치하지 않습니다.');
         }
     };
 

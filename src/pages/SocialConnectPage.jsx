@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import puppyLogo from '../assets/images/paw.png';
+import puppyLogo from '../assets/images/hanlogo.png';
 import axios from 'axios';
 
 const SocialConnectPage = () => {
@@ -85,7 +85,7 @@ const SocialConnectPage = () => {
                         <img
                             src={puppyLogo}
                             alt="PawPatrol Logo"
-                            className="w-32 h-32 mb-2"
+                            className="w-48 h-48 mb-2"
                         />
                         {/* <h1 className="text-2xl font-bold text-orange-900 absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-orange-50 px-2">
                             PawPatrol
