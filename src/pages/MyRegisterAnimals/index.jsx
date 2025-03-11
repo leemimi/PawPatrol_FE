@@ -261,9 +261,9 @@ const MyRegisteredAnimals = () => {
                             <>
                                 {/* 신청가능 카운트 */}
                                 <div className="flex-1 text-center">
-                                    <div className="bg-yellow-50 rounded-lg p-2">
+                                    <div className="bg-orange-50 rounded-lg p-2">
                                         <span className="text-sm text-gray-500">신청가능</span>
-                                        <p className="text-lg font-semibold text-yellow-500">{waitingCount}</p>
+                                        <p className="text-lg font-semibold text-orange-500">{waitingCount}</p>
                                     </div>
                                 </div>
 

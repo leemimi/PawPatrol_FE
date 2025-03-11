@@ -39,7 +39,7 @@ const getStatusColor = (status, type) => {
     if (type === 'protection') {
         switch (status) {
             case 'PROTECT_WAITING':
-                return 'bg-yellow-400 text-white';
+                return 'bg-orange-400 text-white';
             case 'TEMP_PROTECTING':
                 return 'bg-red-400 text-white';
             case 'SHELTER_PROTECTING':
