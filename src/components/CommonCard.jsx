@@ -30,10 +30,10 @@ export const CommonCard = ({ item, type, onClose }) => {
     // 상세 페이지로 이동하는 함수
     const handleDetailNavigation = (e) => {
         if (e) e.stopPropagation();
-        console.log("item",item);
+        console.log("item", item);
         if (type !== 'pet') return;
         console.log('item?.pet?.imageUrl:', item?.pet?.imageUrl);
-console.log('item?.image:', item?.image);
+        console.log('item?.image:', item?.image);
 
         // ID 가져오기 (foundId 우선, id는 차선)
         let postId = null;
@@ -67,38 +67,27 @@ console.log('item?.image:', item?.image);
             </h3>
         ) : null;
 
-         // 이미지 경로 처리
-         const imageUrl = item?.pet?.imageUrl || petImage;  // imageUrl이 없으면 item?.image 사용
-         const imageUrl1 = item?.image || petImage;  // item?.image가 없으면 기본 이미지 사용
-       
+        // 이미지 경로 처리
+        const imageUrl = item?.pet?.imageUrl || petImage;  // imageUrl이 없으면 item?.image 사용
+        const imageUrl1 = item?.image || petImage;  // item?.image가 없으면 기본 이미지 사용
+
 
         return (
             <div className="flex flex-col items-start gap-4 bg-white p-4 rounded-lg border border-orange-200">
                 <div className="flex items-start gap-4 w-full">
                     {/* 이미지 URL 적용 */}
                     <div className="flex gap-4">
-    {/* 첫 번째 이미지 칸 */}
-    <div className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-orange-100 cursor-pointer" onClick={handleDetailNavigation}>
-        {item?.pet?.imageUrl && (
-            <img
-                src={imageUrl}
-                alt={item?.pet?.name || '제보글입니다'}
-                className="w-full h-full object-cover"
-            />
-        )}
-    </div>
-
-    {/* 두 번째 이미지 칸 */}
-    <div className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-orange-100 cursor-pointer" onClick={handleDetailNavigation}>
-        {item?.image && item?.pet?.imageUrl !== item?.image && (
-            <img
-                src={imageUrl1}
-                alt={item?.pet?.name || 'Default Pet'}
-                className="w-full h-full object-cover"
-            />
-        )}
-    </div>
-</div>
+                        {/* 이미지 칸 */}
+                        <div className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-orange-100 cursor-pointer" onClick={handleDetailNavigation}>
+                            {item?.image && item?.pet?.imageUrl !== item?.image && (
+                                <img
+                                    src={imageUrl1}
+                                    alt={item?.pet?.name || 'Default Pet'}
+                                    className="w-full h-full object-cover"
+                                />
+                            )}
+                        </div>
+                    </div>
 
 
                     <div className="flex-1">
