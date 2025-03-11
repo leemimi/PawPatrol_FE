@@ -242,6 +242,7 @@ export const useAnimalForm = (id = null) => {
             try {
                 setLoading(true);
                 const result = await ProtectionApiService.fetchProtectionDetail(id);
+                console.log('API 응답 원본 데이터:', result);
 
                 // API 응답에서 폼 데이터로 변환
                 const animalData = result.animalCaseDetail;
@@ -259,10 +260,12 @@ export const useAnimalForm = (id = null) => {
                     registrationNo: animalData.animalInfo.registrationNo || "",
                     animalType: animalData.animalInfo.animalType || "DOG"
                 };
+                const imagePaths = result.images ? result.images.map(img => img.path) : [];
 
                 setInitialData({
                     formData,
-                    imageUrl: animalData.animalInfo.imageUrl
+                    imageUrl: animalData.animalInfo.imageUrl,
+                    imageUrls: imagePaths
                 });
             } catch (err) {
                 setError(err);
