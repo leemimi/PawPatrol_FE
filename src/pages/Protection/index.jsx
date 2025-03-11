@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, Search, X, MapPin, ChevronDown, ChevronUp } from 'lucide-react';
+import { Menu, Search, X, MapPin, ChevronDown, ChevronUp, Filter } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import StatusBadge from '../../components/StatusBadge';
 import InfiniteScroll from '../../components/InfiniteScroll';
@@ -67,15 +67,15 @@ const Protection = () => {
 
   const renderAnimal = (animal, index) => (
     <div
-      className="bg-white rounded-xl overflow-hidden shadow hover:shadow-md transition-shadow cursor-pointer"
+      className="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:scale-[1.02]"
       onClick={() => handleAnimalClick(animal)}
     >
-      <div className="relative h-40">
+      <div className="relative h-40 overflow-hidden">
         {animal.imageUrl && (
           <img
             src={animal.imageUrl}
             alt={animal.title}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
           />
         )}
         <div className="absolute top-2 left-2">
@@ -83,19 +83,21 @@ const Protection = () => {
         </div>
       </div>
 
-      <div className="p-3 h-[6.5rem] flex flex-col justify-between">
-        <h3 className="text-sm text-gray-800 min-h-[2.5rem] line-clamp-2 text-center">
+      <div className="p-4 h-[7rem] flex flex-col justify-between">
+        <h3 className="text-[15px] text-amber-900 min-h-[2.5rem] line-clamp-2 text-center font-medium">
           {animal.title}
         </h3>
         {animal.location && (
-          <div className="flex items-center justify-start text-xs text-gray-400 mt-1">
-            <MapPin size={12} className="mr-1" />
+          <div className="flex items-center justify-start text-sm text-amber-700/70 mt-1">
+            <MapPin size={14} className="mr-1" />
             <span className="truncate">{animal.location}</span>
           </div>
         )}
-        <div className="flex justify-between items-center text-xs mt-1">
-          <span className="text-orange-500">{animal.breed}</span>
-          <span className="text-gray-400">{new Date(animal.createdAt).toLocaleDateString()}</span>
+        <div className="flex justify-between items-center text-sm mt-2">
+          <span className="text-amber-600 font-medium">{animal.breed}</span>
+          <span className="text-amber-700/60">
+            {new Date(animal.createdAt).toLocaleDateString()}
+          </span>
         </div>
       </div>
     </div>
@@ -139,72 +141,79 @@ const Protection = () => {
   }
 
   return (
-    <div className="max-w-lg mx-auto bg-[#FFF5E6] min-h-screen p-3 relative pb-24">
-      <div className="mb-4 bg-white rounded-xl p-4 shadow hover:shadow-md transition-shadow">
+    <div className="max-w-lg mx-auto bg-orange-100 min-h-screen p-3 relative pb-24">
+      <div className="mb-4 bg-white rounded-xl p-4 shadow-md hover:shadow-lg transition-shadow">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">🐾</span>
-            <p className="text-sm text-gray-600">
-              총 <span className="text-orange-500 font-semibold">{totalElements}</span>마리의
-              <span className="text-orange-400 font-semibold"> 귀여운 친구들</span>이 기다리고 있어요!
-            </p>
+          <div className="flex items-center gap-3">
+            <span className="text-3xl">🐾</span>
+            <div className="text-base">
+              <p className="text-amber-800 leading-relaxed">
+                총 <span className="text-amber-600 font-bold text-lg">{totalElements}</span>마리의
+                <span className="text-amber-700 font-bold"> 귀여운 친구들</span>이
+                <br />기다리고 있어요!
+              </p>
+            </div>
           </div>
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className="text-orange-500 flex items-center"
+            className="text-amber-600 hover:text-amber-700 flex items-center gap-1 bg-orange-50 px-3 py-1.5 rounded-full transition-all duration-200"
           >
-            {showFilters ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+            <Filter size={16} className={`transition-transform duration-200 ${showFilters ? 'rotate-180' : ''}`} />
+            <span className="text-sm font-medium">필터</span>
+            {showFilters ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
           </button>
         </div>
 
         {showFilters && (
-          <div className="mt-3 pt-3 border-t border-gray-100">
-            <div className="flex items-center gap-2">
+          <div className="mt-4 pt-4 border-t border-amber-100">
+            <div className="flex items-center gap-3">
               {/* 동물 유형 필터 버튼 */}
               <button
                 onClick={() => handleAnimalTypeChange('DOG')}
-                className={`px-3 py-1.5 rounded-full text-xs ${animalType === 'DOG'
-                  ? 'bg-orange-500 text-white'
-                  : 'bg-gray-100 text-gray-600'
-                  }`}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                  animalType === 'DOG'
+                    ? 'bg-amber-500 text-white shadow-md'
+                    : 'bg-orange-50 text-amber-700 hover:bg-amber-100'
+                }`}
               >
                 강아지
               </button>
               <button
                 onClick={() => handleAnimalTypeChange('CAT')}
-                className={`px-3 py-1.5 rounded-full text-xs ${animalType === 'CAT'
-                  ? 'bg-orange-500 text-white'
-                  : 'bg-gray-100 text-gray-600'
-                  }`}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                  animalType === 'CAT'
+                    ? 'bg-amber-500 text-white shadow-md'
+                    : 'bg-orange-50 text-amber-700 hover:bg-amber-100'
+                }`}
               >
                 고양이
               </button>
 
               {/* 검색 입력 필드 */}
-              <div className="flex-1 flex items-center ml-2 bg-gray-100 rounded-full overflow-hidden">
+              <div className="flex-1 flex items-center ml-2 bg-orange-50 rounded-full overflow-hidden shadow-sm">
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="지역 검색"
-                  className="flex-1 px-3 py-1.5 text-xs bg-transparent focus:outline-none"
+                  className="flex-1 px-4 py-2 text-sm bg-transparent focus:outline-none text-amber-800 placeholder-amber-600"
                   onKeyDown={(e) => e.key === 'Enter' && applyFilters()}
                 />
                 <button
                   onClick={applyFilters}
-                  className="px-3 py-1.5 text-orange-500 hover:text-orange-600 transition-colors"
+                  className="px-4 py-2 text-amber-600 hover:text-amber-700 transition-colors"
                 >
-                  <Search size={14} />
+                  <Search size={16} />
                 </button>
               </div>
 
-              {/* 초기화 버튼 - X 아이콘만 */}
+              {/* 초기화 버튼 */}
               {(animalType || location) && (
                 <button
                   onClick={resetFilters}
-                  className="p-1.5 rounded-full bg-gray-200 text-gray-600 hover:bg-gray-300 transition-colors"
+                  className="p-2 rounded-full bg-amber-100 text-amber-600 hover:bg-amber-200 transition-colors"
                 >
-                  <X size={14} />
+                  <X size={16} />
                 </button>
               )}
             </div>

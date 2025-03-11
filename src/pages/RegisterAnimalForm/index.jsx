@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronLeft, MapPin, Pencil, Camera, X, Plus } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import { useAnimalForm } from '../../hooks/useProtections';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const RegisterAnimalForm = () => {
+    const location = useLocation();
     const navigate = useNavigate();
     const fileInputRef = useRef(null);
     const [images, setImages] = useState([]);
@@ -76,6 +77,19 @@ const RegisterAnimalForm = () => {
     useEffect(() => {
         window.scrollTo(0, 0);
     }, []);
+
+
+    useEffect(() => {
+        if (location.state?.animalType) {
+            setFormData(prev => ({
+                ...prev,
+                animalType: location.state.animalType
+            }));
+        }
+    }, [location.state]);
+
+    const animalTypeText = formData.animalType === 'DOG' ? '강아지' : formData.animalType === 'CAT' ? '고양이' : '알 수 없음';
+
 
     return (
         <div className="min-h-screen bg-orange-50">
@@ -173,15 +187,10 @@ const RegisterAnimalForm = () => {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm text-orange-900 mb-1">종류</label>
-                                    <select
-                                        name="animalType"
-                                        value={formData.animalType}
-                                        onChange={handleChange}
-                                        className="w-full p-2 border border-orange-200 rounded-lg text-orange-900 focus:outline-none focus:border-orange-400"
-                                    >
-                                        <option value="DOG">강아지</option>
-                                        <option value="CAT">고양이</option>
-                                    </select>
+                                    <div className="w-full p-2 border border-orange-200 rounded-lg text-orange-900 bg-gray-50">
+                                        {animalTypeText}
+                                    </div>
+                                    <input type="hidden" name="animalType" value={formData.animalType} />
                                 </div>
 
                                 <div>

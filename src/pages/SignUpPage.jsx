@@ -5,6 +5,13 @@ import DaumPostcode from 'react-daum-postcode';
 
 
 const SignUp = () => {
+    const [errors, setErrors] = useState({
+        email: '',
+        code: '',
+        password: '',
+        address: '',
+        general: ''
+    });
     const [openPostcode, setOpenPostcode] = useState(false);
     const [address, setAddress] = useState('');
     const navigate = useNavigate();
@@ -41,6 +48,7 @@ const SignUp = () => {
     // 이메일 인증
     const handleEmailVerification = async () => {
         try {
+            setErrors({ ...errors, email: '' }); // 성공 시 에러 초기화
             const response = await axios.post(
                 `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/auth/email/verification-code`,
                 {
@@ -55,21 +63,35 @@ const SignUp = () => {
             );
 
             if (response.data.statusCode === 200) {
-                alert('인증 이메일이 발송되었습니다. 이메일을 확인해주세요.');
+                setErrors({
+                    ...errors,
+                    email: '인증 이메일이 발송되었습니다. 이메일을 확인해주세요.'
+                });
                 setIsEmailSent(true);
             } else if (response.data.statusCode === 400) {
-                alert(response.data.message);
+                setErrors({
+                    ...errors,
+                    email: response.data.message
+                });
             } else {
-                alert('이메일 인증 발송에 실패했습니다.');
+                setErrors({
+                    ...errors,
+                    email: '이메일 인증 발송에 실패했습니다.'
+                });
             }
         } catch (error) {
-            alert('이메일 인증 중 오류가 발생했습니다.');
+            setErrors({
+                ...errors,
+                email: '이메일 인증 중 오류가 발생했습니다.'
+            });
         }
     };
 
     // 이메일 인증 코드 확인
     const handleVerifyCode = async () => {
         try {
+
+
             const response = await axios.post(
                 `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/auth/email/verify`,
                 {
@@ -83,14 +105,26 @@ const SignUp = () => {
                     withCredentials: true // 쿠키 포함 설정
                 }
             );
+            if (response.data.statusCode == 200) {
+                setErrors(prevErrors => ({
+                    ...prevErrors,
+                    email: '',
+                    code: ''  // 한 번에 두 필드 모두 초기화
+                }));
+                setIsEmailVerified(true);
+            }
 
-            alert('이메일 인증이 완료되었습니다.');
-            setIsEmailVerified(true);
         } catch (error) {
             if (error.response && error.response.data) {
-                alert(error.response.data.message || '인증 코드가 일치하지 않습니다.');
+                setErrors({
+                    ...errors,
+                    code: error.response.data.message || '인증 코드가 일치하지 않습니다.'
+                });
             } else {
-                alert('인증 코드 확인 중 오류가 발생했습니다.');
+                setErrors({
+                    ...errors,
+                    code: '인증 코드 확인 중 오류가 발생했습니다.'
+                });
             }
         }
     };
@@ -105,13 +139,31 @@ const SignUp = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        // 이메일 인증 여부 검증
         if (!isEmailVerified) {
-            alert('이메일 인증이 필요합니다.');
+            setErrors({
+                ...errors,
+                email: '이메일 인증이 필요합니다.'
+            });
             return;
         }
 
+        // 비밀번호 검증
         if (formData.password !== formData.passwordConfirm) {
-            alert('비밀번호가 일치하지 않습니다.');
+            setErrors({
+                ...errors,
+                password: '비밀번호가 일치하지 않습니다.'
+            });
+            return;
+        }
+
+        // 주소 입력 검사
+        if (!address.trim()) {
+            setErrors({
+                ...errors,
+                address: '주소를 입력해주세요.'  // 주소 에러 메시지 추가
+            });
             return;
         }
 
@@ -133,13 +185,19 @@ const SignUp = () => {
             );
 
             alert('회원가입이 완료되었습니다.');
+            setErrors(prevErrors => ({  // 성공 시 에러 초기화
+                ...prevErrors,
+                email: '',
+                code: '',
+                password: '',
+                general: ''
+            }));
             navigate('/');
         } catch (error) {
-            if (error.response && error.response.data) {
-                alert(error.response.data.message || '회원가입에 실패했습니다.');
-            } else {
-                alert('회원가입 중 오류가 발생했습니다.');
-            }
+            setErrors({
+                ...errors,
+                general: error.response.data.message || '회원가입에 실패했습니다.'
+            });
         }
     };
 
@@ -186,6 +244,9 @@ const SignUp = () => {
                                 </span>
                             )}
                         </div>
+                        {errors && (
+                            <div className="text-red-500 text-sm">{errors.email}</div>
+                        )}
                         {/* 인증 코드 입력 필드 */}
                         {isEmailSent && !isEmailVerified && (
                             <div className="flex space-x-2">
@@ -210,6 +271,9 @@ const SignUp = () => {
                                 </button>
                             </div>
                         )}
+                        {errors && (
+                            <div className="text-red-500 text-sm">{errors.code}</div>
+                        )}
                         <div>
                             <input
                                 type="password"
@@ -232,6 +296,9 @@ const SignUp = () => {
                                 required
                             />
                         </div>
+                        {errors && (
+                            <div className="text-red-500 text-sm">{errors.password}</div>
+                        )}
                         <div className="relative">
                             <input
                                 type="text"
@@ -250,6 +317,9 @@ const SignUp = () => {
                                 검색
                             </button>
                         </div>
+                        {errors.address && (
+                            <div className="text-red-500 text-sm">{errors.address}</div>
+                        )}
                         {/* 우편번호 검색 팝업 */}
                         {openPostcode && (
                             <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
@@ -285,6 +355,9 @@ const SignUp = () => {
                             가입하기
                         </button>
                     </form>
+                    {errors && (
+                        <div className="text-red-500 text-sm">{errors.general}</div>
+                    )}
 
                     <div className="flex items-center justify-center space-x-4 text-sm text-gray-600">
                         <button

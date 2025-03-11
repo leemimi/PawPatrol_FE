@@ -8,6 +8,7 @@ import { useGeolocation } from '../hooks/UseGeolocation.jsx';
 import { useCustomOverlays } from '../hooks/UseCustomOverlays';
 import { CommonList } from '../components/CommonList';
 import { CommonCard } from '../components/CommonCard';
+import RewardPoster from '../components/RewardPoster';
 import { PetCard } from '../components/PetCard';
 import WriteButton from '../components/WriteButton';
 import NotificationButton from '../components/NotificationButton';
@@ -40,6 +41,8 @@ const Map = () => {
     const [currentPosition, setCurrentPosition] = useState(getSavedPosition());
     const [isCardVisible, setIsCardVisible] = useState(false);
     const [isMarkerTransitioning, setIsMarkerTransitioning] = useState(false);
+    const [showRewardPoster, setShowRewardPoster] = useState(false);
+    const [rewardPosterData, setRewardPosterData] = useState(null);
 
     // 알림 관련 상태
     const [notification, setNotification] = useState(null);
@@ -490,6 +493,25 @@ const Map = () => {
         }
     };
 
+
+    const showTestRewardPoster = () => {
+        // 더미 데이터로 현상금 전단지 표시
+        const dummyPoster = {
+            id: 1,
+            petName: '멍이',
+            breed: '골든 리트리버',
+            lastSeenLocation: '서울시 강남구 역삼동',
+            imageUrl: '',
+            contactNumber: '010-1234-5678',
+            reward: 500000,
+            templateType: 'DOG' // 'DOG', 'CAT', 'WANTED' 중 선택
+        };
+
+        setRewardPosterData(dummyPoster);
+        setShowRewardPoster(true);
+    };
+
+
     return (
         <div className="h-screen w-full bg-orange-50/30 relative overflow-hidden">
             {/* 알림 팝업 */}
@@ -538,6 +560,15 @@ const Map = () => {
                         onLocationClick={getCurrentLocation}
                         onListClick={() => setShowList(!showList)}
                     />
+                    <button
+                        onClick={showTestRewardPoster}
+                        className="fixed bottom-52 left-4 z-40 bg-white rounded-full p-3 shadow-lg text-red-600 hover:text-red-500 transition-colors border-2 border-red-100"
+                        title="현상금 전단지 테스트"
+                    >
+                        <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none">
+                            <path d="M12 8v4m0 4h.01M21.29 4.71a10 10 0 0 0-14.14 0L3 9l1.5 1.5L12 18l7.5-7.5L21 9l-1.71-2.29Z" />
+                        </svg>
+                    </button>
 
                     {/* 알림 버튼 컴포넌트 - 글쓰기 버튼 위에 배치 */}
                     <NotificationButton
@@ -580,6 +611,13 @@ const Map = () => {
                                 }}
                             />
                         </div>
+                    )}
+
+                    {showRewardPoster && rewardPosterData && (
+                        <RewardPoster
+                            poster={rewardPosterData}
+                            onClose={() => setShowRewardPoster(false)}
+                        />
                     )}
                 </div>
             </div>

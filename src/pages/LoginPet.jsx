@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import pawPatrolLogo from '../assets/images/paw.png';
+import pawPatrolLogo from '../assets/images/hanlogo.png';
 import SignUpTypeModal from '../components/SignUpTypeModal';
 import naverImage from '../assets/images/naver_simple_icon.png';
 import axios from 'axios';
 import { requestPermission } from '../firebase-config'; // Import from the new firebase-config file
 
 const LoginScreen = () => {
+    const [error, setError] = useState('');
+
     const socialLoginForKakaoUrl = `${import.meta.env.VITE_CORE_API_BASE_URL}/oauth2/authorization/kakao`;
     const socialLoginForGoogleUrl = `${import.meta.env.VITE_CORE_API_BASE_URL}/oauth2/authorization/google`;
     const socialLoginForNaverUrl = `${import.meta.env.VITE_CORE_API_BASE_URL}/oauth2/authorization/naver`;
@@ -55,6 +57,7 @@ const LoginScreen = () => {
 
     const handleLogin = async (e) => {
         e.preventDefault();
+        setError('');
 
         // 아이디 저장 처리
         if (rememberMe) {
@@ -100,7 +103,7 @@ const LoginScreen = () => {
                 }
             }
         } catch (error) {
-            alert(error.response.data.msg || error.response.data.message);
+            setError(error.response.data.msg || '비밀번호가 일치하지 않습니다.')
         }
     };
 
@@ -139,7 +142,7 @@ const LoginScreen = () => {
                     <img
                         src={pawPatrolLogo}
                         alt="PawPatrol Logo"
-                        className="w-32 h-32 mb-2"
+                        className="w-64 h-64 mb-2 "
                     />
                     {/* <h1 className="text-2xl font-bold text-[#7D5A50] mb-1">
                         PawPatrol
@@ -180,6 +183,9 @@ const LoginScreen = () => {
                                 아이디 저장
                             </label>
                         </div>
+                        {error && (
+                            <div className="text-red-500 text-sm">{error}</div>
+                        )}
                         <button
                             type="submit"
                             className="w-full bg-orange-500 text-white py-3 rounded-lg font-medium hover:bg-orange-600 transition-colors text-sm"

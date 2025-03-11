@@ -153,6 +153,7 @@ const ReportPostForm = ({ formType = "standalone" }) => {
       console.log(response.data);
       if (location.state?.returnPath) {
         localStorage.setItem('reportSubmitted', 'true');
+        localStorage.setItem('reportSubmitted_time', new Date().getTime().toString());
         navigate(location.state.returnPath, {
           state: location.state.returnState || {}
         });

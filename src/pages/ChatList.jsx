@@ -103,7 +103,7 @@ const ChatList = () => {
   const filteredRooms = chatRooms;
 
   return (
-    <div className="flex flex-col h-full bg-gray-50">
+    <div className="flex flex-col h-full bg-[#FFF5E6]">
       {/* Header */}
       <div className="bg-orange-500 p-4 shadow-md">
         <div className="flex items-center justify-between">
@@ -112,21 +112,33 @@ const ChatList = () => {
       </div>
       
       {/* Tab Navigation */}
-      <div className="flex border-b border-gray-200">
+      <div className="flex border-b border-amber-100 bg-white">
         <button 
-          className={`flex-1 py-3 font-medium text-sm ${activeTab === 'ALL' ? 'text-orange-500 border-b-2 border-orange-500' : 'text-gray-500'}`}
+          className={`flex-1 py-3 font-medium text-sm ${
+            activeTab === 'ALL' 
+              ? 'text-orange-500 border-b-2 border-orange-500 bg-orange-50/50' 
+              : 'text-amber-700 hover:text-orange-500'
+          }`}
           onClick={() => setActiveTab('ALL')}
         >
           전체
         </button>
         <button 
-          className={`flex-1 py-3 font-medium text-sm ${activeTab === 'PROTECTADOPT' ? 'text-orange-500 border-b-2 border-orange-500' : 'text-gray-500'}`}
+          className={`flex-1 py-3 font-medium text-sm ${
+            activeTab === 'PROTECTADOPT' 
+              ? 'text-orange-500 border-b-2 border-orange-500 bg-orange-50/50' 
+              : 'text-amber-700 hover:text-orange-500'
+          }`}
           onClick={() => setActiveTab('PROTECTADOPT')}
         >
           임보/입양
         </button>
         <button 
-          className={`flex-1 py-3 font-medium text-sm ${activeTab === 'LOSTFOUND' ? 'text-orange-500 border-b-2 border-orange-500' : 'text-gray-500'}`}
+          className={`flex-1 py-3 font-medium text-sm ${
+            activeTab === 'LOSTFOUND' 
+              ? 'text-orange-500 border-b-2 border-orange-500 bg-orange-50/50' 
+              : 'text-amber-700 hover:text-orange-500'
+          }`}
           onClick={() => setActiveTab('LOSTFOUND')}
         >
           구조/제보
@@ -134,25 +146,25 @@ const ChatList = () => {
       </div>
       
       {/* Chat List */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto bg-white">
         {isLoading ? (
           <div className="flex flex-col items-center justify-center h-full p-4">
             <div className="animate-pulse flex space-x-4">
-              <div className="rounded-full bg-orange-200 h-12 w-12"></div>
+              <div className="rounded-full bg-amber-100 h-12 w-12"></div>
               <div className="flex-1 space-y-2 py-1">
-                <div className="h-4 bg-orange-200 rounded w-3/4"></div>
-                <div className="h-4 bg-orange-200 rounded w-5/6"></div>
+                <div className="h-4 bg-amber-100 rounded w-3/4"></div>
+                <div className="h-4 bg-amber-100 rounded w-5/6"></div>
               </div>
             </div>
-            <p className="text-orange-500 mt-4">채팅 목록을 불러오는 중...</p>
+            <p className="text-amber-600 mt-4">채팅 목록을 불러오는 중...</p>
           </div>
         ) : filteredRooms.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full p-4 text-gray-500">
-            <div className="bg-orange-100 rounded-full p-4 mb-3">
+          <div className="flex flex-col items-center justify-center h-full p-4 text-amber-700">
+            <div className="bg-amber-100 rounded-full p-4 mb-3">
               <MessageSquare className="w-8 h-8 text-orange-500" />
             </div>
             <p>아직 채팅이 없어요</p>
-            <p className="text-sm mt-2">
+            <p className="text-sm mt-2 text-amber-600">
               {activeTab === 'ALL' ? '게시글에서 메시지를 보내보세요!' : 
                activeTab === 'PROTECTADOPT' ? '임보/입양 관련 채팅이 없습니다.' : 
                '구조/제보 관련 채팅이 없습니다.'}
@@ -167,17 +179,17 @@ const ChatList = () => {
             return (
               <div 
                 key={room.id} 
-                className="border-b border-gray-100 hover:bg-orange-50 transition-colors duration-200 cursor-pointer"
+                className="border-b border-amber-100 hover:bg-amber-50/50 transition-colors duration-200 cursor-pointer"
                 onClick={() => handleChatSelect(room)}
               >
                 <div className="flex items-start p-4">
                   {/* Avatar */}
                   <div className="relative mr-3">
-                    <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center">
+                    <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center">
                       <UserCircle className="w-10 h-10 text-orange-500" />
                     </div>
                     {unreadCount > 0 && (
-                      <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                      <div className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                         {unreadCount}
                       </div>
                     )}

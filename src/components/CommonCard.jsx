@@ -30,7 +30,7 @@ export const CommonCard = ({ item, type, onClose }) => {
     // 상세 페이지로 이동하는 함수
     const handleDetailNavigation = (e) => {
         if (e) e.stopPropagation();
-
+        console.log("item",item);
         if (type !== 'pet') return;
         console.log('item?.pet?.imageUrl:', item?.pet?.imageUrl);
 console.log('item?.image:', item?.image);
