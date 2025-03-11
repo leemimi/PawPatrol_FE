@@ -90,8 +90,8 @@ const SignUp = () => {
     // 이메일 인증 코드 확인
     const handleVerifyCode = async () => {
         try {
-            setErrors({ ...errors, code: '' }); // 성공 시 에러 초기화
-            setErrors({ ...errors, email: '' }); // 성공 시 에러 초기화
+
+
             const response = await axios.post(
                 `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/auth/email/verify`,
                 {
@@ -105,7 +105,15 @@ const SignUp = () => {
                     withCredentials: true // 쿠키 포함 설정
                 }
             );
-            setIsEmailVerified(true);
+            if (response.data.statusCode == 200) {
+                setErrors(prevErrors => ({
+                    ...prevErrors,
+                    email: '',
+                    code: ''  // 한 번에 두 필드 모두 초기화
+                }));
+                setIsEmailVerified(true);
+            }
+
         } catch (error) {
             if (error.response && error.response.data) {
                 setErrors({
@@ -177,10 +185,13 @@ const SignUp = () => {
             );
 
             alert('회원가입이 완료되었습니다.');
-            setErrors({ ...errors, email: '' }); // 성공 시 에러 초기화
-            setErrors({ ...errors, code: '' });
-            setErrors({ ...errors, password: '' });
-            setErrors({ ...errors, general: '' });
+            setErrors(prevErrors => ({  // 성공 시 에러 초기화
+                ...prevErrors,
+                email: '',
+                code: '',
+                password: '',
+                general: ''
+            }));
             navigate('/');
         } catch (error) {
             setErrors({
