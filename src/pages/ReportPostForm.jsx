@@ -151,9 +151,11 @@ const ReportPostForm = ({ formType = "standalone" }) => {
       );
       alert("발견 신고가 성공적으로 등록되었습니다.");
       console.log(response.data);
-      if (location.state?.returnPath) {
-        localStorage.setItem('reportSubmitted', 'true');
-        localStorage.setItem('reportSubmitted_time', new Date().getTime().toString());
+      if (location.state?.returnPath === "/rescue") {
+        localStorage.setItem('rescueReportData', JSON.stringify({
+          postId: response.data.data.id,
+          timestamp: new Date().getTime() // 데이터 유효성 검증용 타임스탬프
+        }));
         navigate(location.state.returnPath, {
           state: location.state.returnState || {}
         });
