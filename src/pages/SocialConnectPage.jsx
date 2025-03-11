@@ -4,6 +4,8 @@ import puppyLogo from '../assets/images/hanlogo.png';
 import axios from 'axios';
 
 const SocialConnectPage = () => {
+    const [error, setError] = useState('');
+
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const navigate = useNavigate();
@@ -68,10 +70,10 @@ const SocialConnectPage = () => {
                 }
                 navigate('/', { replace: true });
             } else {
-                alert('계정 연동에 실패했습니다.');
+                setError('계정 연동에 실패했습니다.');
             }
         } catch (error) {
-            alert('계정 연동에 실패했습니다.');
+            setError('계정 연동에 실패했습니다.');
         }
     };
 
@@ -119,6 +121,9 @@ const SocialConnectPage = () => {
                             className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:border-orange-500"
                         />
                     </div>
+                    {error && (
+                        <div className="text-red-500 text-sm">{error}</div>
+                    )}
                     <button
                         type="submit"
                         className="w-full bg-orange-500 text-white py-3 rounded-xl font-medium hover:bg-orange-600 transition-colors"
