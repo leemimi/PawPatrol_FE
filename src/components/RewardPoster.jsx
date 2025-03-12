@@ -298,21 +298,34 @@ const RewardPoster = ({
                         </div>
                     </div>
 
-                    {/* 순위 배지 - 이미지 대신 CSS로 제작 */}
+                    {/* 순위 배지 - 디자인 개선 */}
                     {posterRank <= 5 && (
-                        <div className="absolute z-10 w-14 h-14" style={{ bottom: '125px', right: '10px' }}>
-                            <div className={`w-full h-full flex items-center justify-center rounded-full shadow-lg border-2 
-            ${posterRank === 1 ? 'bg-yellow-400 border-yellow-600' :
-                                    posterRank === 2 ? 'bg-gray-200 border-gray-400' :
-                                        posterRank === 3 ? 'bg-amber-600 border-amber-800' :
-                                            'bg-white border-gray-300'}`}>
-                                <span className={`font-bold text-lg 
-                ${posterRank === 1 ? 'text-yellow-900' :
-                                        posterRank === 2 ? 'text-gray-700' :
-                                            posterRank === 3 ? 'text-amber-100' :
-                                                'text-gray-700'}`}>
-                                    {posterRank}위
-                                </span>
+                        <div className="absolute z-10 w-16 h-16" style={{ bottom: '125px', right: '10px' }}>
+                            <div className={`w-full h-full flex items-center justify-center rounded-full shadow-xl 
+        ${posterRank === 1
+                                    ? 'bg-gradient-to-br from-yellow-300 to-yellow-500 border-2 border-yellow-200'
+                                    : posterRank === 2
+                                        ? 'bg-gradient-to-br from-gray-200 to-gray-400 border-2 border-gray-100'
+                                        : posterRank === 3
+                                            ? 'bg-gradient-to-br from-amber-500 to-amber-700 border-2 border-amber-400'
+                                            : 'bg-gradient-to-br from-white to-gray-100 border-2 border-gray-200'}`}>
+                                <div className="flex flex-col items-center justify-center relative">
+                                    {posterRank === 1 && (
+                                        <svg className="absolute top-0 left-0 w-full h-full text-yellow-200 opacity-30" viewBox="0 0 50 50" fill="currentColor">
+                                            <path d="M25 0 L30 20 L50 20 L35 32 L42 50 L25 38 L8 50 L15 32 L0 20 L20 20 Z" />
+                                        </svg>
+                                    )}
+                                    <span className={`font-bold text-lg drop-shadow-md
+                    ${posterRank === 1
+                                            ? 'text-yellow-900'
+                                            : posterRank === 2
+                                                ? 'text-gray-800'
+                                                : posterRank === 3
+                                                    ? 'text-amber-100'
+                                                    : 'text-gray-700'}`}>
+                                        {posterRank}위
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     )}
