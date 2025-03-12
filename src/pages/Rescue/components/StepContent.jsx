@@ -2,7 +2,6 @@ import React from 'react';
 import { AlertCircle, Phone, ChevronUp, ChevronDown, MapPin, Bookmark, Info, CheckCircle } from 'lucide-react';
 import { EmergencyContacts } from './EmergencyContacts';
 import AnimalSelectionModal from '../../../components/AnimalSelectionModal';
-import { useLocalStorageWithExpiry } from '../../../hooks/UserLocalStorageWithExpiry';
 
 export const StepContent = ({
     currentStep,
@@ -23,7 +22,18 @@ export const StepContent = ({
     setSelectedAnimalType,
     navigate
 }) => {
-    const [isReportSubmitted, setIsReportSubmitted] = useLocalStorageWithExpiry('reportSubmitted', 1800);
+    const hasRescueReportData = () => {
+        const rescueReportDataStr = localStorage.getItem('rescueReportData');
+        if (rescueReportDataStr) {
+            try {
+                const data = JSON.parse(rescueReportDataStr);
+                return new Date().getTime() - data.timestamp < 3600000; // 1시간 이내
+            } catch (e) {
+                return false;
+            }
+        }
+        return false;
+    };
 
 
     switch (currentStep) {
@@ -176,7 +186,7 @@ export const StepContent = ({
                         <p className="text-base text-gray-700">구조자는 구조 동물에 대해 주인을 찾을 수 있도록 노력해 주시기 바랍니다. 동물이 버려진 것이 아니라 집을 나왔다가 길을 잃은 것이라면 주인이 애타게 찾고 있을 겁니다. 동물 입장에서도 입양보다는 주인을 찾는 것이 우선이며 더 좋은 일입니다.</p>
                     </div>
 
-                    {isReportSubmitted === 'true' ? (
+                    {hasRescueReportData() ? (
                         // 제보글 작성 완료한 경우
                         <div className="w-full p-4 bg-green-500 text-white rounded-lg flex items-center justify-center">
                             <CheckCircle size={18} className="mr-2" />
@@ -229,11 +239,43 @@ export const StepContent = ({
                 </div>
             );
 
+
+
         case 5: // 임시보호 신청
+
+            // 제보글 데이터가 있는 경우 해당 데이터로 임시보호 신청 페이지로 이동
+            const goToTempCareWithData = () => {
+                const rescueReportDataStr = localStorage.getItem('rescueReportData');
+                navigate('/register-animal', {
+                    state: {
+                        fromRescueReport: true,
+                        rescueReportData: JSON.parse(rescueReportDataStr)
+                    }
+                });
+            };
+
+            // 제보글 데이터가 없는 경우 동물 선택 모달 표시
+            const handleTempCareClick = () => {
+                if (hasRescueReportData()) {
+                    goToTempCareWithData();
+                } else {
+                    // 동물 선택 모달 표시
+                    setShowAnimalTypeModal(true);
+                }
+            };
+
             return (
                 <div className="space-y-4">
                     <h3 className="text-xl font-medium text-orange-800">임시보호 신청하기</h3>
                     <p className="text-base text-gray-700">동물을 임시로 보호할 수 있나요? 주인을 찾지 못한 경우 임시보호가 필요합니다.</p>
+
+                    {hasRescueReportData() && (
+                        <div className="p-3 bg-green-100 rounded-lg border border-green-200">
+                            <p className="text-sm text-green-700 font-medium">
+                                작성하신 제보글 정보가 임시보호 신청 시 자동으로 적용됩니다.
+                            </p>
+                        </div>
+                    )}
 
                     <div className="p-3 bg-white rounded-lg border border-orange-200">
                         <p className="text-base text-gray-700">긴급한 동물은 가능한 구조자가 임시보호해 주시면서 동물단체를 통해 입양될 수 있도록 해주시기 바랍니다. 모든 동물 단체는 늘어만 가는 집 없는 동물로 인해 한계상황에 처해 있고, 누구에게나 임시보호는 힘에 겨운 일입니다.</p>
@@ -242,10 +284,13 @@ export const StepContent = ({
                     <div className="grid grid-cols-2 gap-3">
                         <button
                             className="p-3 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition-colors flex flex-col items-center"
-                            onClick={goToTempCarePage}
+                            onClick={handleTempCareClick}
                         >
                             <Bookmark size={18} className="mb-2" />
                             <span className="font-bold">임시보호 가능해요</span>
+                            {hasRescueReportData() && (
+                                <span className="text-xs mt-1">제보 정보 포함</span>
+                            )}
                         </button>
 
                         <button
@@ -263,6 +308,22 @@ export const StepContent = ({
                     >
                         <span className="font-bold">이전</span>
                     </button>
+
+                    {/* 동물 선택 모달 추가 */}
+                    <AnimalSelectionModal
+                        isOpen={showAnimalTypeModal}
+                        onClose={() => setShowAnimalTypeModal(false)}
+                        onSelect={setSelectedAnimalType}
+                        selectedAnimalType={selectedAnimalType}
+                        onConfirm={() => {
+                            setShowAnimalTypeModal(false);
+                            navigate('/register-animal', {
+                                state: {
+                                    animalType: selectedAnimalType
+                                }
+                            });
+                        }}
+                    />
                 </div>
             );
 
