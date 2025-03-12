@@ -1127,17 +1127,17 @@ const ShelterMyPage = () => {
                                     </div>
 
                                     <div className="p-4 space-y-3">
-                                        <div className="flex justify-between items-center">
-                                            <h3 className="text-xl font-bold text-gray-800">{pet.name}</h3>
+                                        <div className="flex justify-between items-center flex-nowrap">
+                                            <h3 className="text-xl font-bold text-gray-800 truncate max-w-[70%]" title={pet.name}>
+                                                {pet.name}
+                                            </h3>
                                             <span
-                                                className={`text-sm font-medium px-2 py-1 rounded-full ${pet.animalType === '강아지'
-                                                    ? 'bg-blue-100 text-blue-800'
-                                                    : pet.animalType === '고양이'
-                                                        ? 'bg-pink-100 text-pink-800'
-                                                        : 'bg-gray-100 text-gray-800'
+                                                className={`text-sm font-medium px-2 py-1 rounded-full whitespace-nowrap flex-shrink-0 ${pet.animalType === '강아지'
+                                                    ? 'bg-blue-100 text-blue-800' // 강아지 스타일
+                                                    : 'bg-pink-100 text-pink-800' // 고양이 스타일
                                                     }`}
                                             >
-                                                {pet.animalType || '동물 종류'}
+                                                {pet.animalType === '강아지' ? '강아지' : '고양이'}
                                             </span>
                                         </div>
 

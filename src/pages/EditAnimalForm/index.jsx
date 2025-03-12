@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { ChevronLeft, MapPin, Pencil, Camera, X, Plus } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAnimalForm } from '../../hooks/useProtections';
+import { ImageApiService } from '../../api/ImageApiService';
+
 
 const EditAnimalForm = () => {
     const { id } = useParams();
@@ -34,7 +36,9 @@ const EditAnimalForm = () => {
             setFormData(initialData.formData);
 
             // 이미지가 있는 경우 미리보기 설정
-            if (initialData.imageUrl) {
+            if (initialData.imageUrls && initialData.imageUrls.length > 0) {
+                setPreviewUrls(initialData.imageUrls);
+            } else if (initialData.imageUrl) {
                 setPreviewUrls([initialData.imageUrl]);
             }
         }
@@ -57,7 +61,23 @@ const EditAnimalForm = () => {
         });
     };
 
-    const removeImage = (index) => {
+
+    const removeImage = async (index) => {
+        const url = previewUrls[index];
+
+        // 서버 이미지인 경우 (URL이 http로 시작하는 경우)
+        if (url.startsWith('http')) {
+            try {
+                // URL로 이미지 삭제 API 호출
+                await ImageApiService.deleteImageByUrl(url);
+            } catch (error) {
+                console.error('서버 이미지 삭제 실패:', error);
+                alert('이미지 삭제 중 오류가 발생했습니다.');
+                return; // 삭제 실패 시 함수 종료
+            }
+        }
+
+        // UI에서 이미지 제거 (로컬 상태 업데이트)
         const newImages = [...images];
         newImages.splice(index, 1);
         setImages(newImages);
@@ -67,20 +87,22 @@ const EditAnimalForm = () => {
         setPreviewUrls(newPreviewUrls);
     };
 
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
         const formDataToSend = new FormData();
-
         const metadataToSend = {
             ...formData,
             gender: formData.gender === 'MALE' ? 'M' : formData.gender === 'FEMALE' ? 'F' : 'UNKNOWN',
-            registrationNo: formData.registrationNo.trim() === "" ? null : formData.registrationNo
+            registrationNo: formData.registrationNo.trim() === "" ? null : formData.registrationNo,
+            // 기존 이미지 URL들을 메타데이터에 포함
+            existingImageUrls: previewUrls.filter(url => url.startsWith('http'))
         };
 
         formDataToSend.append('metadata', JSON.stringify(metadataToSend));
 
-        // 새로 추가된 이미지만 전송
+        // 새로 추가된 File 객체들만 FormData에 추가
         images.forEach((image) => {
             formDataToSend.append('images', image);
         });
