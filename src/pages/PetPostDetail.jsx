@@ -189,7 +189,11 @@ const [currentImageIndex, setCurrentImageIndex] = useState(0);
 // Handle image rendering
 const renderImages = () => {
   if (post?.images?.length > 0) {
-    return post.images.map((image, index) => {
+    // 이미지 경로만 중복 제거
+    const uniqueImages = Array.from(new Set(post.images.map(image => image?.path)))
+      .map(path => post.images.find(image => image?.path === path)); // 중복된 이미지 경로를 가진 첫 번째 이미지를 유지
+    
+    return uniqueImages.map((image, index) => {
       const imageUrl = image?.path || '/api/placeholder/160/160';
       return (
         <img
@@ -204,6 +208,7 @@ const renderImages = () => {
   }
   return null;
 };
+
 
 // Open the gallery
 const handleImageClick = (index) => {
