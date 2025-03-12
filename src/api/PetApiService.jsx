@@ -4,7 +4,7 @@ import axios from 'axios';
 export const PetApiService = {
   // 위치 기반 펫 데이터 조회
   async fetchPetsByLocation(position, range) {
-    const apiUrl = 'http://localhost:8090/api/v1/lost-foundposts/map';
+    const apiUrl = `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/lost-foundposts/map`;
 
     try {
       const response = await axios.get(apiUrl, {

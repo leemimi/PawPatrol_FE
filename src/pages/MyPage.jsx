@@ -1099,17 +1099,20 @@ const MyPage = () => {
                                     </div>
 
                                     <div className="p-4 space-y-3">
-                                        <div className="flex justify-between items-center">
-                                            <h3 className="text-xl font-bold text-gray-800">{pet.name}</h3>
+                                        <div className="flex justify-between items-center flex-nowrap">
+                                            <h3 className="text-xl font-bold text-gray-800 truncate max-w-[70%]" title={pet.name}>
+                                                {pet.name}
+                                            </h3>
                                             <span
-                                                className={`text-sm font-medium px-2 py-1 rounded-full ${pet.animalType === '강아지'
-                                                    ? 'bg-blue-100 text-blue-800' // 강아지 스타일
-                                                    : 'bg-pink-100 text-pink-800' // 고양이 스타일
+                                                className={`text-sm font-medium px-2 py-1 rounded-full whitespace-nowrap flex-shrink-0 ${pet.animalType === '강아지'
+                                                        ? 'bg-blue-100 text-blue-800' // 강아지 스타일
+                                                        : 'bg-pink-100 text-pink-800' // 고양이 스타일
                                                     }`}
                                             >
                                                 {pet.animalType === '강아지' ? '강아지' : '고양이'}
                                             </span>
                                         </div>
+
 
                                         <div className="grid grid-cols-[auto_1fr] gap-1 text-sm text-gray-600">
                                             <span className="font-medium">품종 :</span>
