@@ -387,24 +387,62 @@ const PetPostDetail = ({ onClose }) => {
                   <span className="font-semibold text-gray-800">{comment.nickname}</span>
                   {currentUserId === comment.userId && (
                     <div className="flex gap-2 items-center">
-                      <button
-                        onClick={() => handleEditComment(comment)}
-                        className="text-xs text-blue-500 hover:underline"
-                      >
-                        수정
-                      </button>
-                      <button
-                        onClick={() => handleDeleteComment(comment.id)}
-                        className="text-xs text-red-500 hover:underline"
-                      >
-                        삭제
-                      </button>
+                      {!(isEditing && editingCommentId === comment.id) && (
+                        <>
+                          <button
+                            onClick={() => {
+                              setEditingCommentId(comment.id);
+                              setNewComment(comment.content);
+                              setIsEditing(true);
+                            }}
+                            className="text-xs text-blue-500 hover:underline"
+                          >
+                            수정
+                          </button>
+                          <button
+                            onClick={() => handleDeleteComment(comment.id)}
+                            className="text-xs text-red-500 hover:underline"
+                          >
+                            삭제
+                          </button>
+                        </>
+                      )}
                     </div>
                   )}
                 </div>
-                <div className="bg-gray-50 p-2 rounded-lg mt-1 border border-gray-100 text-gray-700 break-words overflow-hidden">
-                  {comment.content}
-                </div>
+
+                {isEditing && editingCommentId === comment.id ? (
+                  <div className="mt-1">
+                    <textarea
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300"
+                      rows={3}
+                    />
+                    <div className="flex justify-end gap-2 mt-2">
+                      <button
+                        onClick={handleUpdateComments}
+                        className="px-3 py-1 text-sm bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+                      >
+                        저장
+                      </button>
+                      <button
+                        onClick={() => {
+                          setIsEditing(false);
+                          setNewComment('');
+                          setEditingCommentId(null);
+                        }}
+                        className="px-3 py-1 text-sm bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
+                      >
+                        취소
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-gray-50 p-2 rounded-lg mt-1 border border-gray-100 text-gray-700 break-words overflow-hidden">
+                    {comment.content}
+                  </div>
+                )}
               </div>
 
               {/* 날짜 */}
@@ -419,18 +457,16 @@ const PetPostDetail = ({ onClose }) => {
                 })}
               </div>
             </div>
-
           </div>
         ))}
 
-
-        {/* Comment form */}
-        <form onSubmit={isEditing ? handleUpdateComments : handleSubmitComment} className="mt-4">
+        {/* Comment form - 새 댓글 작성용으로만 사용 */}
+        <form onSubmit={handleSubmitComment} className="mt-4">
           <div className="flex gap-2">
             <input
               type="text"
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
+              value={!isEditing ? newComment : ''}
+              onChange={(e) => !isEditing && setNewComment(e.target.value)}
               placeholder="댓글을 입력하세요"
               className="flex-1 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-300"
             />
@@ -438,20 +474,8 @@ const PetPostDetail = ({ onClose }) => {
               type="submit"
               className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors"
             >
-              {isEditing ? '수정' : '등록'}
+              등록
             </button>
-            {isEditing && (
-              <button
-                type="button"
-                onClick={() => {
-                  setIsEditing(false);
-                  setNewComment('');
-                }}
-                className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition-colors"
-              >
-                취소
-              </button>
-            )}
           </div>
         </form>
       </div>
