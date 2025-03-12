@@ -76,7 +76,7 @@ const NotificationButton = ({ notifications = [], onViewNotification, onClearNot
             className="absolute bottom-14 right-0 bg-white rounded-lg shadow-lg w-72 overflow-hidden z-50"
           >
             <div className="p-3 border-b border-gray-200 flex justify-between items-center">
-              <h3 className="font-semibold text-gray-900">알림</h3>
+              <h3 className="font-semibold text-gray-900">내 게시글 알림</h3>
               {notifications.length > 0 && (
                 <span className="text-xs text-gray-500">{notifications.length}개의 알림</span>
               )}
@@ -90,35 +90,46 @@ const NotificationButton = ({ notifications = [], onViewNotification, onClearNot
                 </div>
               ) : (
                 <ul className="divide-y divide-gray-100">
-                  {notifications.map((notification, index) => (
-                    <li 
-                      key={notification.id || index}
-                      onClick={() => handleNotificationClick(notification)}
-                      className={`p-3 hover:bg-gray-50 cursor-pointer ${!notification.read ? 'bg-orange-50' : ''}`}
-                    >
-                      <div className="flex justify-between items-start">
-                        <h4 className="font-medium text-sm text-gray-900">
-                          {notification.status === 'FINDING' ? '실종 신고' : '발견 신고'}
-                        </h4>
-                        <button 
-                          onClick={(e) => handleClearNotification(e, notification)}
-                          className="p-1 text-gray-400 hover:text-gray-600"
-                        >
-                          <X size={14} />
-                        </button>
-                      </div>
-                      <p className="text-sm text-gray-700 mt-1 line-clamp-2">
-                        {notification.content}
-                      </p>
-                      <div className="flex items-center mt-2 text-xs text-gray-500">
-                        <span className="mr-2">작성자: {notification.nickname}</span>
-                        {notification.timestamp && (
-                          <span>{new Date(notification.timestamp).toLocaleTimeString()}</span>
-                        )}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
+  {notifications.map((notification, index) => (
+    <li 
+      key={notification.id || index}
+      onClick={() => handleNotificationClick(notification)}
+      className={`p-3 hover:bg-gray-50 cursor-pointer ${!notification.read ? 'bg-orange-50' : ''}`}
+    >
+      <div className="flex justify-between items-start">
+        <h4 className="font-medium text-sm text-gray-900">
+          {notification.type === 'COMMENT' ? '댓글 알림' : notification.postData?.status === 'FINDING' ? '실종 신고' : '목격 신고'}
+        </h4>
+        <button 
+          onClick={(e) => handleClearNotification(e, notification)}
+          className="p-1 text-gray-400 hover:text-gray-600"
+        >
+          <X size={14} />
+        </button>
+      </div>
+      <p className="text-sm text-gray-700 mt-1 line-clamp-2">
+        {notification.message || notification.content}
+      </p>
+      {notification.commentContent && (
+        <p className="text-xs text-gray-600 mt-1 italic">
+          "{notification.commentContent.length > 30 
+            ? notification.commentContent.substring(0, 30) + '...' 
+            : notification.commentContent}"
+        </p>
+      )}
+      <div className="flex items-center mt-2 text-xs text-gray-500">
+        <span className="mr-2">
+          {notification.type === 'COMMENT' 
+            ? `댓글 작성자: ${notification.commentAuthorNickname || '알 수 없음'}`
+            : `작성자: ${notification.nickname || notification.postData?.nickname}`}
+        </span>
+        {notification.timestamp && (
+          <span>{new Date(notification.timestamp).toLocaleTimeString()}</span>
+        )}
+      </div>
+    </li>
+  ))}
+</ul>
               )}
             </div>
           </div>
@@ -134,6 +145,8 @@ NotificationButton.propTypes = {
       id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
       status: PropTypes.string,
       content: PropTypes.string,
+      message: PropTypes.string,
+      postData: PropTypes.object,
       nickname: PropTypes.string,
       timestamp: PropTypes.number,
       read: PropTypes.bool,

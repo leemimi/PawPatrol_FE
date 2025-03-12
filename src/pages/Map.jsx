@@ -133,27 +133,31 @@ const Map = () => {
                 console.log('Connected to WebSocket: ' + frame);
 
                 // 구독: 실종/발견 게시글
-                client.subscribe('/topic/lost-found-posts', function (message) {
-                    try {
-                        const lostFoundPost = JSON.parse(message.body);
-                        console.log("New notification received:", lostFoundPost);
-
-                        // 알림에 타임스탬프와 읽음 상태 추가
-                        const newNotification = {
-                            ...lostFoundPost,
-                            timestamp: Date.now(),
-                            read: false
-                        };
-
-                        // 알림 상태 업데이트 (최근 알림이 맨 위로)
-                        setNotifications(prev => [newNotification, ...prev]);
-
-                        // 알림 표시
-                        displayNotification(newNotification);
-                    } catch (error) {
-                        console.error("Error parsing message:", error);
-                    }
-                });
+                // 개인화된 알림 구독 - 현재 로그인한 사용자 ID 사용
+  const userId = getUserId();
+  const userSpecificTopic = `/user/${userId}/queue/notifications`;
+  
+  client.subscribe(userSpecificTopic, function (message) {
+    try {
+      const notificationData = JSON.parse(message.body);
+      console.log("Personal notification received:", notificationData);
+      
+      // 알림에 타임스탬프와 읽음 상태 확인
+      const newNotification = {
+        ...notificationData,
+        timestamp: notificationData.timestamp || Date.now(),
+        read: notificationData.read !== undefined ? notificationData.read : false
+      };
+      
+      // 알림 상태 업데이트 (최근 알림이 맨 위로)
+      setNotifications(prev => [newNotification, ...prev]);
+      
+      // 알림 표시
+      displayNotification(newNotification);
+    } catch (error) {
+      console.error("Error parsing notification:", error);
+    }
+  });
 
                 // 사용자 위치 기반 구독 등록
                 if (currentPosition) {
@@ -229,27 +233,34 @@ const Map = () => {
     // 알림 처리 핸들러
     const handleViewNotification = (notification) => {
         // 알림을 읽음 상태로 변경
-        setNotifications(prev =>
-            prev.map(notif =>
-                notif.id === notification.id ? { ...notif, read: true } : notif
-            )
-        );
-
-        // 해당 위치로 지도 이동
-        if (notification.latitude && notification.longitude && map) {
-            const position = new window.kakao.maps.LatLng(
-                notification.latitude,
-                notification.longitude
-            );
-            map.setCenter(position);
-
-            // 현재 위치 업데이트
-            updatePosition({
-                lat: notification.latitude,
-                lng: notification.longitude
-            });
-        }
+  setNotifications(prev =>
+    prev.map(notif =>
+      notif.id === notification.id ? { ...notif, read: true } : notif
+    )
+  );
+  
+  // 위치 정보 추출 - 구조에 따라 다르게 접근
+  const latitude = notification.latitude || notification.postData?.latitude;
+  const longitude = notification.longitude || notification.postData?.longitude;
+  
+  // 해당 위치로 지도 이동
+  if (latitude && longitude && map) {
+    const position = new window.kakao.maps.LatLng(latitude, longitude);
+    map.setCenter(position);
+    
+    // 현재 위치 업데이트
+    updatePosition({
+      lat: latitude,
+      lng: longitude
+    });
     };
+    // 게시글 ID가 있으면 해당 게시글로 이동
+  const postId = notification.postId || notification.postData?.id;
+  if (postId) {
+    console.log('상세 페이지로 이동:', postId);
+    navigate(`/PetPostDetail/${postId}`);
+  }
+};
 
     // 알림 삭제 핸들러
     const handleClearNotification = (notification) => {
@@ -515,37 +526,54 @@ const Map = () => {
     return (
         <div className="h-screen w-full bg-orange-50/30 relative overflow-hidden">
             {/* 알림 팝업 */}
-            {showNotification && notification && (
-                <div className="fixed top-4 right-4 z-50 bg-white rounded-lg shadow-lg max-w-xs w-full p-4 flex flex-col transition-all duration-300 ease-in-out">
-                    <div className="flex justify-between items-start mb-2">
-                        <h4 className="font-bold text-orange-600 text-sm">
-                            {notification.status === 'LOST' ? '실종 신고' : '발견 신고'}
-                        </h4>
-                        <button
-                            onClick={handleCloseNotification}
-                            className="p-1 ml-2 text-gray-400 hover:text-gray-600"
-                        >
-                            ✕
-                        </button>
-                    </div>
-                    <div
-                        className="cursor-pointer"
-                        onClick={handleNotificationClick}
-                    >
-                        <p className="text-sm text-gray-800 font-medium">
-                            {notification.content?.length > 50
-                                ? notification.content.substring(0, 50) + '...'
-                                : notification.content}
-                        </p>
-                        <div className="flex items-center mt-2 text-xs text-gray-500">
-                            <span className="mr-2">작성자: {notification.nickname}</span>
-                            {notification.distance && (
-                                <span>약 {Math.round(notification.distance)}m 거리</span>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* 알림 팝업 */}
+{showNotification && notification && (
+  <div className="fixed top-4 right-4 z-50 bg-white rounded-lg shadow-lg max-w-xs w-full p-4 flex flex-col transition-all duration-300 ease-in-out">
+    <div className="flex justify-between items-start mb-2">
+      <h4 className="font-bold text-orange-600 text-sm">
+        {notification.type === 'COMMENT' 
+          ? '댓글 알림' 
+          : notification.status === 'LOST' 
+            ? '실종 신고' 
+            : '목격 신고'}
+      </h4>
+      <button
+        onClick={handleCloseNotification}
+        className="p-1 ml-2 text-gray-400 hover:text-gray-600"
+      >
+        ✕
+      </button>
+    </div>
+    <div
+      className="cursor-pointer"
+      onClick={handleNotificationClick}
+    >
+      <p className="text-sm text-gray-800 font-medium">
+        {notification.message || 
+         (notification.content?.length > 50
+          ? notification.content.substring(0, 50) + '...'
+          : notification.content)}
+      </p>
+      {notification.commentContent && (
+        <p className="text-xs text-gray-600 mt-1 italic">
+          "{notification.commentContent.length > 40
+            ? notification.commentContent.substring(0, 40) + '...'
+            : notification.commentContent}"
+        </p>
+      )}
+      <div className="flex items-center mt-2 text-xs text-gray-500">
+        <span className="mr-2">
+          {notification.type === 'COMMENT'
+            ? `댓글 작성자: ${notification.commentAuthorNickname}`
+            : `작성자: ${notification.nickname}`}
+        </span>
+        {notification.distance && (
+          <span>약 {Math.round(notification.distance)}m 거리</span>
+        )}
+      </div>
+    </div>
+  </div>
+)}
 
             <div className="h-full w-full">
                 <div className="relative h-full w-full">
