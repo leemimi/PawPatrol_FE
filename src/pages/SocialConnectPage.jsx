@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import puppyLogo from '../assets/images/paw.png';
+import puppyLogo from '../assets/images/hanlogo.png';
 import axios from 'axios';
 
 const SocialConnectPage = () => {
+    const [error, setError] = useState('');
+
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const navigate = useNavigate();
@@ -23,55 +25,58 @@ const SocialConnectPage = () => {
 
     const handleConnect = async (e) => {
         e.preventDefault();
-
-        const request = {
-            email: email,
-            password: password,
-            tempToken: tempToken
-        }
+        setError(''); // 에러 상태 초기화
 
         try {
-            const response = await axios.post(
+            // 소셜 계정 연동 API 호출
+            const connectResponse = await axios.post(
                 `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/auth/connect-social`,
-                request,
+                {
+                    email: email,
+                    password: password,
+                    tempToken: tempToken
+                },
                 { withCredentials: true }
             );
 
-            if (response.data.statusCode === 200) {
-                alert('소셜 계정 연동이 완료되었습니다.');
-
-                localStorage.removeItem('userInfo');
-                localStorage.removeItem('isLoggedIn');
-
-                const login_response = await axios.post(
-                    `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/auth/login`,
-                    request
-                )
-
-                if (login_response.data.statusCode === 200 || login_response.data.statusCode === "200") {
-                    const response = await axios.get(
+            if (connectResponse.data.statusCode === 200) {
+                // 연동 성공 시 사용자 정보 가져오기
+                try {
+                    const userResponse = await axios.get(
                         `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/auth/me`,
                         { withCredentials: true }
-                    )
+                    );
 
-                    if (response) {
+                    if (userResponse.data && userResponse.data.data) {
                         const loginUserInfo = {
-                            email: response.data.data.email,
-                            nickname: response.data.data.nickname,
-                            profileImage: response.data.data.profileImage,
-                            role: response.data.data.role
+                            email: userResponse.data.data.email,
+                            nickname: userResponse.data.data.nickname,
+                            profileImage: userResponse.data.data.profileImage,
+                            role: userResponse.data.data.role
                         };
 
                         localStorage.setItem('userInfo', JSON.stringify(loginUserInfo));
                         localStorage.setItem('isLoggedIn', 'true');
+
+                        alert('소셜 계정 연동이 완료되었습니다.');
+                        navigate('/', { replace: true });
+                    } else {
+                        throw new Error('사용자 정보를 가져오는데 실패했습니다.');
                     }
+                } catch (userError) {
+                    setError('사용자 정보를 가져오는데 실패했습니다. 다시 로그인해주세요.');
                 }
-                navigate('/', { replace: true });
             } else {
-                alert('계정 연동에 실패했습니다.');
+                setError(connectResponse.data.message || '계정 연동에 실패했습니다.');
             }
         } catch (error) {
-            alert('계정 연동에 실패했습니다.');
+            if (error.response) {
+                setError(error.response.data.message || '계정 연동에 실패했습니다.');
+            } else if (error.request) {
+                setError('서버 응답이 없습니다. 네트워크 연결을 확인해주세요.');
+            } else {
+                setError('요청 설정 중 오류가 발생했습니다.');
+            }
         }
     };
 
@@ -85,7 +90,7 @@ const SocialConnectPage = () => {
                         <img
                             src={puppyLogo}
                             alt="PawPatrol Logo"
-                            className="w-32 h-32 mb-2"
+                            className="w-48 h-48 mb-2"
                         />
                         {/* <h1 className="text-2xl font-bold text-orange-900 absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-orange-50 px-2">
                             PawPatrol
@@ -119,6 +124,9 @@ const SocialConnectPage = () => {
                             className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:border-orange-500"
                         />
                     </div>
+                    {error && (
+                        <div className="text-red-500 text-sm">{error}</div>
+                    )}
                     <button
                         type="submit"
                         className="w-full bg-orange-500 text-white py-3 rounded-xl font-medium hover:bg-orange-600 transition-colors"
