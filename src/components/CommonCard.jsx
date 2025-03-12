@@ -124,14 +124,7 @@ export const CommonCard = ({ item, type, onClose }) => {
 
                             <div>
                                 <span className="text-sm text-amber-700">
-                                    {time ? new Date(time).toLocaleString('ko-KR', {
-                                        year: 'numeric',
-                                        month: 'long',
-                                        day: 'numeric',
-                                        hour: '2-digit',
-                                        minute: '2-digit',
-                                        hour12: true
-                                    }) : ''}
+                                    {time}
                                 </span>
                             </div>
                         </div>
