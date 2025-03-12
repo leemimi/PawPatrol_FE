@@ -3,10 +3,10 @@ import { useNavigate, useParams } from 'react-router-dom';
 import ImageGallery from './ProtectionDetail/components/ImageGallery'; // ImageGallery 컴포넌트를 import 합니다.
 import axios from 'axios';
 
-import { 
-  ChevronLeft, 
-  MoreVertical, 
-  MapPin, 
+import {
+  ChevronLeft,
+  MoreVertical,
+  MapPin,
   Clock,
   MessageSquare,
   Share,
@@ -17,7 +17,7 @@ import {
 const PetPostDetail = ({ onClose }) => {
   const { postId } = useParams();
   const navigate = useNavigate();
-  
+
   const [post, setPost] = useState(null);
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
@@ -28,7 +28,7 @@ const PetPostDetail = ({ onClose }) => {
   const [currentUserId, setCurrentUserId] = useState(null);
   const [isAuthor, setIsAuthor] = useState(false);
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
-const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
 
   useEffect(() => {
@@ -39,7 +39,7 @@ const [currentImageIndex, setCurrentImageIndex] = useState(0);
         setPost(response.data.data);
       })
       .catch(error => console.error("Error fetching post data:", error));
-      
+
 
     axios.get(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/comments/lost-foundposts/${postId}`)
       .then(response => setComments(response.data.data || []))
@@ -58,7 +58,7 @@ const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
     // 로그인한 사용자 정보 가져오기
     const userInfo = JSON.parse(localStorage.getItem('userInfo')) || {};
-  
+
     if (userInfo.email) {
       axios.get(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/auth/me`, { withCredentials: true })
         .then(response => {
@@ -115,7 +115,7 @@ const [currentImageIndex, setCurrentImageIndex] = useState(0);
     try {
       const response = await axios.put(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/comments/${editingCommentId}`, updatedComment);
       if (response.data.resultCode === "200") {
-        setComments(comments.map(comment => 
+        setComments(comments.map(comment =>
           comment.id === editingCommentId ? { ...comment, content: newComment } : comment
         ));
         setIsEditing(false);
@@ -148,7 +148,7 @@ const [currentImageIndex, setCurrentImageIndex] = useState(0);
       navigate('/error');  // Example of a fallback
     }
   };
- 
+
 
   const handleDelete = async (postId) => {
     if (window.confirm('정말로 삭제하시겠습니까?')) {
@@ -173,7 +173,7 @@ const [currentImageIndex, setCurrentImageIndex] = useState(0);
       alert('게시자 정보를 불러올 수 없습니다.');
       return;
     }
-    
+
     // 세션 스토리지에 채팅 상대 정보 저장 (페이지 이동 후에도 접근하기 위함)
     sessionStorage.setItem('chatTarget', JSON.stringify({
       userId: post.author.id, // 닉네임을 사용자 ID로 가정 (실제 구현에서는 수정 필요)
@@ -182,42 +182,42 @@ const [currentImageIndex, setCurrentImageIndex] = useState(0);
       postTitle: post.content,
       type: 'LOSTFOUND'
     }));
-    
+
     // 채팅 페이지로 이동
     navigate('/chat');
   };
-// Handle image rendering
-const renderImages = () => {
-  if (post?.images?.length > 0) {
-    return post.images.map((image, index) => {
-      const imageUrl = image?.path || '/api/placeholder/160/160';
-      return (
-        <img
-          key={index}
-          src={imageUrl}
-          alt={`Post Image ${index + 1}`}
-          className="w-32 h-32 object-cover rounded-lg cursor-pointer"
-          onClick={() => handleImageClick(index)} // 클릭 시 갤러리 열기
-        />
-      );
-    });
-  }
-  return null;
-};
+  // Handle image rendering
+  const renderImages = () => {
+    if (post?.images?.length > 0) {
+      return post.images.map((image, index) => {
+        const imageUrl = image?.path || '/api/placeholder/160/160';
+        return (
+          <img
+            key={index}
+            src={imageUrl}
+            alt={`Post Image ${index + 1}`}
+            className="w-32 h-32 object-cover rounded-lg cursor-pointer"
+            onClick={() => handleImageClick(index)} // 클릭 시 갤러리 열기
+          />
+        );
+      });
+    }
+    return null;
+  };
 
-// Open the gallery
-const handleImageClick = (index) => {
-  setCurrentImageIndex(index);
-  setIsGalleryOpen(true);
-};
+  // Open the gallery
+  const handleImageClick = (index) => {
+    setCurrentImageIndex(index);
+    setIsGalleryOpen(true);
+  };
 
-// Close the gallery
-const closeGallery = () => {
-  setIsGalleryOpen(false);
-};
+  // Close the gallery
+  const closeGallery = () => {
+    setIsGalleryOpen(false);
+  };
 
   const handleUpdate = () => {
-    setPost({...post, title: newComment});
+    setPost({ ...post, title: newComment });
     setIsEditing(false);
   };
 
@@ -244,15 +244,15 @@ const closeGallery = () => {
               <MoreVertical size={24} />
             </button>
           )}
-          
+
           {showOptions && (
             <div className="absolute right-0 top-full mt-2 bg-white border rounded-lg shadow-lg py-2 w-32">
               <button onClick={handleEdit} className="w-full px-4 py-2 text-left hover:bg-gray-100">
                 수정하기
               </button>
               <button onClick={() => handleDelete(postId)} className="w-full px-4 py-2 text-left text-red-500 hover:bg-gray-100">
-  삭제하기
-</button>
+                삭제하기
+              </button>
             </div>
           )}
         </div>
@@ -268,7 +268,7 @@ const closeGallery = () => {
               className="w-full px-4 py-3 border rounded-lg h-32"
               placeholder="수정할 댓글을 입력하세요..."
             />
-            
+
             <div className="flex gap-2">
               <button
                 onClick={() => setIsEditing(false)}
@@ -306,20 +306,20 @@ const closeGallery = () => {
                 {/* Location */}
                 <div className="flex items-center gap-2 text-gray-500 text-sm">
                   <MapPin size={16} />
-                  
+
                   <span>{post.latitude}, {post.longitude}</span>
                 </div>
-                
+
               </div>
 
               <div className="space-y-2">
-              {post?.pet?.imageUrl && (
-  <img 
-    src={post.pet.imageUrl} 
-    alt={post?.pet?.name || 'Default Pet'} 
-    className="w-40 h-40 object-cover mr-3 rounded-lg"
-  />
-)}
+                {post?.pet?.imageUrl && (
+                  <img
+                    src={post.pet.imageUrl}
+                    alt={post?.pet?.name || 'Default Pet'}
+                    className="w-40 h-40 object-cover mr-3 rounded-lg"
+                  />
+                )}
 
                 {post.pet && post.pet.estimatedAge && (
                   <p className="text-gray-500">생년월일: {post.pet.estimatedAge}</p>
@@ -341,33 +341,35 @@ const closeGallery = () => {
                 )}
               </div>
 
-               {/* Render Images */}
-               <div className="flex gap-4">{renderImages()}</div>
-               {/* Image Gallery */}
-        {isGalleryOpen && (
-          <ImageGallery
-            images={post?.images || []}
-            currentIndex={currentImageIndex}
-            setCurrentIndex={setCurrentImageIndex}
-            closeGallery={closeGallery}
-          />
-        )}
+              {/* Render Images */}
+              <div className="mb-6 grid grid-cols-1 gap-4">
+                {renderImages()}
+              </div>
+              {/* Image Gallery */}
+              {isGalleryOpen && (
+                <ImageGallery
+                  images={post?.images || []}
+                  currentIndex={currentImageIndex}
+                  setCurrentIndex={setCurrentImageIndex}
+                  closeGallery={closeGallery}
+                />
+              )}
 
               <div className="flex justify-between py-2 border-t">
                 <button className="flex items-center gap-1 text-gray-500">
                   <MessageSquare size={20} />
                   <span>댓글 {comments.length}</span>
                 </button>
-                
+
                 {/* 채팅 버튼 */}
-                <button 
+                <button
                   onClick={handleStartChat}
                   className="flex items-center gap-1 text-orange-500 hover:text-orange-600 transition-colors"
                 >
                   <MessageCircle size={20} />
                   <span>채팅하기</span>
                 </button>
-                
+
                 <button className="flex items-center gap-1 text-gray-500">
                   <Share size={20} />
                   <span>공유하기</span>
@@ -383,27 +385,27 @@ const closeGallery = () => {
         <div className="mt-4">
           <h2 className="font-semibold">댓글</h2>
           {comments.map(comment => (
-  <div key={comment.id} className="border p-2 mt-2 rounded">
-    <p><strong>{comment.nickname}</strong>: {comment.content}</p>
+            <div key={comment.id} className="border p-2 mt-2 rounded">
+              <p><strong>{comment.nickname}</strong>: {comment.content}</p>
 
-    {/* Check if the current user is the author of the comment */}
-    {currentUserId && currentUserId === comment.userId && (
-      <div className="flex gap-2">
-        <button onClick={() => handleEditComment(comment)} className="text-blue-500">수정</button>
-        <button onClick={() => handleDeleteComment(comment.id)} className="text-red-500">삭제</button>
-      </div>
-    )}
-  </div>
-))}
+              {/* Check if the current user is the author of the comment */}
+              {currentUserId && currentUserId === comment.userId && (
+                <div className="flex gap-2">
+                  <button onClick={() => handleEditComment(comment)} className="text-blue-500">수정</button>
+                  <button onClick={() => handleDeleteComment(comment.id)} className="text-red-500">삭제</button>
+                </div>
+              )}
+            </div>
+          ))}
 
         </div>
 
         <form onSubmit={handleSubmitComment} className="mt-4 flex items-center gap-2">
-          
-          <input 
-            type="text" 
-            value={newComment} 
-            onChange={(e) => setNewComment(e.target.value)} 
+
+          <input
+            type="text"
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
             placeholder="댓글을 입력하세요..."
             className="flex-1 border p-2 rounded"
           />
