@@ -78,6 +78,7 @@ const MyRegisteredAnimals = () => {
 
             // 승인 후 첫 페이지부터 다시 데이터 로드
             resetPage();
+            refresh();
             setIsModalOpen(false); // 모달 닫기
         } catch (error) {
             console.error('승인 오류:', error);
@@ -96,6 +97,7 @@ const MyRegisteredAnimals = () => {
 
             // 거절 후 첫 페이지부터 다시 데이터 로드
             resetPage();
+            refresh();
             setIsModalOpen(false); // 모달 닫기
         } catch (error) {
             console.error('거절 오류:', error);

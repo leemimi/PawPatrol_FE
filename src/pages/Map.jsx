@@ -494,20 +494,52 @@ const Map = () => {
     };
 
 
-    const showTestRewardPoster = () => {
-        // 더미 데이터로 현상금 전단지 표시
-        const dummyPoster = {
+    const dummyPosters = [
+        {
             id: 1,
             petName: '멍이',
             breed: '골든 리트리버',
             lastSeenLocation: '서울시 강남구 역삼동',
-            imageUrl: '',
+            imageUrl: 'https://animal.seoul.go.kr/comm/getImage?srvcId=MEDIA&upperNo=4282&fileTy=ADOPTIMG&fileNo=4&thumbTy=L',
             contactNumber: '010-1234-5678',
-            reward: 500000,
-            templateType: 'DOG' // 'DOG', 'CAT', 'WANTED' 중 선택
-        };
+            reward: 800000,
+            templateType: 'DOG'
+        },
+        {
+            id: 2,
+            petName: '코코',
+            breed: '비숑 프리제',
+            lastSeenLocation: '서울시 마포구 합정동',
+            imageUrl: 'https://animal.seoul.go.kr/comm/getImage?srvcId=MEDIA&upperNo=1142&fileTy=ADOPTIMG&fileNo=42&thumbTy=L',
+            contactNumber: '010-9876-5432',
+            reward: 600000,
+            templateType: 'DOG'
+        },
+        {
+            id: 3,
+            petName: '나비',
+            breed: '포메라니안',
+            lastSeenLocation: '서울시 서초구 반포동',
+            imageUrl: 'https://animal.seoul.go.kr/comm/getImage?srvcId=MEDIA&upperNo=1142&fileTy=ADOPTIMG&fileNo=45&thumbTy=L',
+            contactNumber: '010-2345-6789',
+            reward: 300000,
+            templateType: 'DOG'
+        },
+        {
+            id: 4,
+            petName: '나비2',
+            breed: '포메라니안2',
+            lastSeenLocation: '서울시 서초구 반포동2',
+            imageUrl: 'https://animal.seoul.go.kr/comm/getImage?srvcId=MEDIA&upperNo=1142&fileTy=ADOPTIMG&fileNo=45&thumbTy=L',
+            contactNumber: '010-2345-6789',
+            reward: 50000,
+            templateType: 'DOG'
+        }
+    ];
 
-        setRewardPosterData(dummyPoster);
+
+    const showTestRewardPoster = () => {
+        setRewardPosterData(dummyPosters);
         setShowRewardPoster(true);
     };
 
@@ -613,9 +645,10 @@ const Map = () => {
                         </div>
                     )}
 
-                    {showRewardPoster && rewardPosterData && (
+                    {showRewardPoster && (
                         <RewardPoster
-                            poster={rewardPosterData}
+                            posters={rewardPosterData}
+                            initialIndex={0}
                             onClose={() => setShowRewardPoster(false)}
                         />
                     )}

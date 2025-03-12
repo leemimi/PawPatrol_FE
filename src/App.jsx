@@ -13,8 +13,6 @@ import MyRegisterAnimals from './pages/MyRegisterAnimals'
 import RegisterAnimalForm from './pages/RegisterAnimalForm'
 import EditAnimalForm from './pages/EditAnimalForm'
 import Rescue from './pages/Rescue'
-import RescueProtection from './pages/RescueProtection'
-import RescueReport from './pages/RescueReport'
 // import Layout from './layout/Layout.jsx'
 import SocialConnect from './pages/SocialConnectPage'
 import LostPostForm from './pages/LostPostForm'
@@ -35,20 +33,20 @@ import './index.css';
 import { initializeFCM, setupForegroundMessageHandler } from './firebase-config';
 
 const App = () => {
-    useEffect(() => {
-      const setupFirebase = async () => {
-        // FCM 초기화
-        await initializeFCM();
-        
-        // 이미 로그인한 사용자인 경우에만 포그라운드 메시지 핸들러 설정
-        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-        if (isLoggedIn) {
-          setupForegroundMessageHandler();
-        }
-      };
-      
-      setupFirebase();
-    }, []);
+  useEffect(() => {
+    const setupFirebase = async () => {
+      // FCM 초기화
+      await initializeFCM();
+
+      // 이미 로그인한 사용자인 경우에만 포그라운드 메시지 핸들러 설정
+      const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+      if (isLoggedIn) {
+        setupForegroundMessageHandler();
+      }
+    };
+
+    setupFirebase();
+  }, []);
 
   return (  /*수정*/
     <Router> {/* This Router wrapper was missing  */}
@@ -72,7 +70,7 @@ const App = () => {
           <Route path="/forgot-password" element={<ForgotPasswordScreen />} />
           <Route path="/lost-pet-registration" element={<LostPostForm />} />
           <Route path="/find-pet-report" element={<ReportPostForm />} />
-          <Route path="/community" element={<LostPetListPages/>} />
+          <Route path="/community" element={<LostPetListPages />} />
           <Route path="/chatlist" element={<ChatList />} />
           {/* You have duplicate route for /community, removed one */}
           <Route path="/PetPostDetail/:postId" element={<PetPostDetail />} />
@@ -80,9 +78,7 @@ const App = () => {
           <Route path="/shelter-mypage" element={<ShelterMyPage />} />
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
           <Route path="/sign-up-shelter" element={<SignUpShelter />} />
-        <Route path="/rescue" element={<Rescue />} />
-        <Route path="/rescue-protection" element={<RescueProtection />} />
-        <Route path="/rescue-report" element={<RescueReport />} />
+          <Route path="/rescue" element={<Rescue />} />
         </Route>
       </Routes>
     </Router>
