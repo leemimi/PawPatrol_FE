@@ -1,36 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import ImageGallery from './ProtectionDetail/components/ImageGallery'; // ImageGallery 컴포넌트를 import 합니다.
+import ImageGallery from './ProtectionDetail/components/ImageGallery';
 import axios from 'axios';
-
-import {
-  ChevronLeft,
-  MoreVertical,
-  MapPin,
-  Clock,
-  MessageSquare,
-  Share,
-  Send,
-  MessageCircle // 채팅 아이콘 추가
-} from 'lucide-react';
+import { ChevronLeft, MoreVertical, MapPin, Clock, MessageSquare, Share, Send, MessageCircle } from 'lucide-react';
 
 const PetPostDetail = ({ onClose }) => {
   const { postId } = useParams();
   const navigate = useNavigate();
 
+  // State management
   const [post, setPost] = useState(null);
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [showOptions, setShowOptions] = useState(false);
-  const [commentType, setCommentType] = useState('lost'); // 'lost' or 'find'
   const [currentUserId, setCurrentUserId] = useState(null);
   const [isAuthor, setIsAuthor] = useState(false);
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [profileImage, setProfileImage] = useState(null);
 
-
+  // 게시글 데이터, 댓글 데이터 가져오기
   useEffect(() => {
     if (!postId) return;
 
@@ -40,52 +31,48 @@ const PetPostDetail = ({ onClose }) => {
       })
       .catch(error => console.error("Error fetching post data:", error));
 
-
     axios.get(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/comments/lost-foundposts/${postId}`)
-      .then(response => setComments(response.data.data || []))
+      .then(response => {
+        console.log('Comments Response:', response);
+        setComments(response.data.data || []);
+      })
       .catch(error => console.error("Error fetching comments:", error));
   }, [postId]);
 
+  // 현재 유저 정보
   useEffect(() => {
     if (!postId) return;
 
-    // 게시글 데이터 가져오기
-    axios.get(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/lost-foundposts/${postId}`)
-      .then(response => {
-        setPost(response.data.data);
-      })
-      .catch(error => console.error("Error fetching post data:", error));
-
-    // 로그인한 사용자 정보 가져오기
     const userInfo = JSON.parse(localStorage.getItem('userInfo')) || {};
-
     if (userInfo.email) {
       axios.get(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/auth/me`, { withCredentials: true })
         .then(response => {
           if (response.data?.data) {
             const userId = response.data.data.id;
+            const userProfileImage = response.data.data.profileImage; // 프로필 이미지 URL 추출
             setCurrentUserId(userId);
+            setProfileImage(userProfileImage); // 프로필 이미지 상태 설정
           }
         })
         .catch(error => console.error("Error fetching current user data:", error));
     }
   }, [postId]);
 
-  // 게시글 데이터가 변경될 때 작성자인지 확인
+  // 현재 로그인한 사용자가 작성자인지 검증
   useEffect(() => {
     if (post && currentUserId !== null) {
       setIsAuthor(Number(post.userId) === Number(currentUserId));
-      console.log("isAuthor", isAuthor); // isAuthor 값 확인
     }
   }, [post, currentUserId]);
 
+  // 댓글 핸들러
   const handleSubmitComment = async (e) => {
     e.preventDefault();
     if (!newComment.trim()) return;
 
     const commentData = {
       content: newComment,
-      lostFoundPostId: postId, // findPostId 대신 lostFoundPostId로 수정,
+      lostFoundPostId: postId,
     };
 
     try {
@@ -108,9 +95,7 @@ const PetPostDetail = ({ onClose }) => {
   const handleUpdateComments = async () => {
     if (!newComment.trim()) return;
 
-    const updatedComment = {
-      content: newComment
-    };
+    const updatedComment = { content: newComment };
 
     try {
       const response = await axios.put(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/comments/${editingCommentId}`, updatedComment);
@@ -139,23 +124,21 @@ const PetPostDetail = ({ onClose }) => {
     }
   };
 
+  // 게시글 핸들러
   const handleEdit = () => {
     if (postId) {
       navigate(`/lostmypetfix/${postId}`);
     } else {
       console.error("postId is not available.");
-      // Optionally, redirect to a fallback page
-      navigate('/error');  // Example of a fallback
+      navigate('/error');
     }
   };
-
 
   const handleDelete = async (postId) => {
     if (window.confirm('정말로 삭제하시겠습니까?')) {
       try {
         const response = await axios.delete(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/lost-foundposts/${postId}`);
         if (response.data.resultCode === "200") {
-          console.log('Post deleted');
           alert('게시글이 성공적으로 삭제되었습니다.');
           navigate(-1);
         }
@@ -166,27 +149,25 @@ const PetPostDetail = ({ onClose }) => {
     }
   };
 
-  // 게시자와 1:1 채팅 시작 기능
+  // 채팅 핸들러
   const handleStartChat = () => {
-    console.log(post);
     if (!post || !post.nickname) {
       alert('게시자 정보를 불러올 수 없습니다.');
       return;
     }
 
-    // 세션 스토리지에 채팅 상대 정보 저장 (페이지 이동 후에도 접근하기 위함)
     sessionStorage.setItem('chatTarget', JSON.stringify({
-      userId: post.author.id, // 닉네임을 사용자 ID로 가정 (실제 구현에서는 수정 필요)
+      userId: post.author.id,
       nickname: post.author.nickname,
       postId: post.id,
       postTitle: post.content,
       type: 'LOSTFOUND'
     }));
 
-    // 채팅 페이지로 이동
     navigate('/chat');
   };
-  // Handle image rendering
+
+  // 이미지 핸들러
   const renderImages = () => {
     if (post?.images?.length > 0) {
       return post.images.map((image, index) => {
@@ -195,9 +176,9 @@ const PetPostDetail = ({ onClose }) => {
           <img
             key={index}
             src={imageUrl}
-            alt={`Post Image ${index + 1}`}
-            className="w-32 h-32 object-cover rounded-lg cursor-pointer"
-            onClick={() => handleImageClick(index)} // 클릭 시 갤러리 열기
+            alt={`Pet image ${index + 1}`}
+            className="w-full h-auto rounded-lg cursor-pointer"
+            onClick={() => handleImageClick(index)}
           />
         );
       });
@@ -205,215 +186,284 @@ const PetPostDetail = ({ onClose }) => {
     return null;
   };
 
-  // Open the gallery
   const handleImageClick = (index) => {
     setCurrentImageIndex(index);
     setIsGalleryOpen(true);
   };
 
-  // Close the gallery
   const closeGallery = () => {
     setIsGalleryOpen(false);
   };
 
-  const handleUpdate = () => {
-    setPost({ ...post, title: newComment });
-    setIsEditing(false);
-  };
-
-  const handleGoTocommunity = () => {
-    navigate(-1); // 이전 페이지로 이동
-    setIsActionMenuVisible(false);
+  const handleGoToCommunity = () => {
+    navigate(-1);
   };
 
   if (!post) {
-    return <div>Loading...</div>;
+    return (
+      <div className="max-w-lg mx-auto bg-orange-100 min-h-screen p-3 relative">
+        <div className="flex justify-center items-center h-full">
+          <p>로딩 중...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="fixed inset-0 bg-white z-50 flex flex-col">
-      {/* Header */}
-      <header className="bg-white border-b px-4 py-3 flex items-center justify-between">
-        <button onClick={handleGoTocommunity} className="p-2">
-          <ChevronLeft size={24} />
-        </button>
-        <h1 className="text-lg font-bold">게시글</h1>
-        <div className="relative">
-          {isAuthor && (
-            <button onClick={() => setShowOptions(!showOptions)} className="p-2">
-              <MoreVertical size={24} />
+    <div className="max-w-lg mx-auto bg-orange-100 min-h-screen p-3 relative pb-24">
+      <div className="mb-4 bg-white rounded-xl p-4 shadow-md hover:shadow-lg transition-shadow">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button onClick={handleGoToCommunity} className="p-2 rounded-full hover:bg-gray-100">
+              <ChevronLeft size={24} />
             </button>
-          )}
+            <h2 className="text-lg font-semibold">게시글 상세</h2>
+          </div>
 
-          {showOptions && (
-            <div className="absolute right-0 top-full mt-2 bg-white border rounded-lg shadow-lg py-2 w-32">
-              <button onClick={handleEdit} className="w-full px-4 py-2 text-left hover:bg-gray-100">
-                수정하기
+          {isAuthor && (
+            <div className="relative">
+              <button
+                onClick={() => setShowOptions(!showOptions)}
+                className="p-2 rounded-full hover:bg-gray-100"
+              >
+                <MoreVertical size={20} />
               </button>
-              <button onClick={() => handleDelete(postId)} className="w-full px-4 py-2 text-left text-red-500 hover:bg-gray-100">
-                삭제하기
-              </button>
+
+              {showOptions && (
+                <div className="absolute right-0 mt-2 w-36 bg-white rounded-md shadow-lg z-10">
+                  <button
+                    onClick={handleEdit}
+                    className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+                  >
+                    수정하기
+                  </button>
+                  <button
+                    onClick={() => handleDelete(post.id)}
+                    className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-red-500"
+                  >
+                    삭제하기
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
-      </header>
 
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto">
-        {isEditing ? (
-          <div className="p-4 space-y-4">
-            <textarea
+        {/* 내용 */}
+        <div className="mt-4">
+          <div className="flex items-center mb-2">
+            <h3 className="font-bold text-xl">{post.title}</h3>
+          </div>
+
+          <div className="flex items-center text-gray-500 mb-2">
+            <p>글쓴이: {post.nickname}</p>
+          </div>
+
+          <div className="flex items-center text-gray-500 mb-2">
+            <Clock size={16} className="mr-1" />
+            <p>
+              {post.lostTime
+                ? `실종시간: ${new Date(post.lostTime).toLocaleString('ko-KR', {
+                  year: 'numeric',
+                  month: 'numeric',
+                  day: 'numeric',
+                  hour: 'numeric',
+                  minute: 'numeric',
+                  second: 'numeric',
+                  hour12: true
+                })}`
+                : post.findTime
+                  ? `발견시각: ${new Date(post.findTime).toLocaleString('ko-KR', {
+                    year: 'numeric',
+                    month: 'numeric',
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: 'numeric',
+                    second: 'numeric',
+                    hour12: true
+                  })}`
+                  : "시간 정보 없음"}
+
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 mb-4">
+            {renderImages()}
+          </div>
+
+          {post.pet && (
+            <div className="bg-gray-50 p-4 rounded-lg mb-4 shadow-sm border border-gray-100">
+              <h3 className="font-medium text-gray-700 mb-2 border-b pb-2">반려동물 정보</h3>
+              <div className="flex flex-col gap-2">
+                {post.pet.estimatedAge && (
+                  <div className="flex flex-col">
+                    <span className="text-gray-500 font-medium">나이:</span>
+                    <span className="text-gray-700 mt-1">{post.pet.estimatedAge}</span>
+                  </div>
+                )}
+                {post.pet.gender && (
+                  <div className="flex flex-col">
+                    <span className="text-gray-500 font-medium">성별:</span>
+                    <span className="text-gray-700 mt-1">{post.pet.gender}</span>
+                  </div>
+                )}
+                {post.pet.breed && (
+                  <div className="flex flex-col">
+                    <span className="text-gray-500 font-medium">품종:</span>
+                    <span className="text-gray-700 mt-1">{post.pet.breed}</span>
+                  </div>
+                )}
+                {post.pet.healthCondition && (
+                  <div className="flex flex-col">
+                    <span className="text-gray-500 font-medium">건강 상태:</span>
+                    <span className="text-gray-700 mt-1">{post.pet.healthCondition}</span>
+                  </div>
+                )}
+                {post.pet.feature && (
+                  <div className="flex flex-col">
+                    <span className="text-gray-500 font-medium">특징:</span>
+                    <span className="text-gray-700 mt-1">{post.pet.feature}</span>
+                  </div>
+                )}
+                {post.pet.size && (
+                  <div className="flex flex-col">
+                    <span className="text-gray-500 font-medium">크기:</span>
+                    <span className="text-gray-700 mt-1">{post.pet.size}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+
+          <div className="bg-gray-50 p-4 rounded-lg mb-4 shadow-sm border border-gray-100">
+            <h3 className="font-medium text-gray-700 mb-2 border-b pb-2">내용</h3>
+            <p className="text-gray-800 leading-relaxed whitespace-pre-line break-words">
+              {post.content}
+            </p>
+          </div>
+
+          {!isAuthor && (
+            <button
+              onClick={handleStartChat}
+              className="w-full py-2 bg-orange-500 text-white rounded-lg flex items-center justify-center gap-2 hover:bg-orange-600 transition-colors"
+            >
+              <MessageCircle size={20} />
+              <span>작성자와 대화하기</span>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* 댓글 섹션 */}
+      <div className="bg-white rounded-xl p-4 shadow-md mb-20">
+        <h3 className="font-semibold text-lg mb-4">댓글 {comments.length}개</h3>
+
+        {comments.map(comment => (
+          <div key={comment.id} className="border-b py-3 last:border-b-0">
+            <div className="grid grid-cols-[auto_1fr_auto] gap-2">
+              {/* 프로필 이미지 */}
+              <div className="self-start -mt-1">
+                {comment.profileImage && !comment.profileImage.includes('default.png') ? (
+                  <img
+                    src={comment.profileImage}
+                    alt={`${comment.nickname}의 프로필`}
+                    className="w-8 h-8 rounded-full object-cover"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = '/path/to/fallback-image.png';
+                    }}
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white font-medium">
+                    {comment.nickname ? comment.nickname.charAt(0).toUpperCase() : '?'}
+                  </div>
+                )}
+              </div>
+
+              {/* 닉네임과 내용 */}
+              <div className="flex flex-col min-width-0 overflow-hidden">
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-gray-800">{comment.nickname}</span>
+                  {currentUserId === comment.userId && (
+                    <div className="flex gap-2 items-center">
+                      <button
+                        onClick={() => handleEditComment(comment)}
+                        className="text-xs text-blue-500 hover:underline"
+                      >
+                        수정
+                      </button>
+                      <button
+                        onClick={() => handleDeleteComment(comment.id)}
+                        className="text-xs text-red-500 hover:underline"
+                      >
+                        삭제
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <div className="bg-gray-50 p-2 rounded-lg mt-1 border border-gray-100 text-gray-700 break-words overflow-hidden">
+                  {comment.content}
+                </div>
+              </div>
+
+              {/* 날짜 */}
+              <div className="text-sm text-gray-500 whitespace-nowrap self-start">
+                {new Date(comment.createdAt).toLocaleString('ko-KR', {
+                  year: 'numeric',
+                  month: 'numeric',
+                  day: 'numeric',
+                  hour: 'numeric',
+                  minute: 'numeric',
+                  hour12: true
+                })}
+              </div>
+            </div>
+
+          </div>
+        ))}
+
+
+        {/* Comment form */}
+        <form onSubmit={isEditing ? handleUpdateComments : handleSubmitComment} className="mt-4">
+          <div className="flex gap-2">
+            <input
+              type="text"
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
-              className="w-full px-4 py-3 border rounded-lg h-32"
-              placeholder="수정할 댓글을 입력하세요..."
+              placeholder="댓글을 입력하세요"
+              className="flex-1 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-300"
             />
-
-            <div className="flex gap-2">
+            <button
+              type="submit"
+              className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors"
+            >
+              {isEditing ? '수정' : '등록'}
+            </button>
+            {isEditing && (
               <button
-                onClick={() => setIsEditing(false)}
-                className="flex-1 px-4 py-2 border rounded-lg"
+                type="button"
+                onClick={() => {
+                  setIsEditing(false);
+                  setNewComment('');
+                }}
+                className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition-colors"
               >
                 취소
               </button>
-              <button
-                onClick={handleUpdateComments}
-                className="flex-1 px-4 py-2 bg-orange-500 text-white rounded-lg"
-              >
-                수정완료
-              </button>
-            </div>
+            )}
           </div>
-        ) : (
-          <>
-            {/* Post Content */}
-            <div className="p-4 space-y-4">
-              <div className="flex items-center gap-3">
-                <div>
-                  <p className="font-medium">글쓴이: {post.nickname}</p>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <span className="inline-block px-2 py-1 bg-orange-100 text-orange-500 rounded-full text-sm">
-                  {post.status}
-                </span>
-                <h2 className="text-xl font-bold">{post.content}</h2>
-                <p className="text-gray-700">
-                  {post.lostTime ? `실종시간: ${post.lostTime}` : post.findTime ? `발견시각: ${post.findTime}` : "시간 정보 없음"}
-                </p>
-
-                {/* Location */}
-                <div className="flex items-center gap-2 text-gray-500 text-sm">
-                  <MapPin size={16} />
-
-                  <span>{post.latitude}, {post.longitude}</span>
-                </div>
-
-              </div>
-
-              <div className="space-y-2">
-                {post?.pet?.imageUrl && (
-                  <img
-                    src={post.pet.imageUrl}
-                    alt={post?.pet?.name || 'Default Pet'}
-                    className="w-40 h-40 object-cover mr-3 rounded-lg"
-                  />
-                )}
-
-                {post.pet && post.pet.estimatedAge && (
-                  <p className="text-gray-500">생년월일: {post.pet.estimatedAge}</p>
-                )}
-                {post.pet && post.pet.gender && (
-                  <p className="text-gray-500">성별: {post.pet.gender}</p>
-                )}
-                {post.pet && post.pet.breed && (
-                  <p className="text-gray-500">품종: {post.pet.breed}</p>
-                )}
-                {post.pet && post.pet.healthCondition && (
-                  <p className="text-gray-500">건강 상태: {post.pet.healthCondition}</p>
-                )}
-                {post.pet && post.pet.feature && (
-                  <p className="text-gray-500">특징: {post.pet.feature}</p>
-                )}
-                {post.pet && post.pet.size && (
-                  <p className="text-gray-500">크기: {post.pet.size}</p>
-                )}
-              </div>
-
-              {/* Render Images */}
-              <div className="mb-6 grid grid-cols-1 gap-4">
-                {renderImages()}
-              </div>
-              {/* Image Gallery */}
-              {isGalleryOpen && (
-                <ImageGallery
-                  images={post?.images || []}
-                  currentIndex={currentImageIndex}
-                  setCurrentIndex={setCurrentImageIndex}
-                  closeGallery={closeGallery}
-                />
-              )}
-
-              <div className="flex justify-between py-2 border-t">
-                <button className="flex items-center gap-1 text-gray-500">
-                  <MessageSquare size={20} />
-                  <span>댓글 {comments.length}</span>
-                </button>
-
-                {/* 채팅 버튼 */}
-                <button
-                  onClick={handleStartChat}
-                  className="flex items-center gap-1 text-orange-500 hover:text-orange-600 transition-colors"
-                >
-                  <MessageCircle size={20} />
-                  <span>채팅하기</span>
-                </button>
-
-                <button className="flex items-center gap-1 text-gray-500">
-                  <Share size={20} />
-                  <span>공유하기</span>
-                </button>
-              </div>
-            </div>
-          </>
-        )}
-      </div>
-
-      {/* Comment Input */}
-      <div className="flex-1 overflow-y-auto pb-16">
-        <div className="mt-4">
-          <h2 className="font-semibold">댓글</h2>
-          {comments.map(comment => (
-            <div key={comment.id} className="border p-2 mt-2 rounded">
-              <p><strong>{comment.nickname}</strong>: {comment.content}</p>
-
-              {/* Check if the current user is the author of the comment */}
-              {currentUserId && currentUserId === comment.userId && (
-                <div className="flex gap-2">
-                  <button onClick={() => handleEditComment(comment)} className="text-blue-500">수정</button>
-                  <button onClick={() => handleDeleteComment(comment.id)} className="text-red-500">삭제</button>
-                </div>
-              )}
-            </div>
-          ))}
-
-        </div>
-
-        <form onSubmit={handleSubmitComment} className="mt-4 flex items-center gap-2">
-
-          <input
-            type="text"
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            placeholder="댓글을 입력하세요..."
-            className="flex-1 border p-2 rounded"
-          />
-          <button type="submit" className="bg-orange-500 text-white p-2 rounded">
-            <Send size={20} />
-          </button>
         </form>
       </div>
+
+      {/* 이미지 갤러리 모달 */}
+      {isGalleryOpen && post?.images?.length > 0 && (
+        <ImageGallery
+          images={post.images.map(img => img.path)}
+          initialIndex={currentImageIndex}
+          onClose={closeGallery}
+        />
+      )}
     </div>
   );
 };
