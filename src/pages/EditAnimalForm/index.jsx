@@ -70,7 +70,6 @@ const EditAnimalForm = () => {
             try {
                 // URL로 이미지 삭제 API 호출
                 await ImageApiService.deleteImageByUrl(url);
-                console.log(`서버 이미지 삭제 성공: URL=${url}`);
             } catch (error) {
                 console.error('서버 이미지 삭제 실패:', error);
                 alert('이미지 삭제 중 오류가 발생했습니다.');

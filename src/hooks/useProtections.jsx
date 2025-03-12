@@ -158,8 +158,6 @@ export const useMyRegisteredAnimals = (initialPage = 0, initialSize = 10) => {
             // 원본 데이터 저장
             setData(result);
 
-            console.log(data);
-
             // 누적 컨텐츠 업데이트 
             if (page === 0) {
                 setAccumulatedContent(result.page.content);
@@ -242,7 +240,6 @@ export const useAnimalForm = (id = null) => {
             try {
                 setLoading(true);
                 const result = await ProtectionApiService.fetchProtectionDetail(id);
-                console.log('API 응답 원본 데이터:', result);
 
                 // API 응답에서 폼 데이터로 변환
                 const animalData = result.animalCaseDetail;

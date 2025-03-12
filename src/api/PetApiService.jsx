@@ -19,7 +19,6 @@ export const PetApiService = {
       if (response.data.resultCode === "200") {
         console.log("response.data.data", response.data.data)
         return response.data.data.map(post => {
-          console.log(post.id)
           const isLostPost = post.lostTime !== null;
 
           const imageUrl = post.images && post.images.length > 0

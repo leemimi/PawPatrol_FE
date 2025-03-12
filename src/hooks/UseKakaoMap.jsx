@@ -10,22 +10,20 @@ export const useKakaoMap = (initialPosition) => {
     // 지도 초기화
     useEffect(() => {
         console.log("useKakaoMap effect triggered with position:", initialPosition);
-        
+
         const loadMap = () => {
             if (!window.kakao || !window.kakao.maps) {
-                console.log("Waiting for Kakao Maps SDK...");
                 setTimeout(loadMap, 1000);
                 return;
             }
 
             if (!mapRef.current) {
-                console.log("Creating new map instance");
                 const container = document.getElementById("map");
                 if (!container) {
                     console.error("Map container not found");
                     return;
                 }
-                
+
                 const options = {
                     center: new window.kakao.maps.LatLng(
                         initialPosition.lat,
@@ -55,10 +53,9 @@ export const useKakaoMap = (initialPosition) => {
 
                 circle.setMap(newMap);
                 circleRef.current = circle;
-                
+
                 // 현재 위치 마커 생성
                 createCenterMarker(newMap, initialPosition);
-                console.log("Initial center marker created");
             } else {
                 console.log("Updating existing map with position:", initialPosition);
                 const moveLatLon = new window.kakao.maps.LatLng(
@@ -66,14 +63,13 @@ export const useKakaoMap = (initialPosition) => {
                     initialPosition.lng
                 );
                 mapRef.current.setCenter(moveLatLon);
-                
+
                 if (circleRef.current) {
                     circleRef.current.setPosition(moveLatLon);
                 }
-                
+
                 // 위치가 변경되면 마커 위치도 업데이트
                 updateCenterMarker(initialPosition);
-                console.log("Center marker updated in map effect");
             }
         };
 
@@ -94,17 +90,16 @@ export const useKakaoMap = (initialPosition) => {
     // 현재 위치 마커 생성 함수 (매번 새로 생성)
     const createCenterMarker = (map, position) => {
         console.log("Creating center marker at position:", position);
-        
+
         // 기존 마커가 있으면 명시적으로 제거
         if (centerMarkerRef.current) {
-            console.log("Removing existing center marker");
             centerMarkerRef.current.setMap(null);
             centerMarkerRef.current = null;
         }
 
         // 현재 위치 마커 생성
         const markerPosition = new window.kakao.maps.LatLng(position.lat, position.lng);
-        
+
         // 커스텀 오버레이로 현재 위치 표시
         const centerMarker = new window.kakao.maps.CustomOverlay({
             position: markerPosition,
@@ -113,22 +108,21 @@ export const useKakaoMap = (initialPosition) => {
             xAnchor: 0.5,
             zIndex: 10
         });
-        
+
         // 맵에 마커 추가
         centerMarker.setMap(map);
         centerMarkerRef.current = centerMarker;
-        console.log("New center marker created and set to map");
     };
 
     // 현재 위치 마커 업데이트 함수
     const updateCenterMarker = (position) => {
         console.log("updateCenterMarker called with position:", position);
-        
+
         if (!position || !position.lat || !position.lng) {
             console.error("Invalid position for marker update:", position);
             return;
         }
-        
+
         if (mapRef.current) {
             // 위치가 변경되었을 때 새 마커를 생성하는 방식으로 변경
             // (기존 마커 위치 업데이트 대신)
