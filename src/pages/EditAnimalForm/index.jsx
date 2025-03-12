@@ -95,29 +95,17 @@ const EditAnimalForm = () => {
         const metadataToSend = {
             ...formData,
             gender: formData.gender === 'MALE' ? 'M' : formData.gender === 'FEMALE' ? 'F' : 'UNKNOWN',
-            registrationNo: formData.registrationNo.trim() === "" ? null : formData.registrationNo
+            registrationNo: formData.registrationNo.trim() === "" ? null : formData.registrationNo,
+            // 기존 이미지 URL들을 메타데이터에 포함
+            existingImageUrls: previewUrls.filter(url => url.startsWith('http'))
         };
 
         formDataToSend.append('metadata', JSON.stringify(metadataToSend));
 
-        // 새로 추가된 File 객체들
+        // 새로 추가된 File 객체들만 FormData에 추가
         images.forEach((image) => {
             formDataToSend.append('images', image);
         });
-
-        // 기존 서버 이미지 URL들도 다운로드해서 FormData에 추가 
-        const serverImageUrls = previewUrls.filter(url => url.startsWith('http'));
-        for (const url of serverImageUrls) {
-            try {
-                const response = await fetch(url);
-                const blob = await response.blob();
-                const filename = url.split('/').pop();
-                const file = new File([blob], filename, { type: blob.type });
-                formDataToSend.append('images', file);
-            } catch (error) {
-                console.error("기존 이미지 다운로드 중 오류 발생:", error);
-            }
-        }
 
         try {
             await updateAnimal(id, formDataToSend);
