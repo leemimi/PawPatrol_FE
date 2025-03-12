@@ -3,6 +3,7 @@ import { ChevronLeft, MapPin, Calendar, Camera, X, Plus, Link } from 'lucide-rea
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useLocation } from 'react-router-dom'; // Ensure useLocation is imported
+import { KakaoMapApiService } from '../api/kakaoRestApiService';
 
 const ReportPostForm = ({ formType = "standalone" }) => {
   const navigate = useNavigate();
@@ -12,7 +13,7 @@ const ReportPostForm = ({ formType = "standalone" }) => {
   const [tagInput, setTagInput] = useState("");
   const [lostPostId, setLostPostId] = useState(null);
   const [formData, setFormData] = useState({
-    content: "강아지를 발견했어요. 제발 도와주세요.",
+    content: "",
     latitude: null,
     longitude: null,
     location: null,
@@ -27,9 +28,20 @@ const ReportPostForm = ({ formType = "standalone" }) => {
 
   useEffect(() => {
     if (location.state?.animalType) {
+      const animalType = location.state.animalType;
+      let defaultContent = "";
+      if (animalType === "DOG") {
+        defaultContent = "강아지를 발견했어요. 제발 도와주세요.";
+      } else if (animalType === "CAT") {
+        defaultContent = "고양이를 발견했어요. 제발 도와주세요.";
+      } else {
+        defaultContent = "반려동물을 발견했어요. 제발 도와주세요.";
+      }
+
       setFormData(prevFormData => ({
         ...prevFormData,
-        animalType: location.state.animalType
+        animalType: location.state.animalType,
+        content: defaultContent
       }));
     }
   }, [location.state?.animalType]);
@@ -89,6 +101,66 @@ const ReportPostForm = ({ formType = "standalone" }) => {
     };
   }, []);
 
+
+  const handleLocationRegister = async () => {
+    if (formData.latitude && formData.longitude) {
+      try {
+        // KakaoMapApiService를 사용하여 좌표를 주소로 변환
+        const response = await KakaoMapApiService.getAddressFromCoords(
+          formData.longitude,
+          formData.latitude
+        );
+
+        console.log("좌표→주소 변환 응답:", response);
+
+        let address = "";
+
+        if (response.resultCode === "200" &&
+          response.data.documents &&
+          response.data.documents.length > 0) {
+
+          // 도로명 주소 우선, 없으면 지번 주소 사용
+          if (response.data.documents[0].road_address) {
+            address = response.data.documents[0].road_address.address_name;
+          } else if (response.data.documents[0].address) {
+            address = response.data.documents[0].address.address_name;
+          }
+
+          // 상태 업데이트
+          setFormData(prev => ({
+            ...prev,
+            location: address
+          }));
+
+          alert(`위치가 등록되었습니다.\n위도: ${formData.latitude}\n경도: ${formData.longitude}\n주소: ${address}`);
+        } else {
+          // 주소 변환 결과가 없는 경우
+          const locationText = `위도: ${formData.latitude}, 경도: ${formData.longitude}`;
+
+          setFormData(prev => ({
+            ...prev,
+            location: locationText
+          }));
+
+          alert(`위치가 등록되었습니다.\n${locationText}\n(주소 정보를 찾을 수 없습니다)`);
+        }
+      } catch (error) {
+        console.error("주소 변환 중 오류 발생:", error);
+
+        // 오류 시 좌표 정보만 저장
+        const locationText = `위도: ${formData.latitude}, 경도: ${formData.longitude}`;
+
+        setFormData(prev => ({
+          ...prev,
+          location: locationText
+        }));
+
+        alert(`위치가 등록되었습니다.\n${locationText}\n(주소 변환 중 오류가 발생했습니다)`);
+      }
+    } else {
+      alert("먼저 지도에서 위치를 선택해주세요.");
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -151,9 +223,11 @@ const ReportPostForm = ({ formType = "standalone" }) => {
       );
       alert("발견 신고가 성공적으로 등록되었습니다.");
       console.log(response.data);
-      if (location.state?.returnPath) {
-        localStorage.setItem('reportSubmitted', 'true');
-        localStorage.setItem('reportSubmitted_time', new Date().getTime().toString());
+      if (location.state?.returnPath === "/rescue") {
+        localStorage.setItem('rescueReportData', JSON.stringify({
+          postId: response.data.data.id,
+          timestamp: new Date().getTime() // 데이터 유효성 검증용 타임스탬프
+        }));
         navigate(location.state.returnPath, {
           state: location.state.returnState || {}
         });
@@ -262,36 +336,36 @@ const ReportPostForm = ({ formType = "standalone" }) => {
             />
           </div>
 
-          {/* Location */}
+          {/* 지도로 위치 선택 */}
           <div className="bg-white p-4 rounded-2xl border-2 border-orange-100">
             <div className="flex items-center gap-2 text-orange-400 mb-2">
               <MapPin size={20} strokeWidth={2.5} />
               <span className="font-medium">발견 위치</span>
             </div>
-            <input
-              type="text"
-              name="location"
-              placeholder="위치를 입력하세요"
-              value={formData.location}
-              onChange={handleChange}
-              className="w-full text-orange-900 focus:outline-none p-2 border rounded-md"
-            />
-          </div>
 
-          {/* Location & Map */}
-          <div className="bg-white p-4 rounded-2xl border-2 border-orange-100">
-            <div className="flex items-center gap-2 text-orange-400 mb-2">
-              <MapPin size={20} strokeWidth={2.5} />
-              <span className="font-medium">발견 위치</span>
-            </div>
+            {/* 지도로 위치 선택 */}
             <div id="kakaoMap" style={{ width: "100%", height: "300px" }}></div>
-            <button
-              type="button"
-              onClick={() => alert(`위도: ${formData.latitude}, 경도: ${formData.longitude}, 주소: ${formData.location}`)}
-              className="mt-4 px-4 py-2 bg-orange-500 text-white rounded-lg shadow-md hover:bg-orange-600 transition"
-            >
-              위치 등록하기
-            </button>
+
+            {/* 선택된 위치와 등록 버튼을 한 줄로 배치 */}
+            <div className="flex items-center gap-2 mt-3">
+              <div className="flex-1 overflow-hidden">
+                <input
+                  type="text"
+                  name="location"
+                  placeholder="지도에서 위치를 선택하세요"
+                  value={formData.location || ''}
+                  onChange={handleChange}
+                  className="w-full text-orange-900 focus:outline-none p-2 border rounded-md truncate"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={handleLocationRegister}
+                className="whitespace-nowrap px-4 py-2 bg-orange-500 text-white rounded-lg shadow-md hover:bg-orange-600 transition"
+              >
+                위치 등록하기
+              </button>
+            </div>
           </div>
 
           <div className="bg-white p-4 rounded-2xl border-2 border-orange-100">
