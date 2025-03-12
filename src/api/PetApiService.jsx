@@ -55,6 +55,56 @@ export const PetApiService = {
       console.error('Failed to fetch pets:', error);
       return [];
     }
+  },
+
+  // 보상금 게시글 목록 조회
+  async fetchRewardPosts(page = 0, size = 20) {
+    const apiUrl = `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/lost-foundposts/reward-list`;
+
+    try {
+      const response = await axios.get(apiUrl, {
+        params: {
+          page: page,
+          size: size
+        },
+        credentials: 'include',
+      });
+
+      if (response.data.resultCode === "200") {
+        // 페이지 정보와 게시글 목록 반환
+        const posts = response.data.data.content.map(post => {
+          const imageUrl = post.images && post.images.length > 0
+            ? post.images[0].path
+            : null;
+
+          // 반려동물 이름 가져오기 (pet 객체가 있는 경우)
+          const petName = post.pet ? post.pet.name : '이름 없음';
+
+          return {
+            id: post.id,
+            content: post.content,
+            petName: petName,
+            imageUrl: imageUrl,
+            reward: post.reward,
+            lostTime: post.lostTime,
+            location: post.location,
+            animalType: post.animalType
+          };
+        });
+
+        return {
+          content: posts,
+          totalPages: response.data.data.totalPages,
+          totalElements: response.data.data.totalElements,
+          currentPage: response.data.data.number
+        };
+      }
+
+      return { content: [], totalPages: 0, totalElements: 0, currentPage: 0 };
+    } catch (error) {
+      console.error('보상금 게시글 목록 조회 실패:', error);
+      return { content: [], totalPages: 0, totalElements: 0, currentPage: 0 };
+    }
   }
 };
 
@@ -75,3 +125,4 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
 function deg2rad(deg) {
   return deg * (Math.PI / 180);
 }
+

@@ -3,6 +3,8 @@ import { ChevronLeft, MapPin, Calendar, Camera, X, Plus, Pencil, CreditCard } fr
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { KakaoMapApiService } from '../api/kakaoRestApiService';
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
 
 const LostPostForm = () => {
   const navigate = useNavigate();
@@ -27,16 +29,47 @@ const LostPostForm = () => {
     reward: null
   });
 
-  // Fetch pets list
+  // SweetAlert2 React 컨텐츠 래퍼
+  const MySwal = withReactContent(Swal);
+
+  // 커스텀 스타일 정의
+  const swalCustomClass = {
+    popup: 'rounded-3xl shadow-xl border-4 border-orange-100',
+    title: 'text-orange-800 font-bold',
+    confirmButton: 'rounded-full px-6 py-2 bg-orange-500 hover:bg-orange-600 text-white transition-colors',
+    actions: 'mt-4',
+    icon: 'text-orange-500'
+  };
+
+  // SweetAlert2 토스트 스타일 커스터마이징
+  const Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true,
+    customClass: {
+      popup: 'rounded-xl border-2 border-orange-200 shadow-lg',
+      title: 'text-sm font-medium text-orange-800 ml-2'
+    },
+    didOpen: (toast) => {
+      toast.onmouseenter = Swal.stopTimer;
+      toast.onmouseleave = Swal.resumeTimer;
+    }
+  });
+
+  // 기존 코드 유지...
   useEffect(() => {
     const fetchPets = async () => {
       try {
         const response = await axios.get(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/animals/list`);
-        setPetsData(response.data.data); // This accesses the actual list of pets
-        //console.log(petsData);  // Add this to check the response in the console
-
+        setPetsData(response.data.data);
       } catch (error) {
         console.error("Failed to fetch pets:", error);
+        Toast.fire({
+          icon: 'error',
+          title: '반려동물 목록을 불러오는데 실패했습니다.'
+        });
       }
     };
 
@@ -49,6 +82,10 @@ const LostPostForm = () => {
 
     script.onerror = () => {
       console.error("Failed to load Kakao Maps API.");
+      Toast.fire({
+        icon: 'error',
+        title: '카카오맵 API 로드에 실패했습니다.'
+      });
     };
 
     script.onload = () => {
@@ -87,6 +124,10 @@ const LostPostForm = () => {
         });
       } else {
         console.error("Kakao Maps is not available.");
+        Toast.fire({
+          icon: 'error',
+          title: '카카오맵을 사용할 수 없습니다.'
+        });
       }
     };
 
@@ -127,7 +168,16 @@ const LostPostForm = () => {
             location: address
           }));
 
-          alert(`위치가 등록되었습니다.\n위도: ${formData.latitude}\n경도: ${formData.longitude}\n주소: ${address}`);
+          // 성공 시 심플한 알림
+          MySwal.fire({
+            icon: 'success',
+            title: '위치가 등록되었습니다',
+            showConfirmButton: false,
+            timer: 1500,
+            customClass: swalCustomClass,
+            iconColor: '#F97316',
+            background: '#fff8f5'
+          });
         } else {
           // 주소 변환 결과가 없는 경우
           const locationText = `위도: ${formData.latitude}, 경도: ${formData.longitude}`;
@@ -137,7 +187,15 @@ const LostPostForm = () => {
             location: locationText
           }));
 
-          alert(`위치가 등록되었습니다.\n${locationText}\n(주소 정보를 찾을 수 없습니다)`);
+          MySwal.fire({
+            icon: 'info',
+            title: '위치가 등록되었습니다',
+            html: `<p class="text-orange-700">(주소 정보를 찾을 수 없습니다)</p>`,
+            customClass: swalCustomClass,
+            confirmButtonText: '확인',
+            iconColor: '#60A5FA',
+            background: '#f0f9ff'
+          });
         }
       } catch (error) {
         console.error("주소 변환 중 오류 발생:", error);
@@ -150,10 +208,26 @@ const LostPostForm = () => {
           location: locationText
         }));
 
-        alert(`위치가 등록되었습니다.\n${locationText}\n(주소 변환 중 오류가 발생했습니다)`);
+        MySwal.fire({
+          icon: 'warning',
+          title: '위치가 등록되었습니다',
+          html: `<p class="text-orange-600">(주소 변환 중 오류가 발생했습니다)</p>`,
+          customClass: swalCustomClass,
+          confirmButtonText: '확인',
+          iconColor: '#FFB020',
+          background: '#fffbeb'
+        });
       }
     } else {
-      alert("먼저 지도에서 위치를 선택해주세요.");
+      MySwal.fire({
+        icon: 'error',
+        title: '위치를 선택해주세요',
+        text: '먼저 지도에서 위치를 선택해주세요.',
+        customClass: swalCustomClass,
+        confirmButtonText: '확인',
+        iconColor: '#EF4444',
+        background: '#fff5f5'
+      });
     }
   };
 
@@ -166,7 +240,7 @@ const LostPostForm = () => {
     const value = e.target.value.replace(/[^0-9]/g, '');
     setFormData({
       ...formData,
-      reward: value === '' ? null : parseInt(value)
+      reward: value === '' || parseInt(value) === 0 ? null : parseInt(value)
     });
   };
 
@@ -178,7 +252,12 @@ const LostPostForm = () => {
     const validFiles = files.filter((file) => file.size <= maxSize);
 
     if (validFiles.length !== files.length) {
-      alert("파일 크기가 5MB를 초과한 파일이 있습니다. 5MB 이하의 파일만 업로드 가능합니다.");
+      Toast.fire({
+        icon: 'warning',
+        title: '5MB 이하의 파일만 업로드 가능합니다.',
+        iconColor: '#FFB020',
+        background: '#fffbeb'
+      });
     }
 
     // Combine new valid files with existing ones (up to 5)
@@ -194,7 +273,6 @@ const LostPostForm = () => {
     e.target.value = null;
   };
 
-
   const removeImage = (index) => {
     setImages(images.filter((_, i) => i !== index));
     setPreviewUrls(previewUrls.filter((_, i) => i !== index));
@@ -202,33 +280,43 @@ const LostPostForm = () => {
 
   const handlePetSelect = (pet) => {
     setSelectedPet(pet);
-    console.log(pet); // 확인하여 id가 존재하는지 확인
-    console.log(pet.id); // Ensure this is a valid Long or number
-
-
     setFormData(prev => {
       const updatedFormData = {
         ...prev,
         petId: pet.id
       };
-      console.log(updatedFormData); // formData 값 확인
       return updatedFormData;
     });
     setShowPetSelection(false);
   };
-
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     // Ensure a pet is selected and location is provided
     if (!selectedPet) {
-      alert("반려동물을 선택해주세요.");
+      MySwal.fire({
+        icon: 'error',
+        title: '반려동물을 선택해주세요',
+        text: '실종 신고를 위해 반려동물 선택이 필요합니다.',
+        customClass: swalCustomClass,
+        confirmButtonText: '확인',
+        iconColor: '#EF4444',
+        background: '#fff5f5'
+      });
       return;
     }
 
     if (!formData.location) {
-      alert("위치를 입력해주세요.");
+      MySwal.fire({
+        icon: 'error',
+        title: '위치를 입력해주세요',
+        text: '실종 위치 정보가 필요합니다.',
+        customClass: swalCustomClass,
+        confirmButtonText: '확인',
+        iconColor: '#EF4444',
+        background: '#fff5f5'
+      });
       return;
     }
 
@@ -241,12 +329,22 @@ const LostPostForm = () => {
       images.forEach((image) => formDataToSend.append("images", image));
     }
 
-    // If no images are selected, don't append the "images" field
-    // No need to append empty arrays or null values
-
     let apiUrl = `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/lost-foundposts`;
 
     try {
+      // 커스텀 로딩 팝업
+      MySwal.fire({
+        title: '등록 중...',
+        html: '<div class="flex justify-center"><div class="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-orange-500"></div></div>',
+        showConfirmButton: false,
+        allowOutsideClick: false,
+        customClass: {
+          popup: 'rounded-3xl shadow-xl border-4 border-orange-100',
+          title: 'text-orange-800 font-bold mt-4'
+        },
+        background: '#fff8f5'
+      });
+
       const response = await axios.post(
         apiUrl,
         formDataToSend,
@@ -254,17 +352,34 @@ const LostPostForm = () => {
           headers: { "Content-Type": "multipart/form-data" }
         }
       );
-      alert("발견 신고가 성공적으로 등록되었습니다.");
+
+      // 성공 시 예쁜 성공 팝업
+      MySwal.fire({
+        icon: 'success',
+        title: '등록 완료!',
+        showConfirmButton: false,
+        timer: 1500,
+        customClass: swalCustomClass,
+        iconColor: '#F97316',
+        background: '#fff8f5'
+      }).then(() => {
+        navigate(-1);
+      });
+
       console.log(response.data);
-      navigate(-1);
     } catch (error) {
       console.error("게시글 등록 중 오류 발생:", error);
-      alert("게시글 등록에 실패했습니다.");
+      MySwal.fire({
+        icon: 'error',
+        title: '등록 실패',
+        text: '게시글 등록 중 오류가 발생했습니다. 다시 시도해주세요.',
+        customClass: swalCustomClass,
+        confirmButtonText: '확인',
+        iconColor: '#EF4444',
+        background: '#fff5f5'
+      });
     }
   };
-
-
-
 
   return (
     <div className="min-h-screen bg-orange-50">
@@ -285,7 +400,7 @@ const LostPostForm = () => {
         </div>
       </header>
 
-      {/* Main Form */}
+      {/* Main Form - 나머지 코드는 유지 */}
       <main className="pt-14 pb-20 px-4">
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Pet Selection */}
@@ -347,7 +462,6 @@ const LostPostForm = () => {
             )}
           </div>
 
-          {/* Image Upload */}
           {/* Image Upload */}
           <div className="bg-white p-4 rounded-2xl border-2 border-orange-100">
             <div className="text-center mb-4">
@@ -434,7 +548,7 @@ const LostPostForm = () => {
                 type="text"
                 name="reward"
                 placeholder="보상금을 입력하세요 (선택사항)"
-                value={formData.reward === null ? '' : formData.reward}
+                value={formData.reward === null ? '' : formData.reward.toLocaleString('ko-KR')}
                 onChange={handleRewardChange}
                 className="w-full text-orange-900 focus:outline-none p-2 pl-8 border rounded-md"
               />
@@ -499,7 +613,6 @@ const LostPostForm = () => {
               onChange={handleChange}
               className="w-full p-2 text-orange-900 border rounded-md"
             >
-
               <option value="FINDING">실종 신고</option>
             </select>
           </div>
