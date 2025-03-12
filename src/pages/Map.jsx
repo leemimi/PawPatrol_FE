@@ -563,7 +563,7 @@ const Map = () => {
       <h4 className="font-bold text-orange-600 text-sm">
         {notification.type === 'COMMENT' 
           ? '댓글 알림' 
-          : notification.status === 'LOST' 
+          : notification.status === 'FINDING' 
             ? '실종 신고' 
             : '목격 신고'}
       </h4>
