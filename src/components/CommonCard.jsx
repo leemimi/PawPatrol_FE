@@ -60,12 +60,32 @@ export const CommonCard = ({ item, type, onClose }) => {
         const content = item?.content || '';
 
         const petInfo = item?.pet ? (
-            <h3 className="text-lg font-bold text-orange-900 mb-1">
-                {getAnimalTypeText(item.animalType)}
-                / {item.pet.name || item.pet.breed || ''}
-                {item.pet.gender ? ` / ${item.pet.gender}` : ''}
-            </h3>
+            <div className="mb-2">
+                <div className="flex items-center flex-wrap gap-2">
+                    <h3 className="text-lg font-bold text-orange-900">
+                        {item.pet.name || item.pet.breed || ''}
+                    </h3>
+                    {item.pet.gender && (
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${item.pet.gender === 'M'
+                            ? 'bg-blue-100 text-blue-600'
+                            : 'bg-pink-100 text-pink-600'
+                            }`}>
+                            {item.pet.gender === 'M' ? '남아' : '여아'}
+                        </span>
+                    )}
+                    {item.pet.animalType && (
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getAnimalTypeText(item.pet.animalType) === '강아지'
+                            ? 'bg-amber-100 text-amber-700'
+                            : 'bg-green-100 text-green-700'
+                            }`}>
+                            {getAnimalTypeText(item.pet.animalType)}
+                        </span>
+                    )}
+                </div>
+            </div>
         ) : null;
+
+
 
         // 이미지 경로 처리
         const imageUrl = item?.pet?.imageUrl || petImage;  // imageUrl이 없으면 item?.image 사용
@@ -79,74 +99,92 @@ export const CommonCard = ({ item, type, onClose }) => {
                     <div className="flex gap-4">
                         {/* 이미지 칸 */}
                         <div className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-orange-100 cursor-pointer" onClick={handleDetailNavigation}>
-                            {item?.image && item?.pet?.imageUrl !== item?.image && (
-                                <img
-                                    src={imageUrl1}
-                                    alt={item?.pet?.name || 'Default Pet'}
-                                    className="w-full h-full object-cover"
-                                />
-                            )}
+                            <img
+                                src={imageUrl}
+                                alt={item?.pet?.name || '반려동물'}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                    e.target.onerror = null;
+                                    e.target.src = '/api/placeholder/160/160';
+                                }}
+                            />
                         </div>
                     </div>
 
-
                     <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                            <span className={`text-sm px-3 py-1.5 rounded-full font-medium ${statusText === '찾는중' ? 'bg-orange-100 text-orange-500' :
-                                statusText === '목격' ? 'bg-red-100 text-red-500' :
-                                    'bg-green-100 text-green-500'
-                                }`}>
-                                {statusText}
-                            </span>
-                            <span className="text-sm text-gray-500">{time}</span>
-                        </div>
-                        {petInfo}
-                        <div className="mt-2">
-                            {location && (
-                                <p className="text-sm text-orange-600 flex items-center gap-1 mb-2">
-                                    <MapPin size={14} />
-                                    {location}
-                                </p>
-                            )}
+                        <div className="flex flex-col gap-2 mb-2">
+                            <div>
+                                <span className={`text-sm px-3 py-1.5 rounded-full font-medium ${statusText === '찾는중' ? 'bg-orange-100 text-amber-600' :
+                                    statusText === '목격' ? 'bg-red-100 text-red-500' :
+                                        'bg-green-100 text-green-500'
+                                    }`}>
+                                    {statusText}
+                                </span>
+                            </div>
 
-                            {/* 상세 조회 버튼 추가 */}
-                            <div className="mt-3">
-                                <button
-                                    onClick={handleDetailNavigation}
-                                    className="inline-flex items-center px-4 py-2 bg-orange-500 text-white text-sm font-medium rounded-md hover:bg-orange-600 transition-colors shadow-md"
-                                    style={{ position: 'relative', zIndex: 50 }}
-                                >
-                                    <ExternalLink size={16} className="mr-1" />
-                                    상세 조회
-                                </button>
+                            <div>
+                                <span className="text-sm text-amber-700">
+                                    {time ? new Date(time).toLocaleString('ko-KR', {
+                                        year: 'numeric',
+                                        month: 'long',
+                                        day: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                        hour12: true
+                                    }) : ''}
+                                </span>
                             </div>
                         </div>
+                        {petInfo}
                     </div>
                     <button onClick={onClose} className="text-orange-300 hover:text-orange-400 transition-colors">
                         <X size={24} strokeWidth={2.5} />
                     </button>
                 </div>
 
-                {/* 내용 섹션 추가 */}
+                {/* 내용 섹션 추가 - 글자 수 제한 */}
                 {content && (
                     <div
                         className="mt-2 w-full cursor-pointer"
                         onClick={handleDetailNavigation}
                     >
-                        <p className="text-sm text-gray-700">{content}</p>
+                        <p className="text-sm text-amber-700 line-clamp-2 overflow-hidden">
+                            {content}
+                        </p>
                     </div>
                 )}
+
+                <div className="mt-2">
+                    {location && (
+                        <p className="text-sm text-orange-600 flex items-center gap-1 mb-2">
+                            <MapPin size={14} />
+                            {location}
+                        </p>
+                    )}
+                </div>
+
+                {/* 상세 조회 버튼 추가 - 가운데 정렬 */}
+                <div className="mt-3 w-full flex justify-center">
+                    <button
+                        onClick={handleDetailNavigation}
+                        className="inline-flex items-center px-4 py-2 bg-orange-500 text-white text-sm font-medium rounded-md hover:bg-orange-600 transition-colors shadow-md"
+                        style={{ position: 'relative', zIndex: 50 }}
+                    >
+                        <ExternalLink size={16} className="mr-1" />
+                        상세 조회
+                    </button>
+                </div>
 
                 {/* 디버깅용 ID 정보 (개발 중에만 표시) */}
                 {process.env.NODE_ENV === 'development' && (
                     <div className="mt-2 pt-2 border-t border-gray-200 w-full">
                         <p className="text-xs text-gray-400">
-
                             {item?.id ? ` id: ${item.id}` : ' (id 없음)'}
                         </p>
                     </div>
                 )}
             </div>
+
         );
     }
 
