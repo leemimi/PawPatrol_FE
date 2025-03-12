@@ -4,6 +4,33 @@ import { useNavigate } from 'react-router-dom';
 
 export const CommonCard = ({ item, type, onClose }) => {
     const navigate = useNavigate();
+
+    // 시간 형식 통일하기
+    const formatTime = (timeString) => {
+        if (!timeString) return '';
+
+        try {
+            const date = new Date(timeString);
+
+            // 유효한 날짜인지 확인
+            if (isNaN(date.getTime())) return timeString;
+
+            // 한국어 로케일로 일관되게 포맷팅
+            return date.toLocaleString('ko-KR', {
+                year: 'numeric',
+                month: 'numeric',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: 'numeric',
+                second: 'numeric',
+                hour12: true
+            });
+        } catch (e) {
+            return timeString; // 변환 실패 시 원본 반환
+        }
+    };
+
+
     // 반려동물 상태 텍스트 변환 수정 
     const getStatusText = (status) => {
         switch (status) {
@@ -56,7 +83,7 @@ export const CommonCard = ({ item, type, onClose }) => {
         const statusText = getStatusText(item?.status);
         const petImage = item?.image || '/api/placeholder/160/160';
         const location = item?.location || '위치 정보 없음';
-        const time = item?.time || '';
+        const time = formatTime(item?.time || '');
         const content = item?.content || '';
 
         const petInfo = item?.pet ? (
