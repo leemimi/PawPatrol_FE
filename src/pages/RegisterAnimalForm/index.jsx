@@ -87,7 +87,7 @@ const RegisterAnimalForm = () => {
         try {
             await registerAnimal(formDataToSend);
             alert("임시보호 동물이 성공적으로 등록되었습니다.");
-            navigate(-1);
+            navigate("/protection");
         } catch (error) {
             console.error("동물 등록 중 오류 발생:", error);
             alert("동물 등록에 실패했습니다." + (error.response?.data?.message || ""));
