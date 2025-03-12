@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { RadiusControl } from '../components/RadiusControl';
+import { DollarSign } from 'lucide-react';
 import { ControlButtons } from '../components/ControlButtons';
 import { useKakaoMap } from '@/hooks/UseKakaoMap';
 import { usePetData } from '../hooks/UsePetData';
@@ -14,6 +15,7 @@ import WriteButton from '../components/WriteButton';
 import NotificationButton from '../components/NotificationButton';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
+import { PetApiService } from '../api/PetApiService';
 
 // window.global 설정
 if (typeof global === 'undefined') {
@@ -43,6 +45,7 @@ const Map = () => {
     const [isMarkerTransitioning, setIsMarkerTransitioning] = useState(false);
     const [showRewardPoster, setShowRewardPoster] = useState(false);
     const [rewardPosterData, setRewardPosterData] = useState(null);
+
 
     // 알림 관련 상태
     const [notification, setNotification] = useState(null);
@@ -278,6 +281,8 @@ const Map = () => {
         document.body.style.padding = '0';
         document.body.style.overflow = 'hidden';
 
+        showTestRewardPoster();
+
         return () => {
             document.documentElement.style.height = '';
             document.body.style.height = '';
@@ -493,54 +498,47 @@ const Map = () => {
         }
     };
 
+    const getDontShowPreference = () => {
+        const lastHiddenTime = localStorage.getItem('lastPosterHiddenTime');
+        if (!lastHiddenTime) return false;
 
-    const dummyPosters = [
-        {
-            id: 1,
-            petName: '멍이',
-            breed: '골든 리트리버',
-            lastSeenLocation: '서울시 강남구 역삼동',
-            imageUrl: 'https://animal.seoul.go.kr/comm/getImage?srvcId=MEDIA&upperNo=4282&fileTy=ADOPTIMG&fileNo=4&thumbTy=L',
-            contactNumber: '010-1234-5678',
-            reward: 800000,
-            templateType: 'DOG'
-        },
-        {
-            id: 2,
-            petName: '코코',
-            breed: '비숑 프리제',
-            lastSeenLocation: '서울시 마포구 합정동',
-            imageUrl: 'https://animal.seoul.go.kr/comm/getImage?srvcId=MEDIA&upperNo=1142&fileTy=ADOPTIMG&fileNo=42&thumbTy=L',
-            contactNumber: '010-9876-5432',
-            reward: 600000,
-            templateType: 'DOG'
-        },
-        {
-            id: 3,
-            petName: '나비',
-            breed: '포메라니안',
-            lastSeenLocation: '서울시 서초구 반포동',
-            imageUrl: 'https://animal.seoul.go.kr/comm/getImage?srvcId=MEDIA&upperNo=1142&fileTy=ADOPTIMG&fileNo=45&thumbTy=L',
-            contactNumber: '010-2345-6789',
-            reward: 300000,
-            templateType: 'DOG'
-        },
-        {
-            id: 4,
-            petName: '나비2',
-            breed: '포메라니안2',
-            lastSeenLocation: '서울시 서초구 반포동2',
-            imageUrl: 'https://animal.seoul.go.kr/comm/getImage?srvcId=MEDIA&upperNo=1142&fileTy=ADOPTIMG&fileNo=45&thumbTy=L',
-            contactNumber: '010-2345-6789',
-            reward: 50000,
-            templateType: 'DOG'
+        const now = new Date().getTime();
+        const oneDayInMs = 24 * 60 * 60 * 1000;
+
+        // 24시간이 지나지 않았다면 true 반환
+        return (now - Number(lastHiddenTime)) < oneDayInMs;
+    };
+
+    const [dontShowFor24Hours, setDontShowFor24Hours] = useState(getDontShowPreference());
+
+    const showTestRewardPoster = async (forceShow = false) => {
+        if (!forceShow) {
+            // 24시간 내에 '표시하지 않기'를 체크했는지 확인
+            const lastHiddenTime = localStorage.getItem('lastPosterHiddenTime');
+            const now = new Date().getTime();
+            const oneDayInMs = 24 * 60 * 60 * 1000; // 24시간을 밀리초로 표현
+
+            // 마지막으로 숨겨진 시간이 있고, 24시간이 지나지 않았으면 표시하지 않음
+            if (lastHiddenTime && (now - Number(lastHiddenTime)) < oneDayInMs) {
+                return;
+            }
         }
-    ];
+        try {
+            setShowRewardPoster(true);
+            const result = await PetApiService.fetchRewardPosts();
 
-
-    const showTestRewardPoster = () => {
-        setRewardPosterData(dummyPosters);
-        setShowRewardPoster(true);
+            if (result && result.content && result.content.length > 0) {
+                // 보상금이 null이 아닌 게시글만 필터링
+                const filteredPosters = result.content.filter(post => post.reward !== null && post.reward > 0);
+                setRewardPosterData(filteredPosters);
+            } else {
+                console.error("보상금이 설정된 게시글이 없습니다.");
+                setRewardPosterData([]);
+            }
+        } catch (error) {
+            console.error("보상금 게시글 데이터 로딩 실패:", error);
+            setRewardPosterData([]);
+        }
     };
 
 
@@ -593,13 +591,11 @@ const Map = () => {
                         onListClick={() => setShowList(!showList)}
                     />
                     <button
-                        onClick={showTestRewardPoster}
+                        onClick={() => showTestRewardPoster(true)}
                         className="fixed bottom-52 left-4 z-40 bg-white rounded-full p-3 shadow-lg text-red-600 hover:text-red-500 transition-colors border-2 border-red-100"
                         title="현상금 전단지 테스트"
                     >
-                        <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none">
-                            <path d="M12 8v4m0 4h.01M21.29 4.71a10 10 0 0 0-14.14 0L3 9l1.5 1.5L12 18l7.5-7.5L21 9l-1.71-2.29Z" />
-                        </svg>
+                        <DollarSign size={24} />
                     </button>
 
                     {/* 알림 버튼 컴포넌트 - 글쓰기 버튼 위에 배치 */}
@@ -650,6 +646,8 @@ const Map = () => {
                             posters={rewardPosterData}
                             initialIndex={0}
                             onClose={() => setShowRewardPoster(false)}
+                            dontShowFor24Hours={dontShowFor24Hours}
+                            setDontShowFor24Hours={setDontShowFor24Hours}
                         />
                     )}
                 </div>
