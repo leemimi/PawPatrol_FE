@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DaumPostcode from 'react-daum-postcode';
+import Swal from 'sweetalert2';
 
 // 보호소 검색 모달 컴포넌트
 const ShelterSearchModal = ({ isOpen, onClose, onSelectShelter }) => {
@@ -41,7 +42,12 @@ const ShelterSearchModal = ({ isOpen, onClose, onSelectShelter }) => {
     const handleSubmitNewShelter = () => {
         // 필수 필드 검증
         if (!newShelter.name || !newShelter.phone || !newShelter.address || !newShelter.detailAddress) {
-            alert('모든 필드를 입력해주세요.');
+            Swal.fire({
+                title: '오류',
+                text: '모든 필드를 입력해주세요.',
+                icon: 'error',
+                confirmButtonText: '확인'
+            });
             return;
         }
 

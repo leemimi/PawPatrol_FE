@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import Swal from 'sweetalert2';
 
 const AdminDashboard = () => {
     const [activeTab, setActiveTab] = useState('users');
@@ -33,17 +34,30 @@ const AdminDashboard = () => {
             );
 
             if (response.data.statusCode === 200) {
-                // 성공 메시지 표시
-                alert(`회원 상태가 ${newStatus === 'ACTIVE' ? '정상' :
-                    newStatus === 'BANNED' ? '정지' :
-                        newStatus === 'INACTIVE' ? '휴면' : '탈퇴'
-                    }으로 변경되었습니다.`);
+                // 상태 텍스트 정의
+                const statusText =
+                    newStatus === 'ACTIVE' ? '정상' :
+                        newStatus === 'BANNED' ? '정지' :
+                            newStatus === 'INACTIVE' ? '휴면' : '탈퇴';
+
+                // 성공 메시지 표시 (SweetAlert2 사용)
+                Swal.fire({
+                    icon: 'success',
+                    title: '상태 변경 완료',
+                    text: `회원 상태가 ${statusText}으로 변경되었습니다.`,
+                    confirmButtonText: '확인'
+                });
 
                 // 회원 목록 새로고침
                 await fetchUsers();
             }
         } catch (error) {
-            alert('회원 상태 변경에 실패했습니다.');
+            Swal.fire({
+                title: '오류',
+                text: '회원 상태 변경에 실패했습니다.',
+                icon: 'error',
+                confirmButtonText: '확인'
+            });
         }
     };
 
@@ -61,7 +75,12 @@ const AdminDashboard = () => {
                 navigate('/');
             }
         } catch (error) {
-            alert('로그아웃 중 오류가 발생했습니다.');
+            Swal.fire({
+                title: '오류',
+                text: '로그아웃 중 오류가 발생했습니다.',
+                icon: 'error',
+                confirmButtonText: '확인'
+            });
         }
     };
 
@@ -253,7 +272,7 @@ const AdminDashboard = () => {
                                                             </td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm">
                                                                 <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${user.role === 'ROLE_USER' ? 'bg-gray-100 text-gray-800' :
-                                                                        user.role === 'ROLE_SHELTER' ? 'bg-blue-100 text-blue-800' : ''
+                                                                    user.role === 'ROLE_SHELTER' ? 'bg-blue-100 text-blue-800' : ''
                                                                     }`}>
                                                                     {user.role === 'ROLE_USER' ? '일반 사용자' :
                                                                         user.role === 'ROLE_SHELTER' ? '보호소 관리자' : ''}
@@ -261,9 +280,9 @@ const AdminDashboard = () => {
                                                             </td>
                                                             <td className="px-6 py-4 whitespace-nowrap">
                                                                 <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${user.status === 'ACTIVE' ? 'bg-green-100 text-green-800' :
-                                                                        user.status === 'INACTIVE' ? 'bg-yellow-100 text-yellow-800' :
-                                                                            user.status === 'BANNED' ? 'bg-red-100 text-red-800' :
-                                                                                'bg-gray-100 text-gray-800'
+                                                                    user.status === 'INACTIVE' ? 'bg-yellow-100 text-yellow-800' :
+                                                                        user.status === 'BANNED' ? 'bg-red-100 text-red-800' :
+                                                                            'bg-gray-100 text-gray-800'
                                                                     }`}>
                                                                     {user.status === 'ACTIVE' ? '정상' :
                                                                         user.status === 'INACTIVE' ? '휴면' :
