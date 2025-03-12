@@ -62,7 +62,7 @@ export const CommonCard = ({ item, type, onClose }) => {
         const petInfo = item?.pet ? (
             <div className="mb-2">
                 <div className="flex items-center flex-wrap gap-2">
-                    <h3 className="text-lg font-bold text-orange-900">
+                    <h3 className="text-lg font-bold text-orange-900 truncate max-w-[200px]" title={item.pet.name || item.pet.breed || ''}>
                         {item.pet.name || item.pet.breed || ''}
                     </h3>
                     {item.pet.gender && (
