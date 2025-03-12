@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { KakaoMapApiService } from '../api/kakaoRestApiService';
 import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
 
 const LostPostForm = () => {
   const navigate = useNavigate();
@@ -28,13 +29,29 @@ const LostPostForm = () => {
     reward: null
   });
 
-  // SweetAlert2 스타일 커스터마이징
+  // SweetAlert2 React 컨텐츠 래퍼
+  const MySwal = withReactContent(Swal);
+
+  // 커스텀 스타일 정의
+  const swalCustomClass = {
+    popup: 'rounded-3xl shadow-xl border-4 border-orange-100',
+    title: 'text-orange-800 font-bold',
+    confirmButton: 'rounded-full px-6 py-2 bg-orange-500 hover:bg-orange-600 text-white transition-colors',
+    actions: 'mt-4',
+    icon: 'text-orange-500'
+  };
+
+  // SweetAlert2 토스트 스타일 커스터마이징
   const Toast = Swal.mixin({
     toast: true,
     position: 'top-end',
     showConfirmButton: false,
     timer: 3000,
     timerProgressBar: true,
+    customClass: {
+      popup: 'rounded-xl border-2 border-orange-200 shadow-lg',
+      title: 'text-sm font-medium text-orange-800 ml-2'
+    },
     didOpen: (toast) => {
       toast.onmouseenter = Swal.stopTimer;
       toast.onmouseleave = Swal.resumeTimer;
@@ -151,12 +168,15 @@ const LostPostForm = () => {
             location: address
           }));
 
-          Swal.fire({
+          // 성공 시 심플한 알림
+          MySwal.fire({
             icon: 'success',
             title: '위치가 등록되었습니다',
-            html: `주소 : ${address}`,
-            confirmButtonText: '확인',
-            confirmButtonColor: '#F97316'
+            showConfirmButton: false,
+            timer: 1500,
+            customClass: swalCustomClass,
+            iconColor: '#F97316',
+            background: '#fff8f5'
           });
         } else {
           // 주소 변환 결과가 없는 경우
@@ -167,12 +187,14 @@ const LostPostForm = () => {
             location: locationText
           }));
 
-          Swal.fire({
+          MySwal.fire({
             icon: 'info',
             title: '위치가 등록되었습니다',
-            html: `${locationText}<br>(주소 정보를 찾을 수 없습니다)`,
+            html: `<p class="text-orange-700">(주소 정보를 찾을 수 없습니다)</p>`,
+            customClass: swalCustomClass,
             confirmButtonText: '확인',
-            confirmButtonColor: '#F97316'
+            iconColor: '#60A5FA',
+            background: '#f0f9ff'
           });
         }
       } catch (error) {
@@ -186,21 +208,25 @@ const LostPostForm = () => {
           location: locationText
         }));
 
-        Swal.fire({
+        MySwal.fire({
           icon: 'warning',
           title: '위치가 등록되었습니다',
-          html: `${locationText}<br>(주소 변환 중 오류가 발생했습니다)`,
+          html: `<p class="text-orange-600">(주소 변환 중 오류가 발생했습니다)</p>`,
+          customClass: swalCustomClass,
           confirmButtonText: '확인',
-          confirmButtonColor: '#F97316'
+          iconColor: '#FFB020',
+          background: '#fffbeb'
         });
       }
     } else {
-      Swal.fire({
+      MySwal.fire({
         icon: 'error',
         title: '위치를 선택해주세요',
         text: '먼저 지도에서 위치를 선택해주세요.',
+        customClass: swalCustomClass,
         confirmButtonText: '확인',
-        confirmButtonColor: '#F97316'
+        iconColor: '#EF4444',
+        background: '#fff5f5'
       });
     }
   };
@@ -228,7 +254,9 @@ const LostPostForm = () => {
     if (validFiles.length !== files.length) {
       Toast.fire({
         icon: 'warning',
-        title: '5MB 이하의 파일만 업로드 가능합니다.'
+        title: '5MB 이하의 파일만 업로드 가능합니다.',
+        iconColor: '#FFB020',
+        background: '#fffbeb'
       });
     }
 
@@ -267,23 +295,27 @@ const LostPostForm = () => {
 
     // Ensure a pet is selected and location is provided
     if (!selectedPet) {
-      Swal.fire({
+      MySwal.fire({
         icon: 'error',
         title: '반려동물을 선택해주세요',
         text: '실종 신고를 위해 반려동물 선택이 필요합니다.',
+        customClass: swalCustomClass,
         confirmButtonText: '확인',
-        confirmButtonColor: '#F97316'
+        iconColor: '#EF4444',
+        background: '#fff5f5'
       });
       return;
     }
 
     if (!formData.location) {
-      Swal.fire({
+      MySwal.fire({
         icon: 'error',
         title: '위치를 입력해주세요',
         text: '실종 위치 정보가 필요합니다.',
+        customClass: swalCustomClass,
         confirmButtonText: '확인',
-        confirmButtonColor: '#F97316'
+        iconColor: '#EF4444',
+        background: '#fff5f5'
       });
       return;
     }
@@ -300,13 +332,17 @@ const LostPostForm = () => {
     let apiUrl = `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/lost-foundposts`;
 
     try {
-      Swal.fire({
+      // 커스텀 로딩 팝업
+      MySwal.fire({
         title: '등록 중...',
-        text: '잠시만 기다려주세요.',
+        html: '<div class="flex justify-center"><div class="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-orange-500"></div></div>',
+        showConfirmButton: false,
         allowOutsideClick: false,
-        didOpen: () => {
-          Swal.showLoading();
-        }
+        customClass: {
+          popup: 'rounded-3xl shadow-xl border-4 border-orange-100',
+          title: 'text-orange-800 font-bold mt-4'
+        },
+        background: '#fff8f5'
       });
 
       const response = await axios.post(
@@ -317,11 +353,15 @@ const LostPostForm = () => {
         }
       );
 
-      Swal.fire({
+      // 성공 시 예쁜 성공 팝업
+      MySwal.fire({
         icon: 'success',
         title: '등록 완료!',
-        confirmButtonText: '확인',
-        confirmButtonColor: '#F97316'
+        showConfirmButton: false,
+        timer: 1500,
+        customClass: swalCustomClass,
+        iconColor: '#F97316',
+        background: '#fff8f5'
       }).then(() => {
         navigate(-1);
       });
@@ -329,12 +369,14 @@ const LostPostForm = () => {
       console.log(response.data);
     } catch (error) {
       console.error("게시글 등록 중 오류 발생:", error);
-      Swal.fire({
+      MySwal.fire({
         icon: 'error',
         title: '등록 실패',
         text: '게시글 등록 중 오류가 발생했습니다. 다시 시도해주세요.',
+        customClass: swalCustomClass,
         confirmButtonText: '확인',
-        confirmButtonColor: '#F97316'
+        iconColor: '#EF4444',
+        background: '#fff5f5'
       });
     }
   };
