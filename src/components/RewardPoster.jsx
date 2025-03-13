@@ -79,21 +79,24 @@ const RewardPoster = ({
                     if (filteredPosters.length > 0) {
                         setPosters(filteredPosters);
                     } else {
-                        setError("보상금이 설정된 게시글이 없습니다.");
+                        // 보상금 게시글이 없을 때는 그냥 닫기
+                        onClose();
                     }
                 } else {
-                    setError("데이터 형식이 올바르지 않습니다.");
+                    // 데이터 형식이 올바르지 않을 때도 그냥 닫기
+                    onClose();
                 }
             } catch (err) {
                 console.error("보상금 게시글 로딩 실패:", err);
-                setError("데이터를 불러오는 중 오류가 발생했습니다.");
+                // 에러 발생 시에도 그냥 닫기
+                onClose();
             } finally {
                 setLoading(false);
             }
         };
 
         fetchRewardPosters();
-    }, [propPosters]);
+    }, [propPosters, onClose]);
 
     // 컴포넌트 마운트 시 템플릿 이미지 프리로드
     useEffect(() => {

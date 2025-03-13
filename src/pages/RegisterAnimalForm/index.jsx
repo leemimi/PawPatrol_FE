@@ -3,6 +3,7 @@ import { ChevronLeft, MapPin, Pencil, Camera, X, Plus } from 'lucide-react';
 import { useAnimalForm } from '../../hooks/useProtections';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
+import SweetAlert from '../../components/SweetAlert'; // Adjust the import path as needed
 
 const RegisterAnimalForm = () => {
     const location = useLocation();
@@ -85,12 +86,26 @@ const RegisterAnimalForm = () => {
         });
 
         try {
+            // 로딩 표시 추가
+            SweetAlert.loading('등록 중입니다...');
+
             await registerAnimal(formDataToSend);
-            alert("임시보호 동물이 성공적으로 등록되었습니다.");
-            navigate("/protection");
+
+            // 로딩 닫기
+            SweetAlert.close();
+
+            // 성공 알림
+            SweetAlert.success('등록 성공', '임시보호 동물이 성공적으로 등록되었습니다.').then(() => {
+                navigate("/protection");
+            });
         } catch (error) {
             console.error("동물 등록 중 오류 발생:", error);
-            alert("동물 등록에 실패했습니다." + (error.response?.data?.message || ""));
+
+            // 로딩 닫기
+            SweetAlert.close();
+
+            // 에러 알림
+            SweetAlert.error('등록 실패', error.response?.data?.message || '동물 등록에 실패했습니다.');
         }
     };
 
@@ -108,6 +123,8 @@ const RegisterAnimalForm = () => {
             // postId가 있는 경우 API 요청
             if (reportData.postId) {
                 setIsLoading(true);
+                // 로딩 표시 추가
+                const loadingAlert = SweetAlert.loading('데이터를 불러오는 중입니다...');
 
                 axios.get(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/lost-foundposts/${reportData.postId}`)
                     .then(response => {
@@ -133,11 +150,13 @@ const RegisterAnimalForm = () => {
                         }
 
                         setIsLoading(false);
+                        SweetAlert.close(); // 로딩 닫기
                     })
                     .catch(error => {
                         console.error("제보글 데이터 가져오기 실패:", error);
                         setIsLoading(false);
-                        alert("제보글 정보를 가져오는데 실패했습니다.");
+                        SweetAlert.close(); // 로딩 닫기
+                        SweetAlert.error('데이터 로딩 실패', '제보글 정보를 가져오는데 실패했습니다.');
                     });
             }
         }

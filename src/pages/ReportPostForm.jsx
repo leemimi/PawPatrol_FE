@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useLocation } from 'react-router-dom'; // Ensure useLocation is imported
 import { KakaoMapApiService } from '../api/kakaoRestApiService';
+import Swal from 'sweetalert2';
 
 const ReportPostForm = ({ formType = "standalone" }) => {
   const navigate = useNavigate();
@@ -52,7 +53,7 @@ const ReportPostForm = ({ formType = "standalone" }) => {
     script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${import.meta.env.VITE_KAKAO_MAP_API_KEY}&autoload=true`;
 
     script.onerror = () => {
-      console.error("Failed to load Kakao Maps API.");
+      // console.error("Failed to load Kakao Maps API.");
     };
 
     script.onload = () => {
@@ -86,11 +87,11 @@ const ReportPostForm = ({ formType = "standalone" }) => {
               longitude: lng,
             }));
 
-            console.log("Latitude:", lat, "Longitude:", lng);
+            // console.log("Latitude:", lat, "Longitude:", lng);
           });
         });
       } else {
-        console.error("Kakao Maps is not available.");
+        // console.error("Kakao Maps is not available.");
       }
     };
 
@@ -111,7 +112,7 @@ const ReportPostForm = ({ formType = "standalone" }) => {
           formData.latitude
         );
 
-        console.log("좌표→주소 변환 응답:", response);
+        // console.log("좌표→주소 변환 응답:", response);
 
         let address = "";
 
@@ -131,8 +132,12 @@ const ReportPostForm = ({ formType = "standalone" }) => {
             ...prev,
             location: address
           }));
-
-          alert(`위치가 등록되었습니다.\n위도: ${formData.latitude}\n경도: ${formData.longitude}\n주소: ${address}`);
+          Swal.fire({
+            icon: 'success',
+            title: '위치 등록 완료',
+            text: `위치가 등록되었습니다. 주소: ${address}`,
+            confirmButtonText: '확인'
+          });
         } else {
           // 주소 변환 결과가 없는 경우
           const locationText = `위도: ${formData.latitude}, 경도: ${formData.longitude}`;
@@ -141,11 +146,15 @@ const ReportPostForm = ({ formType = "standalone" }) => {
             ...prev,
             location: locationText
           }));
-
-          alert(`위치가 등록되었습니다.\n${locationText}\n(주소 정보를 찾을 수 없습니다)`);
+          Swal.fire({
+            title: '오류',
+            text: `${locationText}\n(주소 정보를 찾을 수 없습니다)`,
+            icon: 'error',
+            confirmButtonText: '확인'
+          });
         }
       } catch (error) {
-        console.error("주소 변환 중 오류 발생:", error);
+        // console.error("주소 변환 중 오류 발생:", error);
 
         // 오류 시 좌표 정보만 저장
         const locationText = `위도: ${formData.latitude}, 경도: ${formData.longitude}`;
@@ -154,11 +163,20 @@ const ReportPostForm = ({ formType = "standalone" }) => {
           ...prev,
           location: locationText
         }));
-
-        alert(`위치가 등록되었습니다.\n${locationText}\n(주소 변환 중 오류가 발생했습니다)`);
+        Swal.fire({
+          title: '오류',
+          text: `${locationText}\n(주소 변환 중 오류가 발생했습니다)`,
+          icon: 'error',
+          confirmButtonText: '확인'
+        });
       }
     } else {
-      alert("먼저 지도에서 위치를 선택해주세요.");
+      Swal.fire({
+        title: '오류',
+        text: "먼저 지도에서 위치를 선택해주세요.",
+        icon: 'error',
+        confirmButtonText: '확인'
+      });
     }
   };
 
@@ -175,7 +193,12 @@ const ReportPostForm = ({ formType = "standalone" }) => {
     const validFiles = files.filter((file) => file.size <= maxSize);
 
     if (validFiles.length !== files.length) {
-      alert("파일 크기가 5MB를 초과한 파일이 있습니다. 5MB 이하의 파일만 업로드 가능합니다.");
+      Swal.fire({
+        title: '오류',
+        text: "파일 크기가 5MB를 초과한 파일이 있습니다. 5MB 이하의 파일만 업로드 가능합니다.",
+        icon: 'error',
+        confirmButtonText: '확인'
+      });
     }
 
     // Combine new valid files with existing ones (up to 5)
@@ -201,7 +224,12 @@ const ReportPostForm = ({ formType = "standalone" }) => {
 
 
     if (!formData.location) {
-      alert("위치를 입력해주세요.");
+      Swal.fire({
+        title: '오류',
+        text: "위치를 입력해주세요.",
+        icon: 'error',
+        confirmButtonText: '확인'
+      });
       return;
     }
     const metadataJson = JSON.stringify(formData);
@@ -221,8 +249,12 @@ const ReportPostForm = ({ formType = "standalone" }) => {
           headers: { "Content-Type": "multipart/form-data" }
         }
       );
-      alert("발견 신고가 성공적으로 등록되었습니다.");
-      console.log(response.data);
+      Swal.fire({
+        icon: 'success',
+        title: '발견 신고 등록 완료',
+        text: "발견 신고가 성공적으로 등록되었습니다.",
+        confirmButtonText: '확인'
+      });
       if (location.state?.returnPath === "/rescue") {
         localStorage.setItem('rescueReportData', JSON.stringify({
           postId: response.data.data.id,
@@ -235,8 +267,12 @@ const ReportPostForm = ({ formType = "standalone" }) => {
         navigate("/");
       }
     } catch (error) {
-      console.error("게시글 등록 중 오류 발생:", error);
-      alert("게시글 등록에 실패했습니다.");
+      Swal.fire({
+        title: '오류',
+        text: "게시글 등록에 실패했습니다.",
+        icon: 'error',
+        confirmButtonText: '확인'
+      });
     }
   };
 

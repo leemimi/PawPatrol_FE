@@ -59,7 +59,7 @@ export const CommonCard = ({ item, type, onClose }) => {
         if (e) e.stopPropagation();
         console.log("item", item);
         if (type !== 'pet') return;
-        console.log('item?.pet?.imageUrl:', item?.pet?.imageUrl);
+        console.log('item?.id:', item?.id);
         console.log('item?.image:', item?.image);
 
         // ID 가져오기 (foundId 우선, id는 차선)
@@ -72,7 +72,12 @@ export const CommonCard = ({ item, type, onClose }) => {
 
         if (postId) {
             console.log('상세 페이지로 이동:', postId);
-            navigate(`/PetPostDetail/${postId}`);
+            if (item?.postType === 'SHELTER_ANIMAL') {
+                console.log('보호소 상세 페이지로 이동:', item?.id);
+                navigate(`/shelters/${item?.id}`);
+            } else {
+                navigate(`/PetPostDetail/${postId}`);
+            }
         } else {
             console.error('유효한 게시물 ID가 없습니다:', item);
         }

@@ -10,19 +10,20 @@ import { useCustomOverlays } from '../hooks/UseCustomOverlays';
 import { CommonList } from '../components/CommonList';
 import { CommonCard } from '../components/CommonCard';
 import RewardPoster from '../components/RewardPoster';
-import { PetCard } from '../components/PetCard';
+import { useNavigate } from 'react-router-dom';  
 import WriteButton from '../components/WriteButton';
 import NotificationButton from '../components/NotificationButton';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
+import NotificationService from '../api/AlarmApiService';
 import { PetApiService } from '../api/PetApiService';
 
-// window.global 설정
 if (typeof global === 'undefined') {
     window.global = window;
 }
 
 const Map = () => {
+    const navigate = useNavigate();  
     const defaultPosition = { lat: 37.497939, lng: 127.027587 };
 
     // localStorage에서 마지막 위치 정보 불러오기
@@ -52,6 +53,7 @@ const Map = () => {
     const [showNotification, setShowNotification] = useState(false);
     const [notifications, setNotifications] = useState([]);
     const stompClientRef = useRef(null);
+    const [currentNotification, setCurrentNotification] = useState(null);
 
     // 초기 렌더링 및 데이터 로딩 추적을 위한 ref
     const initialLoadRef = useRef(false);
@@ -109,13 +111,46 @@ const Map = () => {
         onSelectPet: setSelectedPet
     });
 
-    useEffect(() => {
-        if (currentPosition) {
-            // WebSocket 연결 및 구독 초기화
-            if (stompClientRef.current) {
-                stompClientRef.current.deactivate(); // 기존 연결 종료
+    const handleNewNotification = useCallback((newNotification) => {
+        setNotifications(prev => {
+            const isDuplicate = prev.some(n => n.id === newNotification.id);
+            if (isDuplicate) {
+                return prev;
             }
 
+            const formattedNotification = {
+                ...newNotification,
+                timestamp: new Date(newNotification.createdAt || Date.now()).getTime(),
+                isRead: false
+            };
+
+            const updatedNotifications = [formattedNotification, ...prev]
+                .sort((a, b) => b.timestamp - a.timestamp);
+
+            // displayNotification(formattedNotification);
+
+            return updatedNotifications;
+        });
+    }, []);
+
+    const fetchInitialNotifications = useCallback(async () => {
+        try {
+            const response = await NotificationService.getNotifications();
+            if (response && response.content) {
+                const formattedNotifications = response.content.map(notification => ({
+                    ...notification,
+                    timestamp: new Date(notification.createdAt).getTime(),
+                    isRead: notification.isRead
+                }));
+                
+                setNotifications(formattedNotifications);
+            }
+        } catch (error) {
+            console.error('알림을 불러오는데 실패했습니다:', error);
+        }
+    }, []);
+
+    useEffect(() => {
             const client = new Client({
                 webSocketFactory: () => {
                     return new SockJS(`${import.meta.env.VITE_CORE_API_BASE_URL}/ws`, null, {
@@ -134,71 +169,25 @@ const Map = () => {
 
             client.onConnect = function (frame) {
                 console.log('Connected to WebSocket: ' + frame);
+                const userId = getUserId();
 
-                // 구독: 실종/발견 게시글
-                // 개인화된 알림 구독 - 현재 로그인한 사용자 ID 사용
-  const userId = getUserId();
-  const userSpecificTopic = `/user/${userId}/queue/notifications`;
-  
-  client.subscribe(userSpecificTopic, function (message) {
-    try {
-      const notificationData = JSON.parse(message.body);
-      console.log("Personal notification received:", notificationData);
-      
-      // 알림에 타임스탬프와 읽음 상태 확인
-      const newNotification = {
-        ...notificationData,
-        timestamp: notificationData.timestamp || Date.now(),
-        read: notificationData.read !== undefined ? notificationData.read : false
-      };
-      
-      // 알림 상태 업데이트 (최근 알림이 맨 위로)
-      setNotifications(prev => [newNotification, ...prev]);
-      
-      // 알림 표시
-      displayNotification(newNotification);
-    } catch (error) {
-      console.error("Error parsing notification:", error);
-    }
-  });
+                client.subscribe(`/queue/notification/${userId}`, function (message) {
+                    try {
+                        const notificationData = JSON.parse(message.body);
 
-                // 사용자 위치 기반 구독 등록
-                if (currentPosition) {
-                    const subscription = {
-                        userId: getUserId(),
-                        latitude: currentPosition.lat,
-                        longitude: currentPosition.lng,
-                        radius: selectedRange * 1000,
-                        includeMyPosts: true // 내 게시글도 포함
-                    };
-                    client.publish({
-                        destination: '/app/location/subscribe',
-                        body: JSON.stringify(subscription)
-                    });
+                        const newNotification = {
+                            ...notificationData,
+                            timestamp: Date.now(),
+                            isRead: false
+                        };
 
-                    // 개인화된 알림 구독
-                    client.subscribe('/user/queue/notifications', function (message) {
-                        try {
-                            const notificationData = JSON.parse(message.body);
-                            console.log("Personalized notification received:", notificationData);
+                        setNotifications(prev => [newNotification, ...prev]);
 
-                            // 알림에 타임스탬프와 읽음 상태 추가
-                            const newNotification = {
-                                ...notificationData,
-                                timestamp: Date.now(),
-                                read: false
-                            };
-
-                            // 알림 상태 업데이트 (최근 알림이 맨 위로)
-                            setNotifications(prev => [newNotification, ...prev]);
-
-                            // 알림 표시
-                            displayNotification(newNotification);
-                        } catch (error) {
-                            console.error("Error parsing notification:", error);
-                        }
-                    });
-                }
+                        // displayNotification(newNotification);
+                    } catch (error) {
+                        console.error("Error parsing notification:", error);
+                    }
+                });
             };
 
             client.onStompError = function (frame) {
@@ -213,9 +202,13 @@ const Map = () => {
                     stompClientRef.current.deactivate(); // 컴포넌트 언마운트 시 연결 종료
                 }
             };
-        }
-    }, [currentPosition, selectedRange]);
+        
+    }, [ handleNewNotification]);
 
+    // 컴포넌트 마운트 시 초기 알림 로드
+    useEffect(() => {
+        fetchInitialNotifications();
+    }, [fetchInitialNotifications]);
 
     const getUserId = () => {
         const userInfo = JSON.parse(localStorage.getItem('userInfo')) || {};
@@ -223,53 +216,35 @@ const Map = () => {
     };
 
     // 알림 표시 함수
-    const displayNotification = (data) => {
-        setNotification(data);
-        setShowNotification(true);
-
-        // 알림 자동 닫기
-        setTimeout(() => {
-            setShowNotification(false);
-        }, 5000); // 5초 후 자동으로 닫힘
-    };
-
-    // 알림 처리 핸들러
-    const handleViewNotification = (notification) => {
-        // 알림을 읽음 상태로 변경
-  setNotifications(prev =>
-    prev.map(notif =>
-      notif.id === notification.id ? { ...notif, read: true } : notif
-    )
-  );
-  
-  // 위치 정보 추출 - 구조에 따라 다르게 접근
-  const latitude = notification.latitude || notification.postData?.latitude;
-  const longitude = notification.longitude || notification.postData?.longitude;
-  
-  // 해당 위치로 지도 이동
-  if (latitude && longitude && map) {
-    const position = new window.kakao.maps.LatLng(latitude, longitude);
-    map.setCenter(position);
+    // const displayNotification = (data) => {
+    //     setCurrentNotification({
+    //         id: data.id,
+    //         title: data.title,
+    //         content: data.body,
+    //         createdAt: data.createdAt || data.timestamp,
+    //         type: data.type
+    //     });
+    //     setShowNotification(true);
     
-    // 현재 위치 업데이트
-    updatePosition({
-      lat: latitude,
-      lng: longitude
-    });
-    };
-    // 게시글 ID가 있으면 해당 게시글로 이동
-  const postId = notification.postId || notification.postData?.id;
-  if (postId) {
-    console.log('상세 페이지로 이동:', postId);
-    navigate(`/PetPostDetail/${postId}`);
-  }
-};
+    //     // 3초 후 알림만 닫기 (읽음 처리는 하지 않음)
+    //     setTimeout(() => {
+    //         setShowNotification(false);
+    //         setCurrentNotification(null);
+    //     }, 3000);
+    // };
+    
 
     // 알림 삭제 핸들러
-    const handleClearNotification = (notification) => {
-        setNotifications(prev =>
-            prev.filter(notif => notif.id !== notification.id)
-        );
+    const handleClearNotification = async (notification) => {
+        try {
+            await NotificationService.deleteNotification(notification.id);
+            
+            setNotifications(prev =>
+                prev.filter(notif => notif.id !== notification.id)
+            );
+        } catch (error) {
+            console.error('알림 삭제 실패:', error);
+        }
     };
 
     const handleSelectMissingPost = () => {
@@ -399,6 +374,7 @@ const Map = () => {
                 };
                 updatePosition(newPosition);
 
+                cleanupOverlays();
                 // 드래그 후 바로 데이터 가져오기 (debounce 제거)
                 fetchAllData(newPosition, selectedRange);
 
@@ -474,38 +450,94 @@ const Map = () => {
         cleanupOverlays
     ]);
 
-    // 알림 닫기 핸들러
-    const handleCloseNotification = () => {
-        setShowNotification(false);
+    // 알림 목록 가져오기
+    const fetchNotifications = useCallback(async () => {
+        try {
+          const response = await NotificationService.getNotifications();
+          console.log('받은 알림 데이터:', response);
+          
+          if (response && response.content) {
+            console.log('알림 목록:', response.content);
+            
+            const formattedNotifications = response.content.map(notification => ({
+              ...notification,
+              timestamp: new Date(notification.createdAt).getTime(),
+              isRead: notification.isRead
+            }));
+            
+            setNotifications(formattedNotifications);
+          } else {
+            console.log('알림 데이터에 content가 없습니다:', response);
+          }
+        } catch (error) {
+          console.error('알림을 불러오는데 실패했습니다:', error);
+        }
+      }, []);
+
+    // 컴포넌트 마운트 시 알림 목록 가져오기
+    useEffect(() => {
+        fetchNotifications();
+    }, [fetchNotifications]);
+
+
+    // 알림 읽음 처리
+    const handleNotificationRead = async (notification) => {
+        console.log('알림 읽음 처리:', notification);
+        try {
+            await NotificationService.markAsRead(notification.id);
+            // 알림 목록 업데이트
+            setNotifications(prev => 
+                prev.map(notif => 
+                    notif.id === notification.id
+                        ? { ...notif, isRead: true }
+                        : notif
+                )
+            )
+
+            if (notification.post.id) {
+                navigate(`/PetPostDetail/${notification.post.id}`);
+            }
+
+        } catch (error) {
+            console.error('알림 읽음 처리 실패:', error);
+        }
     };
 
-    // 알림 클릭 핸들러 (해당 게시글로 이동)
-    const handleNotificationClick = () => {
-        if (notification && notification.postId) {
-            // 알림을 읽음 상태로 변경
-            setNotifications(prev =>
-                prev.map(notif =>
-                    notif.id === notification.id ? { ...notif, read: true } : notif
-                )
-            );
+    // Fixed the function definition here to avoid duplicate declaration
+    const showTestRewardPoster = async (forceShow = false) => {
+        if (!forceShow) {
+            // 24시간 내에 '표시하지 않기'를 체크했는지 확인
+            const lastHiddenTime = localStorage.getItem('lastPosterHiddenTime');
+            const now = new Date().getTime();
+            const oneDayInMs = 24 * 60 * 60 * 1000; // 24시간을 밀리초로 표현
 
-            // 또는 게시글이 있는 위치로 맵 이동
-            if (notification.latitude && notification.longitude && map) {
-                const position = new window.kakao.maps.LatLng(
-                    notification.latitude,
-                    notification.longitude
-                );
-                map.setCenter(position);
-
-                // 새 위치 설정
-                updatePosition({
-                    lat: notification.latitude,
-                    lng: notification.longitude
-                });
-
-                // 알림 닫기
-                setShowNotification(false);
+            // 마지막으로 숨겨진 시간이 있고, 24시간이 지나지 않았으면 표시하지 않음
+            if (lastHiddenTime && (now - Number(lastHiddenTime)) < oneDayInMs) {
+                return;
             }
+        }
+
+        try {
+            // 여기서 먼저 API 호출해서 데이터 확인
+            const result = await PetApiService.fetchRewardPosts();
+
+            if (result && result.content) {
+                // 보상금이 null이 아닌 게시글만 필터링
+                const filteredPosters = result.content.filter(post => post.reward !== null && post.reward > 0);
+
+                if (filteredPosters.length > 0) {
+                    // 보상금 게시글이 있을 때만 포스터 표시
+                    setRewardPosterData(filteredPosters);
+                    setShowRewardPoster(true); // 확인 후 표시
+                } else {
+                    // 보상금 게시글이 없을 때는 표시하지 않음
+                    console.log("보상금이 설정된 게시글이 없습니다.");
+                }
+            } else {
+                console.log("데이터 형식이 올바르지 않거나 게시글이 없습니다.");
+            }
+        } catch (error) {
+            console.error("보상금 게시글 데이터 로딩 실패:", error);
         }
     };
 
@@ -522,88 +554,38 @@ const Map = () => {
 
     const [dontShowFor24Hours, setDontShowFor24Hours] = useState(getDontShowPreference());
 
-    const showTestRewardPoster = async (forceShow = false) => {
-        if (!forceShow) {
-            // 24시간 내에 '표시하지 않기'를 체크했는지 확인
-            const lastHiddenTime = localStorage.getItem('lastPosterHiddenTime');
-            const now = new Date().getTime();
-            const oneDayInMs = 24 * 60 * 60 * 1000; // 24시간을 밀리초로 표현
-
-            // 마지막으로 숨겨진 시간이 있고, 24시간이 지나지 않았으면 표시하지 않음
-            if (lastHiddenTime && (now - Number(lastHiddenTime)) < oneDayInMs) {
-                return;
-            }
-        }
-        try {
-            setShowRewardPoster(true);
-            const result = await PetApiService.fetchRewardPosts();
-
-            if (result && result.content && result.content.length > 0) {
-                // 보상금이 null이 아닌 게시글만 필터링
-                const filteredPosters = result.content.filter(post => post.reward !== null && post.reward > 0);
-                setRewardPosterData(filteredPosters);
-            } else {
-                console.error("보상금이 설정된 게시글이 없습니다.");
-                setRewardPosterData([]);
-            }
-        } catch (error) {
-            console.error("보상금 게시글 데이터 로딩 실패:", error);
-            setRewardPosterData([]);
-        }
-    };
-
-
     return (
         <div className="h-screen w-full bg-orange-50/30 relative overflow-hidden">
             {/* 알림 팝업 */}
-            {/* 알림 팝업 */}
-{showNotification && notification && (
-  <div className="fixed top-4 right-4 z-50 bg-white rounded-lg shadow-lg max-w-xs w-full p-4 flex flex-col transition-all duration-300 ease-in-out">
-    <div className="flex justify-between items-start mb-2">
-      <h4 className="font-bold text-orange-600 text-sm">
-        {notification.type === 'COMMENT' 
-          ? '댓글 알림' 
-          : notification.status === 'FINDING' 
-            ? '실종 신고' 
-            : '목격 신고'}
-      </h4>
-      <button
-        onClick={handleCloseNotification}
-        className="p-1 ml-2 text-gray-400 hover:text-gray-600"
-      >
-        ✕
-      </button>
-    </div>
-    <div
-      className="cursor-pointer"
-      onClick={handleNotificationClick}
-    >
-      <p className="text-sm text-gray-800 font-medium">
-        {notification.message || 
-         (notification.content?.length > 50
-          ? notification.content.substring(0, 50) + '...'
-          : notification.content)}
-      </p>
-      {notification.commentContent && (
-        <p className="text-xs text-gray-600 mt-1 italic">
-          "{notification.commentContent.length > 40
-            ? notification.commentContent.substring(0, 40) + '...'
-            : notification.commentContent}"
-        </p>
-      )}
-      <div className="flex items-center mt-2 text-xs text-gray-500">
-        <span className="mr-2">
-          {notification.type === 'COMMENT'
-            ? `댓글 작성자: ${notification.commentAuthorNickname}`
-            : `작성자: ${notification.nickname}`}
-        </span>
-        {notification.distance && (
-          <span>약 {Math.round(notification.distance)}m 거리</span>
-        )}
-      </div>
-    </div>
-  </div>
-)}
+            {showNotification && currentNotification && (
+                <div 
+                    className="fixed top-4 right-4 z-50 bg-white rounded-xl shadow-lg max-w-xs w-full overflow-hidden transition-all duration-300 ease-in-out transform translate-y-0 cursor-pointer"
+                    onClick={() => {
+                        setShowNotification(false);
+                        handleNotificationRead(currentNotification);
+                    }}
+                >
+                    <div className="p-4 border-l-4 border-orange-500">
+                        <div className="flex-1">
+                            <h3 className="text-sm font-semibold text-amber-800">
+                                {currentNotification.title}
+                            </h3>
+                            <p className="mt-1 text-sm text-amber-600">
+                                {currentNotification.content}
+                            </p>
+                            <span className="mt-2 text-xs text-amber-400">
+                                {new Date(currentNotification.createdAt).toLocaleString()}
+                            </span>
+                        </div>
+                    </div>
+                    <div 
+                        className="h-1 bg-orange-100"
+                        style={{
+                            animation: 'timeoutProgress 3s linear forwards'
+                        }}
+                    />
+                </div>
+            )}
 
             <div className="h-full w-full">
                 <div className="relative h-full w-full">
@@ -629,7 +611,7 @@ const Map = () => {
                     {/* 알림 버튼 컴포넌트 - 글쓰기 버튼 위에 배치 */}
                     <NotificationButton
                         notifications={notifications}
-                        onViewNotification={handleViewNotification}
+                        onViewNotification={handleNotificationRead}
                         onClearNotification={handleClearNotification}
                     />
 
@@ -684,4 +666,19 @@ const Map = () => {
     );
 };
 
+// CSS 애니메이션 추가
+const styles = `
+@keyframes timeoutProgress {
+    from { width: 100%; }
+    to { width: 0%; }
+}
+`;
+
+// style 태그 생성 및 추가
+const styleSheet = document.createElement("style");
+styleSheet.type = "text/css";
+styleSheet.innerText = styles;
+document.head.appendChild(styleSheet);
+
+// Export statement at the top level
 export default Map;
