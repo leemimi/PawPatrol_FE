@@ -150,22 +150,26 @@ const PetPostDetail = ({ onClose }) => {
   };
 
   // 채팅 핸들러
-  const handleStartChat = () => {
-    if (!post || !post.nickname) {
-      alert('게시자 정보를 불러올 수 없습니다.');
-      return;
-    }
+  // handleStartChat 함수 수정
+const handleStartChat = () => {
+  if (!post || !post.nickname) {
+    alert('게시자 정보를 불러올 수 없습니다.');
+    return;
+  }
 
-    sessionStorage.setItem('chatTarget', JSON.stringify({
-      userId: post.author.id,
-      nickname: post.author.nickname,
-      postId: post.id,
-      postTitle: post.content,
-      type: 'LOSTFOUND'
-    }));
-
-    navigate('/chat');
-  };
+  // 채팅 대상 정보를 세션 스토리지에 저장
+  sessionStorage.setItem('chatTarget', JSON.stringify({
+    userId: post.author.id,
+    nickname: post.author.nickname,
+    postId: post.id,
+    postTitle: post.content,
+    type: 'LOSTFOUND',
+    reward: post.reward || null,
+    owner: post.author.id, 
+  }));
+  
+  navigate('/chat');
+};
 
   // 이미지 핸들러
   const renderImages = () => {

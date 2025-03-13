@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, ArrowLeft, MoreVertical, UserCircle, FileText, MessageSquare, Image, X } from 'lucide-react';
+import { Send, ArrowLeft, MoreVertical, UserCircle, FileText, MessageSquare, Image, X, Award } from 'lucide-react';
 import SockJS from 'sockjs-client';
 import { Client } from '@stomp/stompjs';
 import { useNavigate } from 'react-router-dom';
@@ -14,7 +14,8 @@ const Chat = () => {
       id: null,
       title: null,
       type: null,
-      userId: null
+      userId: null,
+      reward: null // 보상금 정보 추가
     }
   });
   const [currentRoomId, setCurrentRoomId] = useState(null);
@@ -42,6 +43,12 @@ const Chat = () => {
            selectedUser.postInfo.userId == currentUser.id; 
   };
 
+  // 보상금 표시 포맷 함수
+  const formatReward = (amount) => {
+    return amount ? amount.toLocaleString() + '원' : '';
+  };
+
+  // 입양 신청 배너 렌더링
   const renderAdoptionRequestBanner = () => {
     if (selectedUser?.postInfo?.type === 'PROTECTADOPT') {
       return (
@@ -67,6 +74,20 @@ const Chat = () => {
     return null;
   };
   
+  // 보상금 배너 렌더링 (새로 추가됨)
+  const renderRewardBanner = () => {
+    if (selectedUser?.postInfo?.type === 'LOSTFOUND' && selectedUser?.postInfo?.reward) {
+      return (
+        <div className="p-3 bg-yellow-50 border-b border-yellow-200 flex items-center justify-center">
+          <Award className="w-5 h-5 text-yellow-600 mr-2" />
+          <p className="text-center text-yellow-800 font-medium">
+            이 게시글은 <span className="font-bold text-yellow-700">{formatReward(selectedUser.postInfo.reward)}</span>의 보상금이 걸려있습니다
+          </p>
+        </div>
+      );
+    }
+    return null;
+  };
 
   // 세션 스토리지에서 채팅 대상 정보 가져오기
   useEffect(() => {
@@ -82,7 +103,8 @@ const Chat = () => {
           id: parsedData.postId,
           title: parsedData.postTitle,
           type: parsedData.type,
-          userId: parsedData.owner
+          userId: parsedData.owner,
+          reward: parsedData.reward // 보상금 정보 추가
         } : null
       });
       console.log('Parsed chat target:', parsedData);
@@ -177,7 +199,6 @@ const Chat = () => {
   }, [selectedUser, currentUser.id, stompClient, isConnected]);
 
   // 채팅방 구독
-  // 채팅방 구독
   const subscribeToRoom = (identifier) => {
     if (!stompClient || !identifier) {
       console.warn('Cannot subscribe to room: Missing stompClient or identifier');
@@ -218,7 +239,7 @@ const Chat = () => {
         console.error('Error processing received message:', error);
       }
     });
-  }; // 이 닫는 괄호가 없었습니다
+  };
 
   // 메시지 불러오기
   const fetchMessages = async (identifier) => {
@@ -572,8 +593,11 @@ const Chat = () => {
         <div className={`w-2 h-2 rounded-full ml-2 ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
       </div>
 
+      {/* 입양 배너 렌더링 */}
       {renderAdoptionRequestBanner()}
-
+      
+      {/* 보상금 배너 렌더링 */}
+      {renderRewardBanner()}
 
       {/* Messages Area */}
       <div className="h-full flex-1 overflow-y-auto p-4 bg-gray-50 pb-32"> {/* padding-bottom 추가 */}
