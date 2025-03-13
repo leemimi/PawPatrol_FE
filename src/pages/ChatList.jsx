@@ -59,7 +59,8 @@ const ChatList = () => {
       nickname: otherMember.nickname,
       postId: room.post.id,
       postTitle: room.post.content,
-      type: room.type
+      type: room.type,
+      owner: room.member2.id
     }));
     
     navigate('/chat');

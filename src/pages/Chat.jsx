@@ -13,7 +13,8 @@ const Chat = () => {
     postInfo: {
       id: null,
       title: null,
-      type: null
+      type: null,
+      userId: null
     }
   });
   const [currentRoomId, setCurrentRoomId] = useState(null);
@@ -34,6 +35,39 @@ const Chat = () => {
     nickname: JSON.parse(localStorage.getItem('userInfo')).nickname
   };
 
+  const isDogOwner = () => {
+    console.log('selectedUser:', selectedUser.postInfo.userId);
+    console.log('currentUser:', currentUser.id);
+    return selectedUser?.postInfo?.type === 'PROTECTADOPT' && 
+           selectedUser.postInfo.userId == currentUser.id; 
+  };
+
+  const renderAdoptionRequestBanner = () => {
+    if (selectedUser?.postInfo?.type === 'PROTECTADOPT') {
+      return (
+        <div className="p-3 bg-orange-100 border-b border-orange-200 flex flex-col items-center">
+          <p className="text-center text-orange-800 font-medium mb-2">
+            {isDogOwner() 
+              ? "입양 신청을 수락하거나 거절하시겠습니까?" 
+              : "입양 신청이 진행 중입니다"}
+          </p>
+          {isDogOwner() && (
+            <div className="flex space-x-3">
+              <button 
+                onClick={() => navigate(`/protection/${selectedUser.postInfo.id}`)}
+                className="px-4 py-1.5 bg-orange-500 text-white rounded-full text-sm hover:bg-orange-600 transition duration-300"
+              >
+                수락하거나 거절하러 가기
+              </button>
+            </div>
+          )}
+        </div>
+      );
+    }
+    return null;
+  };
+  
+
   // 세션 스토리지에서 채팅 대상 정보 가져오기
   useEffect(() => {
     const chatTargetData = sessionStorage.getItem('chatTarget');
@@ -47,7 +81,8 @@ const Chat = () => {
         postInfo: parsedData.postId ? {
           id: parsedData.postId,
           title: parsedData.postTitle,
-          type: parsedData.type
+          type: parsedData.type,
+          userId: parsedData.owner
         } : null
       });
       console.log('Parsed chat target:', parsedData);
@@ -537,9 +572,11 @@ const Chat = () => {
         <div className={`w-2 h-2 rounded-full ml-2 ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
       </div>
 
+      {renderAdoptionRequestBanner()}
+
 
       {/* Messages Area */}
-      <div className="h-full flex-1 overflow-y-auto p-4 bg-gray-50">
+      <div className="h-full flex-1 overflow-y-auto p-4 bg-gray-50 pb-32"> {/* padding-bottom 추가 */}
         {!Array.isArray(messages) || messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-gray-500 p-4">
             <div className="bg-orange-100 rounded-full p-4 mb-3">
@@ -576,65 +613,68 @@ const Chat = () => {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* 이미지 미리보기 */}
-      {selectedImages.length > 0 && (
-        <div className="p-2 bg-gray-100 border-t border-gray-200">
-          <div className="flex overflow-x-auto gap-2 py-1">
-            {selectedImages.map((file, index) => (
-              <div key={index} className="relative flex-shrink-0">
-                <img
-                  src={URL.createObjectURL(file)}
-                  alt={`Preview ${index}`}
-                  className="h-16 w-16 object-cover rounded-lg border border-gray-300"
-                />
-                <button
-                  onClick={() => removeImage(index)}
-                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 w-5 h-5 flex items-center justify-center"
-                >
-                  <X size={12} />
-                </button>
-              </div>
-            ))}
+      {/* Input Area Container - position fixed 제거하고 하단에 고정 */}
+      <div className="sticky bottom-16 left-0 right-0 bg-white border-t border-gray-200">
+        {/* Image Preview */}
+        {selectedImages.length > 0 && (
+          <div className="p-2 bg-gray-100 border-t border-gray-200">
+            <div className="flex overflow-x-auto gap-2 py-1">
+              {selectedImages.map((file, index) => (
+                <div key={index} className="relative flex-shrink-0">
+                  <img
+                    src={URL.createObjectURL(file)}
+                    alt={`Preview ${index}`}
+                    className="h-16 w-16 object-cover rounded-lg border border-gray-300"
+                  />
+                  <button
+                    onClick={() => removeImage(index)}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 w-5 h-5 flex items-center justify-center"
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Message Input */}
-      <div className="fixed bottom-16 left-0 right-0 w-full p-4 border-t border-gray-200 flex items-center bg-white">
-        <input
-          type="file"
-          multiple
-          accept="image/*"
-          ref={fileInputRef}
-          className="hidden"
-          onChange={handleImageSelect}
-        />
-        <button
-          onClick={() => fileInputRef.current.click()}
-          className="w-10 h-10 flex items-center justify-center text-gray-500 hover:text-orange-500"
-          disabled={isUploading}
-        >
-          <Image className="w-5 h-5" />
-        </button>
-        <input
-          type="text"
-          value={newMessage}
-          onChange={handleTyping}
-          onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-          placeholder="메시지를 입력하세요"
-          className="flex-1 p-2 border border-gray-300 rounded-full mx-2 focus:outline-none focus:ring-2 focus:ring-orange-400"
-          disabled={isUploading}
-        />
-        <button
-          onClick={sendMessage}
-          disabled={(!newMessage.trim() && selectedImages.length === 0) || !isConnected || !selectedUser?.postInfo || isUploading}
-          className={`w-10 h-10 rounded-full ${(newMessage.trim() || selectedImages.length > 0) && isConnected && selectedUser?.postInfo && !isUploading
-              ? 'bg-orange-500 hover:bg-orange-600'
-              : 'bg-gray-300'
-            } text-white flex items-center justify-center transition duration-300`}
-        >
-          <Send className="w-5 h-5" />
-        </button>
+        {/* Message Input */}
+        <div className="p-4 flex items-center bg-white">
+          <input
+            type="file"
+            multiple
+            accept="image/*"
+            ref={fileInputRef}
+            className="hidden"
+            onChange={handleImageSelect}
+          />
+          <button
+            onClick={() => fileInputRef.current.click()}
+            className="w-10 h-10 flex items-center justify-center text-gray-500 hover:text-orange-500"
+            disabled={isUploading}
+          >
+            <Image className="w-5 h-5" />
+          </button>
+          <input
+            type="text"
+            value={newMessage}
+            onChange={handleTyping}
+            onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+            placeholder="메시지를 입력하세요"
+            className="flex-1 p-2 border border-gray-300 rounded-full mx-2 focus:outline-none focus:ring-2 focus:ring-orange-400"
+            disabled={isUploading}
+          />
+          <button
+            onClick={sendMessage}
+            disabled={(!newMessage.trim() && selectedImages.length === 0) || !isConnected || !selectedUser?.postInfo || isUploading}
+            className={`w-10 h-10 rounded-full ${(newMessage.trim() || selectedImages.length > 0) && isConnected && selectedUser?.postInfo && !isUploading
+                ? 'bg-orange-500 hover:bg-orange-600'
+                : 'bg-gray-300'
+              } text-white flex items-center justify-center transition duration-300`}
+          >
+            <Send className="w-5 h-5" />
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -53,9 +53,10 @@ const App = () => {
   return (  /*수정*/
     <Router> {/* This Router wrapper was missing  */}
       <Routes>
+      <Route path="/" element={<LoginPet />} />
         <Route element={<Layout />}>
 
-          <Route path="/" element={<LoginPet />} />
+      
 
           <Route path="/sign-up" element={<SignUp />} />
           <Route path="/mypage" element={<MyPage />} />
