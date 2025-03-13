@@ -516,21 +516,28 @@ const Map = () => {
                 return;
             }
         }
+
         try {
-            setShowRewardPoster(true);
+            // 여기서 먼저 API 호출해서 데이터 확인
             const result = await PetApiService.fetchRewardPosts();
 
-            if (result && result.content && result.content.length > 0) {
+            if (result && result.content) {
                 // 보상금이 null이 아닌 게시글만 필터링
                 const filteredPosters = result.content.filter(post => post.reward !== null && post.reward > 0);
-                setRewardPosterData(filteredPosters);
+
+                if (filteredPosters.length > 0) {
+                    // 보상금 게시글이 있을 때만 포스터 표시
+                    setRewardPosterData(filteredPosters);
+                    setShowRewardPoster(true); // 확인 후 표시
+                } else {
+                    // 보상금 게시글이 없을 때는 표시하지 않음
+                    console.log("보상금이 설정된 게시글이 없습니다.");
+                }
             } else {
-                console.error("보상금이 설정된 게시글이 없습니다.");
-                setRewardPosterData([]);
+                console.log("데이터 형식이 올바르지 않거나 게시글이 없습니다.");
             }
         } catch (error) {
             console.error("보상금 게시글 데이터 로딩 실패:", error);
-            setRewardPosterData([]);
         }
     };
 

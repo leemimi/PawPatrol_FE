@@ -11,6 +11,7 @@ import ApplyModal from './components/ApplyModal';
 import ImageGallery from './components/ImageGallery';
 import ActionButtons from './components/ActionButtons';
 import { useProtectionDetail, useAnimalDeletion, useProtectionApplication } from '../../hooks/useProtections';
+import SweetAlert from '../../components/SweetAlert';
 
 const AnimalDetail = () => {
     const { id } = useParams();
@@ -71,11 +72,11 @@ const AnimalDetail = () => {
     const handleConfirmDelete = async () => {
         try {
             await deleteAnimal(id);
-            alert('삭제되었습니다.');
+            SweetAlert.success('삭제되었습니다.');
             navigate('/my-register-animals');
         } catch (error) {
             console.error('삭제 오류:', error);
-            alert('삭제 중 오류가 발생했습니다.');
+            SweetAlert.error('삭제 실패', '삭제 중 오류가 발생했습니다.');
         } finally {
             setIsDeleteModalOpen(false);
         }
@@ -83,7 +84,7 @@ const AnimalDetail = () => {
 
     const handleSubmitApply = async () => {
         if (!applyReason.trim()) {
-            alert('신청 사유를 입력해주세요.');
+            SweetAlert.warning('입력 오류', '신청 사유를 입력해주세요.');
             return;
         }
 
@@ -93,11 +94,11 @@ const AnimalDetail = () => {
                 protectionType: applicationType === 'adoption' ? 'ADOPTION' : 'TEMP_PROTECTION'
             });
 
-            alert(applicationType === 'adoption' ? '입양 신청이 완료되었습니다.' : '임시보호 신청이 완료되었습니다.');
+            SweetAlert.success(applicationType === 'adoption' ? '입양 신청이 완료되었습니다.' : '임시보호 신청이 완료되었습니다.');
             navigate('/my-applications');
         } catch (error) {
             console.error('신청 오류:', error);
-            alert('신청 중 오류가 발생했습니다.');
+            SweetAlert.error('신청 실패', '신청 중 오류가 발생했습니다.');
         } finally {
             setIsApplyModalOpen(false);
             setApplyReason('');
@@ -108,25 +109,28 @@ const AnimalDetail = () => {
     const handleApproveProtection = async (protectionId) => {
         try {
             await approveProtection(protectionId);
-            alert('신청이 승인되었습니다.');
+            SweetAlert.success('신청이 승인되었습니다.');
             refresh(); // 데이터 새로고침
         } catch (error) {
             console.error('승인 오류:', error);
-            alert('승인 중 오류가 발생했습니다.');
+            SweetAlert.error('승인 실패', '승인 중 오류가 발생했습니다.');
         }
     };
 
     const handleRejectProtection = async (protectionId) => {
-        const rejectReason = prompt('거절 사유를 입력해주세요');
-        if (rejectReason === null) return;
+        const result = await SweetAlert.input('거절 사유', '거절 사유를 입력해주세요');
+
+        if (result.isDismissed || !result.value) return;
+
+        const rejectReason = result.value;
 
         try {
             await rejectProtection(protectionId, rejectReason);
-            alert('신청이 거절되었습니다.');
+            SweetAlert.success('신청이 거절되었습니다.');
             refresh(); // 데이터 새로고침
         } catch (error) {
             console.error('거절 오류:', error);
-            alert('거절 중 오류가 발생했습니다.');
+            SweetAlert.error('거절 실패', '거절 중 오류가 발생했습니다.');
         }
     };
 

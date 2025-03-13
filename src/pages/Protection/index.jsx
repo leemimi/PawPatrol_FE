@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, Search, X, MapPin, ChevronDown, ChevronUp, Filter } from 'lucide-react';
+import { Menu, Search, X, ChevronDown, ChevronUp, Filter } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import StatusBadge from '../../components/StatusBadge';
-import InfiniteScroll from '../../components/InfiniteScroll';
 import { useProtections } from '../../hooks/useProtections';
-import AnimalSelectionModal from '../../components/AnimalSelectionModal'; // AnimalSelectionModal 컴포넌트 import
-
+import AnimalCaseList from '../../components/AnimalCaseList';
+import AnimalSelectionModal from '../../components/AnimalSelectionModal';
 
 const Protection = () => {
   const navigate = useNavigate();
@@ -61,68 +59,6 @@ const Protection = () => {
     window.scrollTo(0, 0);
   }, []);
 
-  const handleAnimalClick = (animal) => {
-    navigate(`/protection/${animal.animalCaseId}`);
-  };
-
-  const renderAnimal = (animal, index) => (
-    <div
-      className="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:scale-[1.02]"
-      onClick={() => handleAnimalClick(animal)}
-    >
-      <div className="relative h-40 overflow-hidden">
-        {animal.imageUrl && (
-          <img
-            src={animal.imageUrl}
-            alt={animal.title}
-            className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
-          />
-        )}
-        <div className="absolute top-2 left-2">
-          <StatusBadge status={animal.caseStatus} type="protection" />
-        </div>
-      </div>
-
-      <div className="p-4 h-[7rem] flex flex-col justify-between">
-        <h3 className="text-[15px] text-amber-900 min-h-[2.5rem] line-clamp-2 text-center font-medium">
-          {animal.title}
-        </h3>
-        {animal.location && (
-          <div className="flex items-center justify-start text-sm text-amber-700/70 mt-1">
-            <MapPin size={14} className="mr-1" />
-            <span className="truncate">{animal.location}</span>
-          </div>
-        )}
-        <div className="flex justify-between items-center text-sm mt-2">
-          <span className="text-amber-600 font-medium">{animal.breed}</span>
-          <span className="text-amber-700/60">
-            {new Date(animal.createdAt).toLocaleDateString()}
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-
-  const loadingComponent = (
-    <div className="text-center py-4">
-      <span className="text-gray-500">불러오는 중...</span>
-    </div>
-  );
-
-  const endMessage = (
-    <div className="text-center py-4">
-      <span className="text-gray-500">모든 동물을 불러왔습니다.</span>
-    </div>
-  );
-
-  const emptyComponent = (
-    <div className="flex flex-col items-center justify-center h-64 p-4">
-      <p className="text-gray-600 text-center">
-        등록된 동물이 없습니다.
-      </p>
-    </div>
-  );
-
   // 에러 처리
   if (error) {
     return (
@@ -170,21 +106,19 @@ const Protection = () => {
               {/* 동물 유형 필터 버튼 */}
               <button
                 onClick={() => handleAnimalTypeChange('DOG')}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                  animalType === 'DOG'
-                    ? 'bg-amber-500 text-white shadow-md'
-                    : 'bg-orange-50 text-amber-700 hover:bg-amber-100'
-                }`}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${animalType === 'DOG'
+                  ? 'bg-amber-500 text-white shadow-md'
+                  : 'bg-orange-50 text-amber-700 hover:bg-amber-100'
+                  }`}
               >
                 강아지
               </button>
               <button
                 onClick={() => handleAnimalTypeChange('CAT')}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                  animalType === 'CAT'
-                    ? 'bg-amber-500 text-white shadow-md'
-                    : 'bg-orange-50 text-amber-700 hover:bg-amber-100'
-                }`}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${animalType === 'CAT'
+                  ? 'bg-amber-500 text-white shadow-md'
+                  : 'bg-orange-50 text-amber-700 hover:bg-amber-100'
+                  }`}
               >
                 고양이
               </button>
@@ -222,32 +156,24 @@ const Protection = () => {
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <InfiniteScroll
-          items={animals}
+        {/* AnimalCaseList 컴포넌트 사용 */}
+        <AnimalCaseList
+          animals={animals}
           hasMore={hasMore}
           loading={loading}
-          loadMore={nextPage}
-          renderItem={renderAnimal}
-          loadingComponent={<div className="text-center py-4"><span className="text-gray-500">불러오는 중...</span></div>}
-          emptyComponent={
-            <div className="flex flex-col items-center justify-center h-64 p-4 col-span-2">
-              <p className="text-gray-600 text-center">
-                {animalType || location
-                  ? '검색 결과가 없습니다.'
-                  : '등록된 동물이 없습니다.'}
-              </p>
-              {(animalType || location) && (
-                <button
-                  onClick={resetFilters}
-                  className="mt-2 px-3 py-1 bg-orange-100 text-orange-500 rounded-full text-sm"
-                >
-                  필터 초기화
-                </button>
-              )}
-            </div>
+          nextPage={nextPage}
+          detailPath="/protection"
+          emptyMessage={animalType || location ? '검색 결과가 없습니다.' : '등록된 동물이 없습니다.'}
+          emptyAction={
+            (animalType || location) ? (
+              <button
+                onClick={resetFilters}
+                className="mt-2 px-3 py-1 bg-orange-100 text-orange-500 rounded-full text-sm"
+              >
+                필터 초기화
+              </button>
+            ) : null
           }
-          endMessage={<div className="text-center py-4"><span className="text-gray-500">모든 동물을 불러왔습니다.</span></div>}
-          className="grid grid-cols-2 gap-3 col-span-2"
         />
       </div>
 
@@ -276,7 +202,7 @@ const Protection = () => {
               className="w-full px-4 py-3 text-sm font-bold text-orange-400  text-left hover:bg-orange-50 text-gray-700 transition-colors border-b border-gray-100"
               onClick={() => {
                 setIsMenuOpen(false);
-                navigate('/my-register-animals'); // 등록한 동물 목록 페이지로 이동
+                navigate('/my-register-animals');
               }}
             >
               내 동물 목록
@@ -285,7 +211,7 @@ const Protection = () => {
               className="w-full px-4 py-3 text-sm font-bold text-orange-400  text-left hover:bg-orange-50 text-gray-700 transition-colors"
               onClick={() => {
                 setIsMenuOpen(false);
-                navigate('/my-applications'); // 나의 신청 목록 페이지로 이동
+                navigate('/my-applications');
               }}
             >
               나의 신청 목록
@@ -303,8 +229,6 @@ const Protection = () => {
         confirmButtonText="동물 등록하기"
         onConfirm={() => {
           setShowAnimalTypeModal(false);
-
-          // 동물 등록 페이지로 이동하면서 선택한 동물 타입 전달
           navigate("/register-animal", {
             state: {
               animalType: selectedAnimalType
@@ -312,7 +236,6 @@ const Protection = () => {
           });
         }}
       />
-
     </div>
   );
 };

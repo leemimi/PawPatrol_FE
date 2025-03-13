@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Home, Users, User, LifeBuoy, MessageSquare } from 'lucide-react';
+import { Home, User, MessageSquare, Cat, PawPrint } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 
@@ -124,7 +124,7 @@ const Footer = () => {
                         className={getTabStyle('rescue')}
                     >
                         <div className={getIconContainerStyle('rescue')}>
-                            <LifeBuoy size={22} strokeWidth={2.5} className={activeTab === 'rescue' ? 'text-white' : ''} />
+                            <Cat size={22} strokeWidth={2.5} className={activeTab === 'rescue' ? 'text-white' : ''} />
                         </div>
                         <span className="text-[12px] font-medium mt-1">구조</span>
                     </button>
@@ -135,7 +135,7 @@ const Footer = () => {
                         className={getTabStyle('protection')}
                     >
                         <div className={getIconContainerStyle('protection')}>
-                            <Users size={22} strokeWidth={2.5} className={activeTab === 'protection' ? 'text-white' : ''} />
+                            <PawPrint size={22} strokeWidth={2.5} className={activeTab === 'protection' ? 'text-white' : ''} />
                         </div>
                         <span className="text-[12px] font-medium mt-1">입양/임시보호</span>
                     </button>
