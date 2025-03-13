@@ -1,4 +1,5 @@
 // firebase-messaging-sw.js
+// firebase-messaging-sw.js
 importScripts('https://www.gstatic.com/firebasejs/11.4.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/11.4.0/firebase-messaging-compat.js');
 
@@ -19,15 +20,7 @@ firebase.initializeApp(firebaseConfig);
 // Get messaging instance
 const messaging = firebase.messaging();
 
-// Background message handler
+// 백그라운드 메시지 핸들러 - notification 필드가 있는 메시지는 처리하지 않도록 함
 messaging.onBackgroundMessage(function(payload) {
   console.log('[firebase-messaging-sw.js] Received background message ', payload);
-  
-  const notificationTitle = payload.notification.title || 'PawPatrol 알림';
-  const notificationOptions = {
-    body: payload.notification.body || '새로운 알림이 있습니다.',
-    icon: '/favicon.ico'
-  };
-
-  self.registration.showNotification(notificationTitle, notificationOptions);
 });
