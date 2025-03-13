@@ -189,29 +189,33 @@ const WriteButton = ({ onSelectMissingPost, onSelectReportPost }) => {
             className="absolute bottom-14 right-0 bg-white rounded-lg shadow-lg w-64 overflow-hidden z-50"
           >
             <div className="p-2">
-              <button
-                onClick={handleMissingPostClick}
-                className="w-full flex items-center p-3 rounded-lg hover:bg-orange-50 transition-colors"
-              >
-                <div className="bg-orange-100 p-1.5 rounded-full mr-2">
-                  <Search size={18} className="text-orange-600" />
-                </div>
-                <div className="text-left">
-                  <p className="font-medium text-gray-900 text-sm">실종글 작성</p>
-                </div>
-              </button>
+{/* 실종글 작성 버튼 */}
+        <button 
+          onClick={handleMissingPostClick} 
+          className="w-full flex items-center p-4 rounded-lg hover:bg-orange-100 transition-colors border border-orange-200 mb-3 shadow-sm"
+        >
+          <div className="bg-orange-200 p-2.5 rounded-full mr-3">
+            <Search size={22} className="text-orange-600" />
+          </div>
+          <div className="text-left">
+            <p className="font-bold text-gray-900 text-base">실종글 작성</p>
+            <p className="text-gray-600 text-sm">반려동물을 잃어버렸어요</p>
+          </div>
+        </button>
 
-              <button
-                onClick={handleReportPostClick}
-                className="w-full flex items-center p-3 rounded-lg hover:bg-orange-50 transition-colors"
-              >
-                <div className="bg-orange-100 p-1.5 rounded-full mr-2">
-                  <Eye size={18} className="text-blue-600" />
-                </div>
-                <div className="text-left">
-                  <p className="font-medium text-gray-900 text-sm">제보글 작성</p>
-                </div>
-              </button>
+        {/* 제보글 작성 버튼 */}
+        <button 
+          onClick={handleReportPostClick} 
+          className="w-full flex items-center p-4 rounded-lg hover:bg-blue-50 transition-colors border border-blue-200 shadow-sm"
+        >
+          <div className="bg-blue-100 p-2.5 rounded-full mr-3">
+            <Eye size={22} className="text-blue-600" />
+          </div>
+          <div className="text-left">
+            <p className="font-bold text-gray-900 text-base">제보글 작성</p>
+            <p className="text-gray-600 text-sm">발견한 동물을 제보해주세요</p>
+          </div>
+        </button>
             </div>
           </div>
         )}
