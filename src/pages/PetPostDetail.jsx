@@ -178,25 +178,49 @@ const handleStartChat = () => {
       const validImages = post.images.filter(image => image && image?.path); // null, undefined, 경로가 없는 이미지 필터링
       const uniqueImages = Array.from(new Set(validImages.map(image => image.path)))
         .map(path => validImages.find(image => image.path === path)); // 중복된 이미지 경로를 가진 첫 번째 이미지를 유지
-  
-      return uniqueImages.map((image, index) => {
-        // 이미지 경로가 없으면 placeholder를 사용
-        const imageUrl = image?.path || '/api/placeholder/160/160';
-        
-        // 이미지 경로가 없는 경우 클릭 불가능하게 처리
-        const handleClick = image?.path ? () => {} : null; // 클릭 처리 제거
-  
-        return (
-          <img
-            key={index}
-            src={imageUrl}
-            alt={`Post Image ${index + 1}`}
-            className="w-32 h-32 object-cover rounded-lg cursor-pointer"
-            onClick={handleClick} // 클릭 시 갤러리 열기 (동작하지 않음)
-            style={{ cursor: image?.path ? 'pointer' : 'not-allowed' }} // 경로가 없으면 커서를 비활성화
-          />
-        );
-      });
+
+      // 이미지가 없으면 렌더링하지 않음
+      if (uniqueImages.length === 0) return null;
+
+      return (
+        <div className="w-full mb-4">
+          {/* 첫 번째 이미지는 크게 표시 */}
+          {uniqueImages.length > 0 && (
+            <div className="w-full h-64 mb-2">
+              <img
+                src={uniqueImages[0]?.path || '/api/placeholder/160/160'}
+                alt={`Main Post Image`}
+                className="w-full h-full object-cover rounded-lg cursor-pointer"
+                onClick={() => uniqueImages[0]?.path && handleImageClick(0)}
+                style={{ cursor: uniqueImages[0]?.path ? 'pointer' : 'not-allowed' }}
+              />
+            </div>
+          )}
+
+          {/* 나머지 이미지는 가로 스크롤로 표시 */}
+          {uniqueImages.length > 1 && (
+            <div className="flex overflow-x-auto gap-2 pb-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+              {uniqueImages.slice(1).map((image, index) => {
+                // 실제 인덱스는 1부터 시작하므로 +1 해줌
+                const realIndex = index + 1;
+                const imageUrl = image?.path || '/api/placeholder/160/160';
+                const handleClick = image?.path ? () => handleImageClick(realIndex) : null;
+
+                return (
+                  <img
+                    key={realIndex}
+                    src={imageUrl}
+                    alt={`Post Image ${realIndex + 1}`}
+                    className="w-24 h-24 flex-shrink-0 object-cover rounded-lg cursor-pointer"
+                    onClick={handleClick}
+                    style={{ cursor: image?.path ? 'pointer' : 'not-allowed' }}
+                  />
+                );
+              })}
+            </div>
+          )}
+        </div>
+      );
     }
     return null;
   };
@@ -302,7 +326,7 @@ const handleStartChat = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 mb-4">
+          <div className="grid grid-cols- gap-2 mb-4">
             {renderImages()}
           </div>
 
