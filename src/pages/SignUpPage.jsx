@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import DaumPostcode from 'react-daum-postcode';
+import Swal from 'sweetalert2';
 
 
 const SignUp = () => {
@@ -184,7 +185,12 @@ const SignUp = () => {
                 }
             );
 
-            alert('회원가입이 완료되었습니다.');
+            Swal.fire({
+                icon: 'success',
+                title: '회원가입 완료',
+                text: '회원가입이 완료되었습니다.',
+                confirmButtonText: '확인'
+            });
             setErrors(prevErrors => ({  // 성공 시 에러 초기화
                 ...prevErrors,
                 email: '',

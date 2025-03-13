@@ -150,38 +150,77 @@ const PetPostDetail = ({ onClose }) => {
   };
 
   // 채팅 핸들러
-  const handleStartChat = () => {
-    if (!post || !post.nickname) {
-      alert('게시자 정보를 불러올 수 없습니다.');
-      return;
-    }
+  // handleStartChat 함수 수정
+const handleStartChat = () => {
+  if (!post || !post.nickname) {
+    alert('게시자 정보를 불러올 수 없습니다.');
+    return;
+  }
 
-    sessionStorage.setItem('chatTarget', JSON.stringify({
-      userId: post.author.id,
-      nickname: post.author.nickname,
-      postId: post.id,
-      postTitle: post.content,
-      type: 'LOSTFOUND'
-    }));
-
-    navigate('/chat');
-  };
+  // 채팅 대상 정보를 세션 스토리지에 저장
+  sessionStorage.setItem('chatTarget', JSON.stringify({
+    userId: post.author.id,
+    nickname: post.author.nickname,
+    postId: post.id,
+    postTitle: post.content,
+    type: 'LOSTFOUND',
+    reward: post.reward || null,
+    owner: post.author.id, 
+  }));
+  
+  navigate('/chat');
+};
 
   // 이미지 핸들러
   const renderImages = () => {
     if (post?.images?.length > 0) {
-      return post.images.map((image, index) => {
-        const imageUrl = image?.path || '/api/placeholder/160/160';
-        return (
-          <img
-            key={index}
-            src={imageUrl}
-            alt={`Pet image ${index + 1}`}
-            className="w-full h-auto rounded-lg cursor-pointer"
-            onClick={() => handleImageClick(index)}
-          />
-        );
-      });
+      // 유효한 경로만 필터링하여 중복 제거
+      const validImages = post.images.filter(image => image && image?.path); // null, undefined, 경로가 없는 이미지 필터링
+      const uniqueImages = Array.from(new Set(validImages.map(image => image.path)))
+        .map(path => validImages.find(image => image.path === path)); // 중복된 이미지 경로를 가진 첫 번째 이미지를 유지
+
+      // 이미지가 없으면 렌더링하지 않음
+      if (uniqueImages.length === 0) return null;
+
+      return (
+        <div className="w-full mb-4">
+          {/* 첫 번째 이미지는 크게 표시 */}
+          {uniqueImages.length > 0 && (
+            <div className="w-full h-64 mb-2">
+              <img
+                src={uniqueImages[0]?.path || '/api/placeholder/160/160'}
+                alt={`Main Post Image`}
+                className="w-full h-full object-cover rounded-lg cursor-pointer"
+                onClick={() => uniqueImages[0]?.path && handleImageClick(0)}
+                style={{ cursor: uniqueImages[0]?.path ? 'pointer' : 'not-allowed' }}
+              />
+            </div>
+          )}
+
+          {/* 나머지 이미지는 가로 스크롤로 표시 */}
+          {uniqueImages.length > 1 && (
+            <div className="flex overflow-x-auto gap-2 pb-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+              {uniqueImages.slice(1).map((image, index) => {
+                // 실제 인덱스는 1부터 시작하므로 +1 해줌
+                const realIndex = index + 1;
+                const imageUrl = image?.path || '/api/placeholder/160/160';
+                const handleClick = image?.path ? () => handleImageClick(realIndex) : null;
+
+                return (
+                  <img
+                    key={realIndex}
+                    src={imageUrl}
+                    alt={`Post Image ${realIndex + 1}`}
+                    className="w-24 h-24 flex-shrink-0 object-cover rounded-lg cursor-pointer"
+                    onClick={handleClick}
+                    style={{ cursor: image?.path ? 'pointer' : 'not-allowed' }}
+                  />
+                );
+              })}
+            </div>
+          )}
+        </div>
+      );
     }
     return null;
   };
@@ -287,7 +326,7 @@ const PetPostDetail = ({ onClose }) => {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 mb-4">
+          <div className="grid grid-cols- gap-2 mb-4">
             {renderImages()}
           </div>
 
@@ -483,9 +522,10 @@ const PetPostDetail = ({ onClose }) => {
       {/* 이미지 갤러리 모달 */}
       {isGalleryOpen && post?.images?.length > 0 && (
         <ImageGallery
-          images={post.images.map(img => img.path)}
-          initialIndex={currentImageIndex}
-          onClose={closeGallery}
+          images={post.images} // 객체 배열 그대로 전달
+          currentIndex={currentImageIndex}
+          setCurrentIndex={setCurrentImageIndex} // 상태 업데이트 함수 필요
+          closeGallery={closeGallery}
         />
       )}
     </div>
