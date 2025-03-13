@@ -91,7 +91,7 @@ const NotificationButton = ({ notifications = [], onViewNotification, onClearNot
               ) : (
                 <ul className="divide-y divide-gray-100">
                 {notifications.map((notification, index) => (
-                  <li 
+                  <li
                     key={notification.id || index}
                     onClick={() => handleNotificationClick(notification)}
                     className={`p-3 hover:bg-gray-50 cursor-pointer ${!notification.read ? 'bg-orange-50' : ''}`}
@@ -100,7 +100,7 @@ const NotificationButton = ({ notifications = [], onViewNotification, onClearNot
                       <h4 className="font-medium text-sm text-gray-900">
                         {notification.title}
                       </h4>
-                      <button 
+                      <button
                         onClick={(e) => handleClearNotification(e, notification)}
                         className="p-1 text-gray-400 hover:text-gray-600"
                       >
