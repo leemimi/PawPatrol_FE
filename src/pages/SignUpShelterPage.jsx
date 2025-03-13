@@ -3,10 +3,18 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import DaumPostcode from 'react-daum-postcode';
 import ShelterSearchModal from '../components/ShelterSearchModal';
-
+import Swal from 'sweetalert2';
 
 
 const SignUpShelter = () => {
+    const [errors, setErrors] = useState({
+        email: '',
+        code: '',
+        password: '',
+        address: '',
+        businessNumber: '',
+        general: ''
+    });
     const [isComposing, setIsComposing] = useState(false);
     const [searchResults, setSearchResults] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -35,7 +43,6 @@ const SignUpShelter = () => {
     const [selectedShelter, setSelectedShelter] = useState(null);
 
     // 보호소 검색 함수
-    // 보호소 검색 함수
     const searchShelters = async (searchTerm) => {
         // 인자가 없으면 formData에서 가져옴
         const term = searchTerm || formData.shelterName.trim();
@@ -52,7 +59,12 @@ const SignUpShelter = () => {
 
             setSearchResults(response.data.data || []);
         } catch (error) {
-            alert('보호소 검색 중 오류가 발생했습니다.');
+            Swal.fire({
+                title: '오류',
+                text: '보호소 검색 중 오류가 발생했습니다.',
+                icon: 'error',
+                confirmButtonText: '확인'
+            });
         } finally {
             setIsLoading(false);
         }
@@ -93,14 +105,28 @@ const SignUpShelter = () => {
             );
 
             if (response.data.data.valid) {
-                alert('유효한 사업자등록번호입니다.');
+                Swal.fire({
+                    icon: 'success',
+                    title: '사업자 등록번호 인증 완료',
+                    text: '유효한 사업자등록번호입니다.',
+                    confirmButtonText: '확인'
+                });
+                setErrors(prevErrors => ({  // 성공 시 에러 초기화
+                    businessNumber: ''
+                }));
                 setIsBusinessVerified(true);
             } else {
-                alert('유효하지 않은 사업자등록번호입니다.');
+                setErrors({
+                    ...errors,
+                    businessNumber: '유효하지 않은 사업자등록번호입니다.'
+                });
                 setIsBusinessVerified(false);
             }
         } catch (error) {
-            alert('사업자 등록번호 검증 중 오류가 발생했습니다.');
+            setErrors({
+                ...errors,
+                businessNumber: '사업자 등록번호 검증 중 오류가 발생했습니다.'
+            });
             setIsBusinessVerified(false);
         }
     };
@@ -124,6 +150,7 @@ const SignUpShelter = () => {
     // 이메일 인증
     const handleEmailVerification = async () => {
         try {
+            setErrors({ ...errors, email: '' }); // 성공 시 에러 초기화
             const response = await axios.post(
                 `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v2/auth/email/verification-code`,
                 {
@@ -138,15 +165,27 @@ const SignUpShelter = () => {
             );
 
             if (response.data.statusCode === 200) {
-                alert('인증 이메일이 발송되었습니다. 이메일을 확인해주세요.');
+                setErrors({
+                    ...errors,
+                    email: '인증 이메일이 발송되었습니다. 이메일을 확인해주세요.'
+                });
                 setIsEmailSent(true);
             } else if (response.data.statusCode === 400) {
-                alert(response.data.message);
+                setErrors({
+                    ...errors,
+                    email: response.data.message
+                });
             } else {
-                alert('이메일 인증 발송에 실패했습니다.');
+                setErrors({
+                    ...errors,
+                    email: '이메일 인증 발송에 실패했습니다.'
+                });
             }
         } catch (error) {
-            alert('이메일 인증 중 오류가 발생했습니다.');
+            setErrors({
+                ...errors,
+                email: '이메일 인증 중 오류가 발생했습니다.'
+            });
         }
     };
 
@@ -166,14 +205,23 @@ const SignUpShelter = () => {
                     withCredentials: true // 쿠키 포함 설정
                 }
             );
-
-            alert('이메일 인증이 완료되었습니다.');
+            setErrors(prevErrors => ({
+                ...prevErrors,
+                email: '',
+                code: ''  // 한 번에 두 필드 모두 초기화
+            }));
             setIsEmailVerified(true);
         } catch (error) {
             if (error.response && error.response.data) {
-                alert(error.response.data.message || '인증 코드가 일치하지 않습니다.');
+                setErrors({
+                    ...errors,
+                    code: error.response.data.message || '인증 코드가 일치하지 않습니다.'
+                });
             } else {
-                alert('인증 코드 확인 중 오류가 발생했습니다.');
+                setErrors({
+                    ...errors,
+                    code: '인증 코드 확인 중 오류가 발생했습니다.'
+                });
             }
         }
     };
@@ -189,18 +237,39 @@ const SignUpShelter = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        // 이메일 인증 여부 검증
         if (!isEmailVerified) {
-            alert('이메일 인증이 필요합니다.');
+            setErrors({
+                ...errors,
+                email: '이메일 인증이 필요합니다.'
+            });
             return;
         }
 
+        // 사업자 등록번호 검증
         if (!isBusinessVerified) {
-            alert('사업자등록번호 검증이 필요합니다.');
+            setErrors({
+                ...errors,
+                businessNumber: '사업자 등록번호 인증이 필요합니다.'
+            });
             return;
         }
 
         if (formData.password !== formData.passwordConfirm) {
-            alert('비밀번호가 일치하지 않습니다.');
+            setErrors({
+                ...errors,
+                password: '비밀번호가 일치하지 않습니다.'
+            });
+            return;
+        }
+
+        // 주소 입력 검증
+        if (!address.trim()) {
+            setErrors({
+                ...errors,
+                address: '주소를 입력해주세요.'  // 주소 에러 메시지 추가
+            });
             return;
         }
 
@@ -224,15 +293,26 @@ const SignUpShelter = () => {
                 }
             );
 
-            alert('회원가입이 완료되었습니다.');
+            Swal.fire({
+                icon: 'success',
+                title: '회원가입 완료',
+                text: '회원가입이 완료되었습니다.',
+                confirmButtonText: '확인'
+            });
+            setErrors(prevErrors => ({  // 성공 시 에러 초기화
+                ...prevErrors,
+                email: '',
+                code: '',
+                password: '',
+                businessNumber: '',
+                general: ''
+            }));
             navigate('/');
         } catch (error) {
-            console.error('SignUp error:', error);
-            if (error.response && error.response.data) {
-                alert(error.response.data.message || '회원가입에 실패했습니다.');
-            } else {
-                alert('회원가입 중 오류가 발생했습니다.');
-            }
+            setErrors({
+                ...errors,
+                general: error.response.data.message || '회원가입에 실패했습니다.'
+            });
         }
     };
 
@@ -280,6 +360,9 @@ const SignUpShelter = () => {
                                 </span>
                             )}
                         </div>
+                        {errors.email && (
+                            <div className="text-red-500 text-sm">{errors.email}</div>
+                        )}
                         {/* 인증 코드 입력 필드 */}
                         {isEmailSent && !isEmailVerified && (
                             <div className="flex space-x-2">
@@ -304,6 +387,9 @@ const SignUpShelter = () => {
                                 </button>
                             </div>
                         )}
+                        {errors.code && (
+                            <div className="text-red-500 text-sm">{errors.code}</div>
+                        )}
                         <div>
                             <input
                                 type="password"
@@ -326,7 +412,9 @@ const SignUpShelter = () => {
                                 required
                             />
                         </div>
-
+                        {errors.password && (
+                            <div className="text-red-500 text-sm">{errors.password}</div>
+                        )}
                         {/* 보호소 검색 필드 추가 */}
                         <div>
                             <div className="relative mb-4">
@@ -378,7 +466,9 @@ const SignUpShelter = () => {
                                     검색
                                 </button>
                             </div>
-
+                            {errors.address && (
+                                <div className="text-red-500 text-sm">{errors.address}</div>
+                            )}
                             {/* 검색 결과 표시 영역 */}
                             {showSearchResults && (
                                 <div className="max-h-60 bg-white overflow-y-auto mb-4 border border-gray-200 rounded-xl">
@@ -408,7 +498,6 @@ const SignUpShelter = () => {
                                 </div>
                             )}
                         </div>
-
                         {/* 원하는 보호소가 없을 경우를 위한 버튼 */}
                         <div className="text-center py-3 border-t border-gray-200">
                             <p className="text-gray-500 mb-2">원하는 보호소가 없으신가요?</p>
@@ -483,6 +572,9 @@ const SignUpShelter = () => {
                                 </span>
                             )}
                         </div>
+                        {errors.businessNumber && (
+                            <div className="text-red-500 text-sm">{errors.businessNumber}</div>
+                        )}
 
                         {/* 사업자등록번호 검증 버튼 */}
                         {!isBusinessVerified && (
@@ -514,6 +606,9 @@ const SignUpShelter = () => {
                             가입하기
                         </button>
                     </form>
+                    {errors.general && (
+                        <div className="text-red-500 text-sm">{errors.general}</div>
+                    )}
 
                     {/* 보호소 등록 모달 */}
                     <ShelterSearchModal

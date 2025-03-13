@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { RadiusControl } from '../components/RadiusControl';
+import { DollarSign } from 'lucide-react';
 import { ControlButtons } from '../components/ControlButtons';
 import { useKakaoMap } from '@/hooks/UseKakaoMap';
 import { usePetData } from '../hooks/UsePetData';
@@ -15,6 +16,7 @@ import NotificationButton from '../components/NotificationButton';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import NotificationService from '../api/AlarmApiService';
+import { PetApiService } from '../api/PetApiService';
 
 if (typeof global === 'undefined') {
     window.global = window;
@@ -44,6 +46,7 @@ const Map = () => {
     const [isMarkerTransitioning, setIsMarkerTransitioning] = useState(false);
     const [showRewardPoster, setShowRewardPoster] = useState(false);
     const [rewardPosterData, setRewardPosterData] = useState(null);
+
 
     // 알림 관련 상태
     const [notification, setNotification] = useState(null);
@@ -108,34 +111,28 @@ const Map = () => {
         onSelectPet: setSelectedPet
     });
 
-    // 알림 통합 관리 함수
     const handleNewNotification = useCallback((newNotification) => {
         setNotifications(prev => {
-            // 중복 체크
             const isDuplicate = prev.some(n => n.id === newNotification.id);
             if (isDuplicate) {
                 return prev;
             }
 
-            // 새 알림 포맷팅
             const formattedNotification = {
                 ...newNotification,
                 timestamp: new Date(newNotification.createdAt || Date.now()).getTime(),
                 isRead: false
             };
 
-            // 최신순 정렬
             const updatedNotifications = [formattedNotification, ...prev]
                 .sort((a, b) => b.timestamp - a.timestamp);
 
-            // 알림 표시
-            displayNotification(formattedNotification);
+            // displayNotification(formattedNotification);
 
             return updatedNotifications;
         });
     }, []);
 
-    // 초기 알림 로드
     const fetchInitialNotifications = useCallback(async () => {
         try {
             const response = await NotificationService.getNotifications();
@@ -177,20 +174,16 @@ const Map = () => {
                 client.subscribe(`/queue/notification/${userId}`, function (message) {
                     try {
                         const notificationData = JSON.parse(message.body);
-                        console.log("Personalized notification received:", notificationData);
 
-                        // 알림에 타임스탬프와 읽음 상태 추가
                         const newNotification = {
                             ...notificationData,
                             timestamp: Date.now(),
                             isRead: false
                         };
 
-                        // 알림 상태 업데이트 (최근 알림이 맨 위로)
                         setNotifications(prev => [newNotification, ...prev]);
 
-                        // 알림 표시
-                        displayNotification(newNotification);
+                        // displayNotification(newNotification);
                     } catch (error) {
                         console.error("Error parsing notification:", error);
                     }
@@ -223,22 +216,22 @@ const Map = () => {
     };
 
     // 알림 표시 함수
-    const displayNotification = (data) => {
-        setCurrentNotification({
-            id: data.id,
-            title: data.title,
-            content: data.body,
-            createdAt: data.createdAt || data.timestamp,
-            type: data.type
-        });
-        setShowNotification(true);
+    // const displayNotification = (data) => {
+    //     setCurrentNotification({
+    //         id: data.id,
+    //         title: data.title,
+    //         content: data.body,
+    //         createdAt: data.createdAt || data.timestamp,
+    //         type: data.type
+    //     });
+    //     setShowNotification(true);
     
-        // 3초 후 알림만 닫기 (읽음 처리는 하지 않음)
-        setTimeout(() => {
-            setShowNotification(false);
-            setCurrentNotification(null);
-        }, 3000);
-    };
+    //     // 3초 후 알림만 닫기 (읽음 처리는 하지 않음)
+    //     setTimeout(() => {
+    //         setShowNotification(false);
+    //         setCurrentNotification(null);
+    //     }, 3000);
+    // };
     
 
     // 알림 삭제 핸들러
@@ -273,6 +266,8 @@ const Map = () => {
         document.body.style.margin = '0';
         document.body.style.padding = '0';
         document.body.style.overflow = 'hidden';
+
+        showTestRewardPoster();
 
         return () => {
             document.documentElement.style.height = '';
@@ -508,23 +503,49 @@ const Map = () => {
         }
     };
 
-    const showTestRewardPoster = () => {
-        // 더미 데이터로 현상금 전단지 표시
-        const dummyPoster = {
-            id: 1,
-            petName: '멍이',
-            breed: '골든 리트리버',
-            lastSeenLocation: '서울시 강남구 역삼동',
-            imageUrl: '',
-            contactNumber: '010-1234-5678',
-            reward: 500000,
-            templateType: 'DOG' // 'DOG', 'CAT', 'WANTED' 중 선택
-        };
+    // Fixed the function definition here to avoid duplicate declaration
+    const showTestRewardPoster = async (forceShow = false) => {
+        if (!forceShow) {
+            // 24시간 내에 '표시하지 않기'를 체크했는지 확인
+            const lastHiddenTime = localStorage.getItem('lastPosterHiddenTime');
+            const now = new Date().getTime();
+            const oneDayInMs = 24 * 60 * 60 * 1000; // 24시간을 밀리초로 표현
 
-        setRewardPosterData(dummyPoster);
-        setShowRewardPoster(true);
+            // 마지막으로 숨겨진 시간이 있고, 24시간이 지나지 않았으면 표시하지 않음
+            if (lastHiddenTime && (now - Number(lastHiddenTime)) < oneDayInMs) {
+                return;
+            }
+        }
+        try {
+            setShowRewardPoster(true);
+            const result = await PetApiService.fetchRewardPosts();
+
+            if (result && result.content && result.content.length > 0) {
+                // 보상금이 null이 아닌 게시글만 필터링
+                const filteredPosters = result.content.filter(post => post.reward !== null && post.reward > 0);
+                setRewardPosterData(filteredPosters);
+            } else {
+                console.error("보상금이 설정된 게시글이 없습니다.");
+                setRewardPosterData([]);
+            }
+        } catch (error) {
+            console.error("보상금 게시글 데이터 로딩 실패:", error);
+            setRewardPosterData([]);
+        }
     };
 
+    const getDontShowPreference = () => {
+        const lastHiddenTime = localStorage.getItem('lastPosterHiddenTime');
+        if (!lastHiddenTime) return false;
+
+        const now = new Date().getTime();
+        const oneDayInMs = 24 * 60 * 60 * 1000;
+
+        // 24시간이 지나지 않았다면 true 반환
+        return (now - Number(lastHiddenTime)) < oneDayInMs;
+    };
+
+    const [dontShowFor24Hours, setDontShowFor24Hours] = useState(getDontShowPreference());
 
     return (
         <div className="h-screen w-full bg-orange-50/30 relative overflow-hidden">
@@ -573,13 +594,11 @@ const Map = () => {
                         onListClick={() => setShowList(!showList)}
                     />
                     <button
-                        onClick={showTestRewardPoster}
+                        onClick={() => showTestRewardPoster(true)}
                         className="fixed bottom-52 left-4 z-40 bg-white rounded-full p-3 shadow-lg text-red-600 hover:text-red-500 transition-colors border-2 border-red-100"
                         title="현상금 전단지 테스트"
                     >
-                        <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none">
-                            <path d="M12 8v4m0 4h.01M21.29 4.71a10 10 0 0 0-14.14 0L3 9l1.5 1.5L12 18l7.5-7.5L21 9l-1.71-2.29Z" />
-                        </svg>
+                        <DollarSign size={24} />
                     </button>
 
                     {/* 알림 버튼 컴포넌트 - 글쓰기 버튼 위에 배치 */}
@@ -625,10 +644,13 @@ const Map = () => {
                         </div>
                     )}
 
-                    {showRewardPoster && rewardPosterData && (
+                    {showRewardPoster && (
                         <RewardPoster
-                            poster={rewardPosterData}
+                            posters={rewardPosterData}
+                            initialIndex={0}
                             onClose={() => setShowRewardPoster(false)}
+                            dontShowFor24Hours={dontShowFor24Hours}
+                            setDontShowFor24Hours={setDontShowFor24Hours}
                         />
                     )}
                 </div>
@@ -651,4 +673,5 @@ styleSheet.type = "text/css";
 styleSheet.innerText = styles;
 document.head.appendChild(styleSheet);
 
+// Export statement at the top level
 export default Map;

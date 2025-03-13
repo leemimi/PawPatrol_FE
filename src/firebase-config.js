@@ -102,7 +102,6 @@ export const displayNotification = (title, body, data = {}) => {
   }
 };
 
-// 파일: src/firebase/firebase.js 또는 해당 FCM 관련 파일
 export const initializeFCM = async () => {
   try {
     const swRegistration = await registerServiceWorker();
@@ -122,18 +121,31 @@ export const initializeFCM = async () => {
   }
 };
 
-// onMessageListener는 이제 내부에서만 사용하거나 제거
 
 export const setupForegroundMessageHandler = () => {
   onMessage(messaging, (payload) => {
     console.log('포그라운드 메시지 수신:', payload);
-    
-
     console.log('알림 데이터:', payload.data);
     
+    // 알림 데이터 준비
+    const notificationData = {
+      id: payload.data?.notificationId || Date.now().toString(),
+      title: payload.notification?.title || payload.data?.title || "새 알림",
+      body: payload.notification?.body || payload.data?.content || "",
+      type: payload.data?.type || "DEFAULT",
+      timestamp: payload.data?.timestamp || Date.now(),
+    };
+    
+    // 전역 이벤트로 발송
     if (window.dispatchEvent) {
-      window.dispatchEvent(new CustomEvent('fcm-message', { 
-        detail: payload 
+      // 기존 이벤트는 유지
+      window.dispatchEvent(new CustomEvent('fcm-message', {
+        detail: payload
+      }));
+      
+      // 커스텀 알림을 위한 새 이벤트
+      window.dispatchEvent(new CustomEvent('custom-notification', {
+        detail: notificationData
       }));
     }
   });

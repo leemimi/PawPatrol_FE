@@ -158,8 +158,6 @@ export const useMyRegisteredAnimals = (initialPage = 0, initialSize = 10) => {
             // 원본 데이터 저장
             setData(result);
 
-            console.log(data);
-
             // 누적 컨텐츠 업데이트 
             if (page === 0) {
                 setAccumulatedContent(result.page.content);
@@ -259,10 +257,12 @@ export const useAnimalForm = (id = null) => {
                     registrationNo: animalData.animalInfo.registrationNo || "",
                     animalType: animalData.animalInfo.animalType || "DOG"
                 };
+                const imagePaths = result.images ? result.images.map(img => img.path) : [];
 
                 setInitialData({
                     formData,
-                    imageUrl: animalData.animalInfo.imageUrl
+                    imageUrl: animalData.animalInfo.imageUrl,
+                    imageUrls: imagePaths
                 });
             } catch (err) {
                 setError(err);

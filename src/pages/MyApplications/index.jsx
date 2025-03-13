@@ -59,7 +59,6 @@ const MyApplications = () => {
 
                     if (newApplications.length === 0) {
                         setHasMore(false);
-                        console.log('더 이상 로드할 데이터가 없습니다');
                         return;
                     }
 

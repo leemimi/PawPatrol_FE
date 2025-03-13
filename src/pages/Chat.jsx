@@ -54,7 +54,7 @@ const Chat = () => {
           {isDogOwner() && (
             <div className="flex space-x-3">
               <button 
-                onClick={() => navigate(`/protection/${selectedUser.postInfo.id}`)}
+                onClick={() => navigate(`/protection/${selectedUser.postInfo.id}#decision-section`)}
                 className="px-4 py-1.5 bg-orange-500 text-white rounded-full text-sm hover:bg-orange-600 transition duration-300"
               >
                 수락하거나 거절하러 가기
@@ -429,7 +429,7 @@ const Chat = () => {
 
   const goToPost = (postId) => {
     if (!postId) return;
-    navigate(`/communitypost/${postId}`);
+    navigate(`/PetPostDetail/${postId}`);
   };
 
   const formatTime = (timestamp) => {

@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import Layout from './layout/Layout'
 import Map from './pages/Map'
@@ -13,8 +13,6 @@ import MyRegisterAnimals from './pages/MyRegisterAnimals'
 import RegisterAnimalForm from './pages/RegisterAnimalForm'
 import EditAnimalForm from './pages/EditAnimalForm'
 import Rescue from './pages/Rescue'
-import RescueProtection from './pages/RescueProtection'
-import RescueReport from './pages/RescueReport'
 // import Layout from './layout/Layout.jsx'
 import SocialConnect from './pages/SocialConnectPage'
 import LostPostForm from './pages/LostPostForm'
@@ -30,28 +28,54 @@ import ShelterMyPage from './pages/ShelterMyPage';
 import AdminDashboard from './pages/AdminDashboard';
 import './api/axiosConfig'; // axios 전역 인터셉터 설정, 토큰 만료시 로그아웃 처리
 import { useAuthStore } from './stores/useAuthStore'
-import './index.css';
+import NotificationPopup from './components/NotificationPopup';
+import { initializeFCM } from './firebase-config';
 
-import { initializeFCM, setupForegroundMessageHandler } from './firebase-config';
+function App() {
+  const [currentNotification, setCurrentNotification] = useState(null);
+  const [showNotification, setShowNotification] = useState(false);
 
-const App = () => {
-    useEffect(() => {
-      const setupFirebase = async () => {
-        // FCM 초기화
-        await initializeFCM();
-        
-        // 이미 로그인한 사용자인 경우에만 포그라운드 메시지 핸들러 설정
-        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-        if (isLoggedIn) {
-          setupForegroundMessageHandler();
-        }
-      };
+  useEffect(() => {
+    const initialize = async () => {
+      await initializeFCM();
+    };
+    
+    initialize();
+    
+    // 커스텀 알림 이벤트 리스너
+    const handleCustomNotification = (event) => {
+      const data = event.detail;
       
-      setupFirebase();
-    }, []);
+      setCurrentNotification({
+        id: data.id,
+        title: data.title,
+        content: data.body,
+        createdAt: data.createdAt || data.timestamp,
+        type: data.type
+      });
+      setShowNotification(true);
+      
+      setTimeout(() => {
+        setShowNotification(false);
+        setCurrentNotification(null);
+      }, 3000);
+    };
+    
+    window.addEventListener('custom-notification', handleCustomNotification);
+    
+    return () => {
+      window.removeEventListener('custom-notification', handleCustomNotification);
+    };
+  }, []);
 
   return (  /*수정*/
     <Router> {/* This Router wrapper was missing  */}
+       {showNotification && currentNotification && (
+        <NotificationPopup 
+          notification={currentNotification}
+          onClose={() => setShowNotification(false)}
+        />
+      )}
       <Routes>
       <Route path="/" element={<LoginPet />} />
         <Route element={<Layout />}>
@@ -73,7 +97,7 @@ const App = () => {
           <Route path="/forgot-password" element={<ForgotPasswordScreen />} />
           <Route path="/lost-pet-registration" element={<LostPostForm />} />
           <Route path="/find-pet-report" element={<ReportPostForm />} />
-          <Route path="/community" element={<LostPetListPages/>} />
+          <Route path="/community" element={<LostPetListPages />} />
           <Route path="/chatlist" element={<ChatList />} />
           {/* You have duplicate route for /community, removed one */}
           <Route path="/PetPostDetail/:postId" element={<PetPostDetail />} />
@@ -81,9 +105,7 @@ const App = () => {
           <Route path="/shelter-mypage" element={<ShelterMyPage />} />
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
           <Route path="/sign-up-shelter" element={<SignUpShelter />} />
-        <Route path="/rescue" element={<Rescue />} />
-        <Route path="/rescue-protection" element={<RescueProtection />} />
-        <Route path="/rescue-report" element={<RescueReport />} />
+          <Route path="/rescue" element={<Rescue />} />
         </Route>
       </Routes>
     </Router>

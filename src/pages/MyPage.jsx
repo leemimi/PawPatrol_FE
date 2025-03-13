@@ -9,8 +9,10 @@ import axios from 'axios';
 import kakaoImage from '../assets/images/kakaotalk_simple_icon2.png';
 import naverImage from '../assets/images/naver_simple_icon.png';
 import googleImage from '../assets/images/google_simple_icon.png';
+import Swal from 'sweetalert2';
 
 const MyPage = () => {
+    const [error, setError] = useState('');
     const [myPets, setMyPets] = useState([]); // 반려동물 리스트
     const [page, setPage] = useState(0); // 현재 페이지 번호
     const [hasMore, setHasMore] = useState(true); // 추가 데이터 여부
@@ -59,7 +61,12 @@ const MyPage = () => {
             );
 
             if (response.data.statusCode === 200) {
-                alert('회원 탈퇴가 완료되었습니다.');
+                Swal.fire({
+                    icon: 'success',
+                    title: '회원 탈퇴 완료료',
+                    text: '회원 탈퇴가 완료되었습니다.',
+                    confirmButtonText: '확인'
+                });
                 // 로컬 스토리지 정보 삭제
                 localStorage.removeItem('accessToken');
                 localStorage.removeItem('userInfo');
@@ -68,7 +75,12 @@ const MyPage = () => {
                 navigate('/', { replace: true });
             }
         } catch (error) {
-            alert('회원 탈퇴 처리 중 오류가 발생했습니다.');
+            Swal.fire({
+                title: '오류',
+                text: '회원 탈퇴 처리 중 오류가 발생했습니다.',
+                icon: 'error',
+                confirmButtonText: '확인'
+            });
         }
     };
 
@@ -84,12 +96,22 @@ const MyPage = () => {
             );
 
             if (response.data.statusCode === 200) {
-                alert(`${providerType} 계정 연동이 해제되었습니다.`);
+                Swal.fire({
+                    icon: 'success',
+                    title: '소셜계정 연동 해제 완료',
+                    text: `${providerType} 계정 연동이 해제되었습니다.`,
+                    confirmButtonText: '확인'
+                });
                 // 소셜 연동 정보 다시 불러오기
                 fetchSocialConnections();
             }
         } catch (error) {
-            alert('소셜 계정 연동 해제 중 오류가 발생했습니다.');
+            Swal.fire({
+                title: '오류',
+                text: '소셜 계정 연동 해제 중 오류가 발생했습니다.',
+                icon: 'error',
+                confirmButtonText: '확인'
+            });
         }
     };
 
@@ -281,12 +303,23 @@ const MyPage = () => {
             );
 
             if (response.data.statusCode === 200) {
-                alert('반려동물 정보가 성공적으로 수정되었습니다.');
+                Swal.fire({
+                    icon: 'success',
+                    title: '반려동물 정보 수정 완료',
+                    text: '반려동물 정보가 성공적으로 수정되었습니다.',
+                    confirmButtonText: '확인'
+                });
                 setIsEditOpen(false);
-                await fetchMyPets(); // 반려동물 목록 새로고침
+                setPage(0); // 페이지를 0으로 초기화
+                await fetchMyPets(0); // 반려동물 목록 새로고침
             }
         } catch (error) {
-            alert('반려동물 정보 수정 중 오류가 발생했습니다.');
+            Swal.fire({
+                title: '오류',
+                text: '반려동물 정보 수정 중 오류가 발생했습니다.',
+                icon: 'error',
+                confirmButtonText: '확인'
+            });
         }
     };
 
@@ -307,13 +340,23 @@ const MyPage = () => {
             );
 
             if (response.data.statusCode === 200) {
-                alert('반려동물이 성공적으로 삭제되었습니다.');
+                Swal.fire({
+                    icon: 'success',
+                    title: '반려동물 정보 삭제 완료',
+                    text: '반려동물 정보가 성공적으로 삭제되었습니다.',
+                    confirmButtonText: '확인'
+                });
                 setIsDeleteConfirmOpen(false);
                 setPetToDelete(null);
                 setShouldReload(true); // 리로드 플래그 설정
             }
         } catch (error) {
-            alert('반려동물 삭제 중 오류가 발생했습니다.');
+            Swal.fire({
+                title: '오류',
+                text: '반려동물 삭제 중 오류가 발생했습니다.',
+                icon: 'error',
+                confirmButtonText: '확인'
+            });
         }
     };
 
@@ -337,7 +380,12 @@ const MyPage = () => {
                 setIsEditing(false); // 편집 모드 종료
             }
         } catch (error) {
-            alert('프로필 업데이트 중 오류가 발생했습니다.');
+            Swal.fire({
+                title: '오류',
+                text: '프로필 업데이트 중 오류가 발생했습니다.',
+                icon: 'error',
+                confirmButtonText: '확인'
+            });
         }
     };
 
@@ -345,7 +393,7 @@ const MyPage = () => {
     const handleUpdatePassword = async (e) => {
         e.preventDefault();
         if (personalInfo.newPassword !== personalInfo.confirmPassword) {
-            alert('새 비밀번호가 일치하지 않습니다.');
+            setError('새 비밀번호가 일치하지 않습니다.');
             return;
         }
 
@@ -368,7 +416,13 @@ const MyPage = () => {
 
             if (response.data.statusCode === 200) {
                 // 성공 시 처리
-                alert(response.data.message);
+                Swal.fire({
+                    icon: 'success',
+                    title: '비밀번호 변경 완료',
+                    text: response.data.message,
+                    confirmButtonText: '확인'
+                });
+                setError('');
                 setIsPasswordEditing(false);
                 setPersonalInfo({
                     ...personalInfo,
@@ -378,7 +432,12 @@ const MyPage = () => {
                 });
             }
         } catch (error) {
-            alert(error.response.data.msg);
+            Swal.fire({
+                title: '오류',
+                text: error.response.data.msg,
+                icon: 'error',
+                confirmButtonText: '확인'
+            });
         }
     };
 
@@ -392,7 +451,12 @@ const MyPage = () => {
             alert('전화번호가 성공적으로 변경되었습니다.');
             setIsPhoneEditing(false);
         } catch (error) {
-            alert('전화번호 변경 중 오류가 발생했습니다.');
+            Swal.fire({
+                title: '오류',
+                text: '전화번호 변경 중 오류가 발생했습니다.',
+                icon: 'error',
+                confirmButtonText: '확인'
+            });
         }
     };
 
@@ -429,7 +493,13 @@ const MyPage = () => {
                 throw new Error('반려동물 등록에 실패했습니다.');
             }
 
-            alert('반려동물이 성공적으로 등록되었습니다.');
+
+            Swal.fire({
+                icon: 'success',
+                title: '반려동물 등록 완료',
+                text: '반려동물이 성공적으로 등록되었습니다.',
+                confirmButtonText: '확인'
+            });
 
             // 모달 닫기
             setIsRegisterOpen(false);  // PetRegisterModal 닫기
@@ -448,7 +518,12 @@ const MyPage = () => {
             });
 
         } catch (error) {
-            alert('반려동물 등록 중 오류가 발생했습니다.');
+            Swal.fire({
+                title: '오류',
+                text: '반려동물 등록 중 오류가 발생했습니다.',
+                icon: 'error',
+                confirmButtonText: '확인'
+            });
         }
     };
 
@@ -478,7 +553,12 @@ const MyPage = () => {
                 navigate('/');
             }
         } catch (error) {
-            alert('로그아웃 중 오류가 발생했습니다.');
+            Swal.fire({
+                title: '오류',
+                text: '로그아웃 중 오류가 발생했습니다.',
+                icon: 'error',
+                confirmButtonText: '확인'
+            });
         }
     };
 
@@ -518,10 +598,20 @@ const MyPage = () => {
                     localStorage.setItem('userInfo', JSON.stringify(userInfo));
                 }
 
-                alert('프로필 이미지가 성공적으로 업데이트되었습니다.');
+                Swal.fire({
+                    icon: 'success',
+                    title: '프로필 이미지 업데이트 완료',
+                    text: '프로필 이미지가 성공적으로 업데이트 되었습니다.',
+                    confirmButtonText: '확인'
+                });
             }
         } catch (error) {
-            alert('이미지 업로드 중 오류가 발생했습니다.');
+            Swal.fire({
+                title: '오류',
+                text: '이미지 업로드 중 오류가 발생했습니다.',
+                icon: 'error',
+                confirmButtonText: '확인'
+            });
         }
     };
 
@@ -551,7 +641,12 @@ const MyPage = () => {
                 localStorage.setItem('userInfo', JSON.stringify(userInfo));
             }
         } catch (error) {
-            alert('프로필 이미지 초기화 중 오류가 발생했습니다.');
+            Swal.fire({
+                title: '오류',
+                text: '프로필 이미지 초기화 중 오류가 발생했습니다.',
+                icon: 'error',
+                confirmButtonText: '확인'
+            });
         }
     };
 
@@ -705,31 +800,10 @@ const MyPage = () => {
         }
     }, [shouldReload]);
 
-
-    // 반려동물 클릭 시 상세화면으로 전환
-    const handlePetClick = async (pet) => {
-        try {
-            const response = await axios.get(
-                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/animal-cases/animals/${pet.id}`,
-                { withCredentials: true }
-            );
-
-            if (response.data.resultCode === "200") {
-                const animalCaseId = response.data.data;
-                // Navigate to AnimalDetail page with the animalCaseId
-                navigate(`/protection/${animalCaseId}`);
-            } else {
-                alert('동물 케이스 정보를 불러오는데 실패했습니다.');
-            }
-        } catch (error) {
-            alert('동물 케이스 정보를 불러오는데 오류가 발생했습니다.');
-        }
-    };
-
     // 상세 페이지로 이동하는 함수
     const handleDetailNavigation = (e, postId) => {
         if (e) e.stopPropagation();
-        
+
         if (postId) {
             navigate(`/PetPostDetail/${postId.id}`);
         } else {
@@ -757,11 +831,10 @@ const MyPage = () => {
                     ].map((tab) => (
                         <button
                             key={tab.id}
-                            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                                activeTab === tab.id
-                                ? 'bg-orange-500 text-white shadow-md'
+                            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${activeTab === tab.id
+                                ? 'bg-amber-500 text-white shadow-md'
                                 : 'bg-orange-50 text-orange-600 hover:bg-orange-100'
-                            }`}
+                                }`}
                             onClick={() => setActiveTab(tab.id)}
                         >
                             {tab.label}
@@ -770,13 +843,13 @@ const MyPage = () => {
                 </div>
 
                 {activeTab === 'profile' && (
-                    <div className="text-center rounded-2xl p-6 bg-amber-50/50">
+                    <div className="text-center rounded-2xl p-6">
                         {/* 프로필 정보 */}
                         <div className="relative w-32 h-32 mx-auto mb-6">
                             <img
                                 src={profileImage || defaultImage}
                                 alt="Profile"
-                                className="w-full h-full rounded-full object-cover border-4 border-amber-200"
+                                className="w-full h-full rounded-full object-cover "
                                 onError={(e) => {
                                     e.target.src = defaultImage;
                                 }}
@@ -833,18 +906,18 @@ const MyPage = () => {
                                     type="text"
                                     value={nickname}
                                     onChange={(e) => setNickname(e.target.value)}
-                                    className="px-4 py-2 border-2 border-amber-200 rounded-full focus:outline-none focus:border-amber-400 text-amber-800"
+                                    className="px-3 py-2 border rounded-md"
                                 />
                                 <div className="space-x-2">
                                     <button
                                         onClick={handleUpdateProfile}
-                                        className="px-6 py-2 bg-amber-500 text-white rounded-full hover:bg-amber-600 transition-colors"
+                                        className="px-4 py-2 bg-amber-500 text-white rounded-md"
                                     >
                                         저장
                                     </button>
                                     <button
                                         onClick={() => setIsEditing(false)}
-                                        className="px-6 py-2 bg-gray-100 text-gray-600 rounded-full hover:bg-gray-200 transition-colors"
+                                        className="px-4 py-2 bg-gray-300 rounded-md"
                                     >
                                         취소
                                     </button>
@@ -950,9 +1023,9 @@ const MyPage = () => {
                                         <button
                                             type="button"
                                             onClick={() => setIsPasswordEditing(prev => !prev)}
-                                            className="px-4 py-2 bg-gray-100 rounded-md hover:bg-gray-200"
+                                            className="px-4 py-2 bg-amber-100 text-amber-600 rounded-md hover:bg-amber-200"
                                         >
-                                            {isPasswordEditing ? '취소' : '비밀번호 변경'}
+                                            {isPasswordEditing ? '취소' : '변경'}
                                         </button>
                                     </div>
 
@@ -985,9 +1058,12 @@ const MyPage = () => {
                                                     className="w-full px-3 py-2 border rounded-md"
                                                 />
                                             </div>
+                                            {error && (
+                                                <div className="text-red-500 text-sm">{error}</div>
+                                            )}
                                             <button
                                                 type="submit"
-                                                className="w-full px-4 py-2 bg-orange-500 text-white rounded-md mt-2"
+                                                className="w-full px-4 py-2 bg-amber-500 text-white rounded-md mt-2"
                                             >
                                                 비밀번호 변경하기
                                             </button>
@@ -1001,10 +1077,9 @@ const MyPage = () => {
                                         <h4 className="text-lg font-semibold">전화번호 관리</h4>
                                         <button
                                             type="button"
-                                            onClick={() => setIsPhoneEditing(prev => !prev)}
-                                            className="px-4 py-2 bg-gray-100 rounded-md hover:bg-gray-200"
+                                            className="px-4 py-2 bg-amber-100 text-amber-600 rounded-md hover:bg-amber-200"
                                         >
-                                            {isPhoneEditing ? '취소' : '전화번호 변경'}
+                                            {isPhoneEditing ? '취소' : '변경'}
                                         </button>
                                     </div>
 
@@ -1094,12 +1169,12 @@ const MyPage = () => {
                 )}
 
                 {activeTab === 'pets' && (
-                    <div className="space-y-6 bg-amber-50/30 rounded-2xl p-6 shadow-md">
+                    <div className="space-y-6 bg-white rounded-xl p-4 shadow hover:shadow-sm transition-shadow">
                         <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-2xl font-bold text-amber-800">내 반려동물 목록</h2>
+                            <h2 className="text-2xl font-bold text-amber-800">반려동물 목록</h2>
                             <button
                                 onClick={handlePetRegistrationClick}
-                                className="px-6 py-2.5 bg-amber-500 text-white rounded-full hover:bg-amber-600 transition-colors shadow-sm"
+                                className="px-4 py-2 bg-amber-500 text-white rounded-full hover:bg-amber-600 transition-colors shadow-sm"
                             >
                                 반려동물 등록
                             </button>
@@ -1109,8 +1184,7 @@ const MyPage = () => {
                             {myPets.map(pet => (
                                 <div
                                     key={pet.id}
-                                    className="bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 border border-amber-100"
-                                    onClick={() => handlePetClick(pet)}
+                                    className="bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 border"
                                 >
                                     {/* 고정된 비율의 이미지 컨테이너 */}
                                     <div className="relative w-full pb-[75%]"> {/* 4:3 비율 유지 */}
@@ -1122,30 +1196,28 @@ const MyPage = () => {
                                     </div>
 
                                     <div className="p-4 space-y-3">
-                                        <div className="flex justify-between items-center">
-                                            <h3 className="text-xl font-bold text-gray-800">{pet.name}</h3>
+                                        <div className="flex justify-between items-center flex-nowrap">
+                                            <h3 className="text-xl font-bold text-gray-800 truncate max-w-[70%]" title={pet.name}>
+                                                {pet.name}
+                                            </h3>
                                             <span
-                                                className={`text-sm font-medium px-2 py-1 rounded-full ${pet.animalType === 'DOG'
+                                                className={`text-sm font-medium px-2 py-1 rounded-full whitespace-nowrap flex-shrink-0 ${pet.animalType === '강아지'
                                                     ? 'bg-blue-100 text-blue-800' // 강아지 스타일
                                                     : 'bg-pink-100 text-pink-800' // 고양이 스타일
                                                     }`}
                                             >
-                                                {pet.animalType === 'DOG' ? '강아지' : '고양이'}
+                                                {pet.animalType === '강아지' ? '강아지' : '고양이'}
                                             </span>
                                         </div>
 
-                                        <div className="grid grid-cols-2 gap-2 text-sm text-gray-600">
-                                            <div>
-                                                <span className="font-medium">품종:</span> {pet.breed}
-                                            </div>
-                                            <div>
-                                                <span className="font-medium">크기:</span> {pet.size}
-                                            </div>
-                                        </div>
 
-                                        <div className="text-sm text-gray-600">
-                                            <span className="font-medium">특징:</span>
-                                            <p className="mt-1 line-clamp-2">{pet.feature}</p>
+                                        <div className="grid grid-cols-[auto_1fr] gap-1 text-sm text-gray-600">
+                                            <span className="font-medium">품종 :</span>
+                                            <span className="truncate">{pet.breed}</span>
+                                            <span className="font-medium">크기 :</span>
+                                            <span className="truncate">{pet.size}</span>
+                                            <span className="font-medium">특징 :</span>
+                                            <span className="line-clamp-2">{pet.feature}</span>
                                         </div>
 
                                         <div className="text-xs text-gray-500 mt-2">
@@ -1158,7 +1230,7 @@ const MyPage = () => {
                                                     e.stopPropagation(); // Prevent navigation when clicking the buttons
                                                     handleEditPet(pet);
                                                 }}
-                                                className="px-3 py-1.5 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors text-sm"
+                                                className="px-3 py-1.5 bg-amber-500 text-white rounded-md hover:bg-amber-600 transition-colors text-sm"
                                             >
                                                 수정
                                             </button>
@@ -1167,7 +1239,7 @@ const MyPage = () => {
                                                     e.stopPropagation(); // Prevent navigation when clicking the buttons
                                                     handleDeleteConfirm(pet);
                                                 }}
-                                                className="px-3 py-1.5 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors text-sm"
+                                                className="px-3 py-1.5 bg-orange-500 text-white rounded-md hover:bg-orange-600 transition-colors text-sm"
                                             >
                                                 삭제
                                             </button>
@@ -1328,7 +1400,7 @@ const MyPage = () => {
                                                 key={pageIndex}
                                                 onClick={() => handleReportPageChange(pageIndex)}
                                                 className={`px-3 py-1 border rounded mx-1 ${myPosts.reportsCurrentPage === pageIndex
-                                                    ? 'bg-blue-500 text-white'
+                                                    ? 'bg-amber-500 text-white'
                                                     : 'hover:bg-gray-100'
                                                     }`}
                                             >
@@ -1431,7 +1503,7 @@ const MyPage = () => {
                                                 key={pageIndex}
                                                 onClick={() => handleWitnessPageChange(pageIndex)}
                                                 className={`px-3 py-1 border rounded mx-1 ${myPosts.witnessCurrentPage === pageIndex
-                                                    ? 'bg-blue-500 text-white'
+                                                    ? 'bg-amber-500 text-white'
                                                     : 'hover:bg-gray-100'
                                                     }`}
                                             >
