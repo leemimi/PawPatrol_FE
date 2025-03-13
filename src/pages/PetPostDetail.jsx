@@ -494,9 +494,10 @@ const PetPostDetail = ({ onClose }) => {
       {/* 이미지 갤러리 모달 */}
       {isGalleryOpen && post?.images?.length > 0 && (
         <ImageGallery
-          images={post.images.map(img => img.path)}
-          initialIndex={currentImageIndex}
-          onClose={closeGallery}
+          images={post.images} // 객체 배열 그대로 전달
+          currentIndex={currentImageIndex}
+          setCurrentIndex={setCurrentImageIndex} // 상태 업데이트 함수 필요
+          closeGallery={closeGallery}
         />
       )}
     </div>
