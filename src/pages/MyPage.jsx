@@ -63,7 +63,7 @@ const MyPage = () => {
             if (response.data.statusCode === 200) {
                 Swal.fire({
                     icon: 'success',
-                    title: '회원 탈퇴 완료료',
+                    title: '회원 탈퇴 완료',
                     text: '회원 탈퇴가 완료되었습니다.',
                     confirmButtonText: '확인'
                 });

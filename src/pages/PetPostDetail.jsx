@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import ImageGallery from './ProtectionDetail/components/ImageGallery';
 import axios from 'axios';
 import { ChevronLeft, MoreVertical, MapPin, Clock, MessageSquare, Share, Send, MessageCircle } from 'lucide-react';
+import Swal from 'sweetalert2';
 
 const PetPostDetail = ({ onClose }) => {
   const { postId } = useParams();
@@ -33,7 +34,6 @@ const PetPostDetail = ({ onClose }) => {
 
     axios.get(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/comments/lost-foundposts/${postId}`)
       .then(response => {
-        console.log('Comments Response:', response);
         setComments(response.data.data || []);
       })
       .catch(error => console.error("Error fetching comments:", error));
@@ -82,7 +82,6 @@ const PetPostDetail = ({ onClose }) => {
         setNewComment('');
       }
     } catch (error) {
-      console.error("Error posting comment:", error);
     }
   };
 
@@ -107,7 +106,6 @@ const PetPostDetail = ({ onClose }) => {
         setNewComment('');
       }
     } catch (error) {
-      console.error("Error updating comment:", error);
     }
   };
 
@@ -119,7 +117,6 @@ const PetPostDetail = ({ onClose }) => {
           setComments(comments.filter(comment => comment.id !== commentId));
         }
       } catch (error) {
-        console.error("Error deleting comment:", error);
       }
     }
   };
@@ -129,7 +126,6 @@ const PetPostDetail = ({ onClose }) => {
     if (postId) {
       navigate(`/lostmypetfix/${postId}`);
     } else {
-      console.error("postId is not available.");
       navigate('/error');
     }
   };
@@ -139,37 +135,51 @@ const PetPostDetail = ({ onClose }) => {
       try {
         const response = await axios.delete(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/lost-foundposts/${postId}`);
         if (response.data.resultCode === "200") {
-          alert('게시글이 성공적으로 삭제되었습니다.');
+          Swal.fire({
+            icon: 'success',
+            title: '게시글 삭제 완료',
+            text: '게시글이 성공적으로 삭제되었습니다.',
+            confirmButtonText: '확인'
+          });
           navigate(-1);
         }
       } catch (error) {
-        console.error('게시글 삭제 중 오류 발생:', error);
-        alert('게시글 삭제에 실패했습니다.');
+        Swal.fire({
+          title: '오류',
+          text: '게시글 삭제에 실패했습니다.',
+          icon: 'error',
+          confirmButtonText: '확인'
+        });
       }
     }
   };
 
   // 채팅 핸들러
   // handleStartChat 함수 수정
-const handleStartChat = () => {
-  if (!post || !post.nickname) {
-    alert('게시자 정보를 불러올 수 없습니다.');
-    return;
-  }
+  const handleStartChat = () => {
+    if (!post || !post.nickname) {
+      Swal.fire({
+        title: '오류',
+        text: '게시자 정보를 불러올 수 없습니다.',
+        icon: 'error',
+        confirmButtonText: '확인'
+      });
+      return;
+    }
 
-  // 채팅 대상 정보를 세션 스토리지에 저장
-  sessionStorage.setItem('chatTarget', JSON.stringify({
-    userId: post.author.id,
-    nickname: post.author.nickname,
-    postId: post.id,
-    postTitle: post.content,
-    type: 'LOSTFOUND',
-    reward: post.reward || null,
-    owner: post.author.id, 
-  }));
-  
-  navigate('/chat');
-};
+    // 채팅 대상 정보를 세션 스토리지에 저장
+    sessionStorage.setItem('chatTarget', JSON.stringify({
+      userId: post.author.id,
+      nickname: post.author.nickname,
+      postId: post.id,
+      postTitle: post.content,
+      type: 'LOSTFOUND',
+      reward: post.reward || null,
+      owner: post.author.id,
+    }));
+
+    navigate('/chat');
+  };
 
   // 이미지 핸들러
   const renderImages = () => {
