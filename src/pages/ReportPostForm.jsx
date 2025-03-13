@@ -135,7 +135,7 @@ const ReportPostForm = ({ formType = "standalone" }) => {
           Swal.fire({
             icon: 'success',
             title: '위치 등록 완료',
-            text: `위치가 등록되었습니다.\n위도: ${formData.latitude}\n경도: ${formData.longitude}\n주소: ${address}`,
+            text: `위치가 등록되었습니다. 주소: ${address}`,
             confirmButtonText: '확인'
           });
         } else {
@@ -148,7 +148,7 @@ const ReportPostForm = ({ formType = "standalone" }) => {
           }));
           Swal.fire({
             title: '오류',
-            text: `위치가 등록되었습니다.\n${locationText}\n(주소 정보를 찾을 수 없습니다)`,
+            text: `${locationText}\n(주소 정보를 찾을 수 없습니다)`,
             icon: 'error',
             confirmButtonText: '확인'
           });
@@ -165,7 +165,7 @@ const ReportPostForm = ({ formType = "standalone" }) => {
         }));
         Swal.fire({
           title: '오류',
-          text: `위치가 등록되었습니다.\n${locationText}\n(주소 변환 중 오류가 발생했습니다)`,
+          text: `${locationText}\n(주소 변환 중 오류가 발생했습니다)`,
           icon: 'error',
           confirmButtonText: '확인'
         });
