@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MessageSquare, UserCircle, FileText } from 'lucide-react';
+import { MessageSquare, UserCircle, FileText, Award } from 'lucide-react';
 import axios from 'axios';
 
 const ChatList = () => {
@@ -52,16 +52,25 @@ const ChatList = () => {
 
   const handleChatSelect = (room) => {
     const otherMember = room.member1.id === currentUser.id ? room.member2 : room.member1;
+    console.log(room);
     
-    // Store chat target info in session storage
-    sessionStorage.setItem('chatTarget', JSON.stringify({
+    // Chat target 정보 생성
+    const chatTarget = {
       userId: otherMember.id,
       nickname: otherMember.nickname,
       postId: room.post.id,
       postTitle: room.post.content,
       type: room.type,
-      owner: room.member2.id
-    }));
+      owner: room.member2.id,
+    };
+    
+    // LOSTFOUND 타입이고 보상금이 있는 경우 chatTarget에 reward 추가
+    if (room.type === 'LOSTFOUND' && room.post && room.post.reward) {
+      chatTarget.reward = room.post.reward;
+    }
+    
+    // Store chat target info in session storage
+    sessionStorage.setItem('chatTarget', JSON.stringify(chatTarget));
     
     navigate('/chat');
   };
@@ -99,6 +108,11 @@ const ChatList = () => {
     return room.messages.filter(msg => 
       !msg.isRead && msg.receiver.id === currentUser.id
     ).length;
+  };
+
+  // 보상금 포맷팅 함수
+  const formatReward = (amount) => {
+    return amount ? amount.toLocaleString() + '원' : '';
   };
 
   const filteredRooms = chatRooms;
@@ -174,8 +188,9 @@ const ChatList = () => {
         ) : (
           filteredRooms.map((room) => {
             const otherMemberName = getOtherMemberName(room);
-            const lastMessage = room.lastMessage 
-            const unreadCount = room.unreadCount
+            const lastMessage = room.lastMessage;
+            const unreadCount = room.unreadCount;
+            const hasReward = room.type === 'LOSTFOUND' && room.post && room.post.reward;
             
             return (
               <div 
@@ -215,6 +230,14 @@ const ChatList = () => {
                           {room.type === 'PROTECTADOPT' ? '임보/입양' : 
                            room.type === 'LOSTFOUND' ? '구조/제보' : '기타'}
                         </span>
+                        
+                        {/* 보상금 표시 - 새로 추가 */}
+                        {hasReward && (
+                          <span className="ml-2 flex items-center gap-1 px-1.5 py-0.5 text-xs rounded-full bg-yellow-100 text-yellow-800">
+                            <Award className="w-3 h-3" />
+                            {formatReward(room.post.reward)}
+                          </span>
+                        )}
                       </div>
                     )}
                     
