@@ -127,6 +127,49 @@ export const ProtectionApiService = {
         }
     },
 
+
+    // 보호소의 보호 동물 목록 조회
+    async fetchShelterAnimalCases(shelterId, page = 0, size = 10) {
+        try {
+            const response = await axios.get(
+                `${BASE_URL}/shelter-cases/${shelterId}`,
+                {
+                    params: { page, size },
+                    withCredentials: true,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                }
+            );
+
+            if (response.status === 200 && response.data.resultCode === "200") {
+                return response.data.data;
+            }
+
+            return {
+                shelterInfo: {
+                    shelterId: null,
+                    shelterName: '',
+                    shelterAddress: '',
+                    shelterTel: '',
+                    latitude: null,
+                    longitude: null,
+                    operatingHours: null,
+                    shelterMemberId: null
+                },
+                animalCases: {
+                    content: [],
+                    totalElements: 0,
+                    last: true
+                }
+            };
+        } catch (error) {
+            console.error('보호소 동물 목록 조회 오류:', error);
+            throw error;
+        }
+    },
+
+
     // 보호 동물 등록
     async registerAnimal(formData) {
         try {
