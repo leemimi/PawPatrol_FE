@@ -170,15 +170,26 @@ const PetPostDetail = ({ onClose }) => {
   // 이미지 핸들러
   const renderImages = () => {
     if (post?.images?.length > 0) {
-      return post.images.map((image, index) => {
+      // 유효한 경로만 필터링하여 중복 제거
+      const validImages = post.images.filter(image => image && image?.path); // null, undefined, 경로가 없는 이미지 필터링
+      const uniqueImages = Array.from(new Set(validImages.map(image => image.path)))
+        .map(path => validImages.find(image => image.path === path)); // 중복된 이미지 경로를 가진 첫 번째 이미지를 유지
+  
+      return uniqueImages.map((image, index) => {
+        // 이미지 경로가 없으면 placeholder를 사용
         const imageUrl = image?.path || '/api/placeholder/160/160';
+        
+        // 이미지 경로가 없는 경우 클릭 불가능하게 처리
+        const handleClick = image?.path ? () => {} : null; // 클릭 처리 제거
+  
         return (
           <img
             key={index}
             src={imageUrl}
-            alt={`Pet image ${index + 1}`}
-            className="w-full h-auto rounded-lg cursor-pointer"
-            onClick={() => handleImageClick(index)}
+            alt={`Post Image ${index + 1}`}
+            className="w-32 h-32 object-cover rounded-lg cursor-pointer"
+            onClick={handleClick} // 클릭 시 갤러리 열기 (동작하지 않음)
+            style={{ cursor: image?.path ? 'pointer' : 'not-allowed' }} // 경로가 없으면 커서를 비활성화
           />
         );
       });
