@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import DaumPostcode from 'react-daum-postcode';
 import ShelterSearchModal from '../components/ShelterSearchModal';
-
+import Swal from 'sweetalert2';
 
 
 const SignUpShelter = () => {
@@ -59,7 +59,12 @@ const SignUpShelter = () => {
 
             setSearchResults(response.data.data || []);
         } catch (error) {
-            alert('보호소 검색 중 오류가 발생했습니다.');
+            Swal.fire({
+                title: '오류',
+                text: '보호소 검색 중 오류가 발생했습니다.',
+                icon: 'error',
+                confirmButtonText: '확인'
+            });
         } finally {
             setIsLoading(false);
         }
@@ -100,14 +105,28 @@ const SignUpShelter = () => {
             );
 
             if (response.data.data.valid) {
-                alert('유효한 사업자등록번호입니다.');
+                Swal.fire({
+                    icon: 'success',
+                    title: '사업자 등록번호 인증 완료',
+                    text: '유효한 사업자등록번호입니다.',
+                    confirmButtonText: '확인'
+                });
+                setErrors(prevErrors => ({  // 성공 시 에러 초기화
+                    businessNumber: ''
+                }));
                 setIsBusinessVerified(true);
             } else {
-                alert('유효하지 않은 사업자등록번호입니다.');
+                setErrors({
+                    ...errors,
+                    businessNumber: '유효하지 않은 사업자등록번호입니다.'
+                });
                 setIsBusinessVerified(false);
             }
         } catch (error) {
-            alert('사업자 등록번호 검증 중 오류가 발생했습니다.');
+            setErrors({
+                ...errors,
+                businessNumber: '사업자 등록번호 검증 중 오류가 발생했습니다.'
+            });
             setIsBusinessVerified(false);
         }
     };
@@ -274,7 +293,12 @@ const SignUpShelter = () => {
                 }
             );
 
-            alert('회원가입이 완료되었습니다.');
+            Swal.fire({
+                icon: 'success',
+                title: '회원가입 완료',
+                text: '회원가입이 완료되었습니다.',
+                confirmButtonText: '확인'
+            });
             setErrors(prevErrors => ({  // 성공 시 에러 초기화
                 ...prevErrors,
                 email: '',

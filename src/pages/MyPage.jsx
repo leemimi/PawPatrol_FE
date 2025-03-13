@@ -9,8 +9,10 @@ import axios from 'axios';
 import kakaoImage from '../assets/images/kakaotalk_simple_icon2.png';
 import naverImage from '../assets/images/naver_simple_icon.png';
 import googleImage from '../assets/images/google_simple_icon.png';
+import Swal from 'sweetalert2';
 
 const MyPage = () => {
+    const [error, setError] = useState('');
     const [myPets, setMyPets] = useState([]); // 반려동물 리스트
     const [page, setPage] = useState(0); // 현재 페이지 번호
     const [hasMore, setHasMore] = useState(true); // 추가 데이터 여부
@@ -59,7 +61,12 @@ const MyPage = () => {
             );
 
             if (response.data.statusCode === 200) {
-                alert('회원 탈퇴가 완료되었습니다.');
+                Swal.fire({
+                    icon: 'success',
+                    title: '회원 탈퇴 완료료',
+                    text: '회원 탈퇴가 완료되었습니다.',
+                    confirmButtonText: '확인'
+                });
                 // 로컬 스토리지 정보 삭제
                 localStorage.removeItem('accessToken');
                 localStorage.removeItem('userInfo');
@@ -68,7 +75,12 @@ const MyPage = () => {
                 navigate('/', { replace: true });
             }
         } catch (error) {
-            alert('회원 탈퇴 처리 중 오류가 발생했습니다.');
+            Swal.fire({
+                title: '오류',
+                text: '회원 탈퇴 처리 중 오류가 발생했습니다.',
+                icon: 'error',
+                confirmButtonText: '확인'
+            });
         }
     };
 
@@ -84,12 +96,22 @@ const MyPage = () => {
             );
 
             if (response.data.statusCode === 200) {
-                alert(`${providerType} 계정 연동이 해제되었습니다.`);
+                Swal.fire({
+                    icon: 'success',
+                    title: '소셜계정 연동 해제 완료',
+                    text: `${providerType} 계정 연동이 해제되었습니다.`,
+                    confirmButtonText: '확인'
+                });
                 // 소셜 연동 정보 다시 불러오기
                 fetchSocialConnections();
             }
         } catch (error) {
-            alert('소셜 계정 연동 해제 중 오류가 발생했습니다.');
+            Swal.fire({
+                title: '오류',
+                text: '소셜 계정 연동 해제 중 오류가 발생했습니다.',
+                icon: 'error',
+                confirmButtonText: '확인'
+            });
         }
     };
 
@@ -281,13 +303,23 @@ const MyPage = () => {
             );
 
             if (response.data.statusCode === 200) {
-                alert('반려동물 정보가 성공적으로 수정되었습니다.');
+                Swal.fire({
+                    icon: 'success',
+                    title: '반려동물 정보 수정 완료',
+                    text: '반려동물 정보가 성공적으로 수정되었습니다.',
+                    confirmButtonText: '확인'
+                });
                 setIsEditOpen(false);
                 setPage(0); // 페이지를 0으로 초기화
                 await fetchMyPets(0); // 반려동물 목록 새로고침
             }
         } catch (error) {
-            alert('반려동물 정보 수정 중 오류가 발생했습니다.');
+            Swal.fire({
+                title: '오류',
+                text: '반려동물 정보 수정 중 오류가 발생했습니다.',
+                icon: 'error',
+                confirmButtonText: '확인'
+            });
         }
     };
 
@@ -308,13 +340,23 @@ const MyPage = () => {
             );
 
             if (response.data.statusCode === 200) {
-                alert('반려동물이 성공적으로 삭제되었습니다.');
+                Swal.fire({
+                    icon: 'success',
+                    title: '반려동물 정보 삭제 완료',
+                    text: '반려동물 정보가 성공적으로 삭제되었습니다.',
+                    confirmButtonText: '확인'
+                });
                 setIsDeleteConfirmOpen(false);
                 setPetToDelete(null);
                 setShouldReload(true); // 리로드 플래그 설정
             }
         } catch (error) {
-            alert('반려동물 삭제 중 오류가 발생했습니다.');
+            Swal.fire({
+                title: '오류',
+                text: '반려동물 삭제 중 오류가 발생했습니다.',
+                icon: 'error',
+                confirmButtonText: '확인'
+            });
         }
     };
 
@@ -338,7 +380,12 @@ const MyPage = () => {
                 setIsEditing(false); // 편집 모드 종료
             }
         } catch (error) {
-            alert('프로필 업데이트 중 오류가 발생했습니다.');
+            Swal.fire({
+                title: '오류',
+                text: '프로필 업데이트 중 오류가 발생했습니다.',
+                icon: 'error',
+                confirmButtonText: '확인'
+            });
         }
     };
 
@@ -346,7 +393,7 @@ const MyPage = () => {
     const handleUpdatePassword = async (e) => {
         e.preventDefault();
         if (personalInfo.newPassword !== personalInfo.confirmPassword) {
-            alert('새 비밀번호가 일치하지 않습니다.');
+            setError('새 비밀번호가 일치하지 않습니다.');
             return;
         }
 
@@ -369,7 +416,13 @@ const MyPage = () => {
 
             if (response.data.statusCode === 200) {
                 // 성공 시 처리
-                alert(response.data.message);
+                Swal.fire({
+                    icon: 'success',
+                    title: '비밀번호 변경 완료',
+                    text: response.data.message,
+                    confirmButtonText: '확인'
+                });
+                setError('');
                 setIsPasswordEditing(false);
                 setPersonalInfo({
                     ...personalInfo,
@@ -379,7 +432,12 @@ const MyPage = () => {
                 });
             }
         } catch (error) {
-            alert(error.response.data.msg);
+            Swal.fire({
+                title: '오류',
+                text: error.response.data.msg,
+                icon: 'error',
+                confirmButtonText: '확인'
+            });
         }
     };
 
@@ -393,7 +451,12 @@ const MyPage = () => {
             alert('전화번호가 성공적으로 변경되었습니다.');
             setIsPhoneEditing(false);
         } catch (error) {
-            alert('전화번호 변경 중 오류가 발생했습니다.');
+            Swal.fire({
+                title: '오류',
+                text: '전화번호 변경 중 오류가 발생했습니다.',
+                icon: 'error',
+                confirmButtonText: '확인'
+            });
         }
     };
 
@@ -430,7 +493,13 @@ const MyPage = () => {
                 throw new Error('반려동물 등록에 실패했습니다.');
             }
 
-            alert('반려동물이 성공적으로 등록되었습니다.');
+
+            Swal.fire({
+                icon: 'success',
+                title: '반려동물 등록 완료',
+                text: '반려동물이 성공적으로 등록되었습니다.',
+                confirmButtonText: '확인'
+            });
 
             // 모달 닫기
             setIsRegisterOpen(false);  // PetRegisterModal 닫기
@@ -449,7 +518,12 @@ const MyPage = () => {
             });
 
         } catch (error) {
-            alert('반려동물 등록 중 오류가 발생했습니다.');
+            Swal.fire({
+                title: '오류',
+                text: '반려동물 등록 중 오류가 발생했습니다.',
+                icon: 'error',
+                confirmButtonText: '확인'
+            });
         }
     };
 
@@ -479,7 +553,12 @@ const MyPage = () => {
                 navigate('/');
             }
         } catch (error) {
-            alert('로그아웃 중 오류가 발생했습니다.');
+            Swal.fire({
+                title: '오류',
+                text: '로그아웃 중 오류가 발생했습니다.',
+                icon: 'error',
+                confirmButtonText: '확인'
+            });
         }
     };
 
@@ -519,10 +598,20 @@ const MyPage = () => {
                     localStorage.setItem('userInfo', JSON.stringify(userInfo));
                 }
 
-                alert('프로필 이미지가 성공적으로 업데이트되었습니다.');
+                Swal.fire({
+                    icon: 'success',
+                    title: '프로필 이미지 업데이트 완료',
+                    text: '프로필 이미지가 성공적으로 업데이트 되었습니다.',
+                    confirmButtonText: '확인'
+                });
             }
         } catch (error) {
-            alert('이미지 업로드 중 오류가 발생했습니다.');
+            Swal.fire({
+                title: '오류',
+                text: '이미지 업로드 중 오류가 발생했습니다.',
+                icon: 'error',
+                confirmButtonText: '확인'
+            });
         }
     };
 
@@ -552,7 +641,12 @@ const MyPage = () => {
                 localStorage.setItem('userInfo', JSON.stringify(userInfo));
             }
         } catch (error) {
-            alert('프로필 이미지 초기화 중 오류가 발생했습니다.');
+            Swal.fire({
+                title: '오류',
+                text: '프로필 이미지 초기화 중 오류가 발생했습니다.',
+                icon: 'error',
+                confirmButtonText: '확인'
+            });
         }
     };
 
@@ -964,6 +1058,9 @@ const MyPage = () => {
                                                     className="w-full px-3 py-2 border rounded-md"
                                                 />
                                             </div>
+                                            {error && (
+                                                <div className="text-red-500 text-sm">{error}</div>
+                                            )}
                                             <button
                                                 type="submit"
                                                 className="w-full px-4 py-2 bg-amber-500 text-white rounded-md mt-2"
@@ -1105,8 +1202,8 @@ const MyPage = () => {
                                             </h3>
                                             <span
                                                 className={`text-sm font-medium px-2 py-1 rounded-full whitespace-nowrap flex-shrink-0 ${pet.animalType === '강아지'
-                                                        ? 'bg-blue-100 text-blue-800' // 강아지 스타일
-                                                        : 'bg-pink-100 text-pink-800' // 고양이 스타일
+                                                    ? 'bg-blue-100 text-blue-800' // 강아지 스타일
+                                                    : 'bg-pink-100 text-pink-800' // 고양이 스타일
                                                     }`}
                                             >
                                                 {pet.animalType === '강아지' ? '강아지' : '고양이'}

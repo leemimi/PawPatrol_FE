@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import puppyLogo from '../assets/images/hanlogo.png';
 import axios from 'axios';
+import Swal from 'sweetalert2';
 
 const SocialConnectPage = () => {
     const [error, setError] = useState('');
@@ -58,7 +59,12 @@ const SocialConnectPage = () => {
                         localStorage.setItem('userInfo', JSON.stringify(loginUserInfo));
                         localStorage.setItem('isLoggedIn', 'true');
 
-                        alert('소셜 계정 연동이 완료되었습니다.');
+                        Swal.fire({
+                            icon: 'success',
+                            title: '소셜 계정 연동 완료',
+                            text: '소셜 계정 연동이 완료되었습니다.',
+                            confirmButtonText: '확인'
+                        });
                         navigate('/', { replace: true });
                     } else {
                         throw new Error('사용자 정보를 가져오는데 실패했습니다.');
