@@ -258,7 +258,8 @@ const AdminDashboard = () => {
                                 {activeTab === 'users' && (
                                     <>
                                         <div className="overflow-x-auto">
-                                            <table className="min-w-full divide-y divide-gray-200">
+                                            {/* 데스크톱 테이블 - 모바일에서는 숨김 */}
+                                            <table className="min-w-full divide-y divide-gray-200 hidden md:table">
                                                 <thead className="bg-gray-50">
                                                     <tr>
                                                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
@@ -272,8 +273,7 @@ const AdminDashboard = () => {
                                                 </thead>
                                                 <tbody className="bg-white divide-y divide-gray-200">
                                                     {users.map(user => (
-                                                        <tr key={user.id} className={`hover:bg-gray-50 ${user.role === 'ROLE_SHELTER' ? 'bg-blue-50' : ''
-                                                            }`}>
+                                                        <tr key={user.id} className={`hover:bg-gray-50 ${user.role === 'ROLE_SHELTER' ? 'bg-blue-50' : ''}`}>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.id}</td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{user.email}</td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{user.nickname}</td>
@@ -281,23 +281,13 @@ const AdminDashboard = () => {
                                                                 {new Date(user.createdAt).toLocaleDateString()}
                                                             </td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                                                <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${user.role === 'ROLE_USER' ? 'bg-gray-100 text-gray-800' :
-                                                                    user.role === 'ROLE_SHELTER' ? 'bg-blue-100 text-blue-800' : ''
-                                                                    }`}>
-                                                                    {user.role === 'ROLE_USER' ? '일반 사용자' :
-                                                                        user.role === 'ROLE_SHELTER' ? '보호소 관리자' : ''}
+                                                                <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${user.role === 'ROLE_USER' ? 'bg-gray-100 text-gray-800' : user.role === 'ROLE_SHELTER' ? 'bg-blue-100 text-blue-800' : ''}`}>
+                                                                    {user.role === 'ROLE_USER' ? '일반 사용자' : user.role === 'ROLE_SHELTER' ? '보호소 관리자' : ''}
                                                                 </span>
                                                             </td>
                                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${user.status === 'ACTIVE' ? 'bg-green-100 text-green-800' :
-                                                                    user.status === 'INACTIVE' ? 'bg-yellow-100 text-yellow-800' :
-                                                                        user.status === 'BANNED' ? 'bg-red-100 text-red-800' :
-                                                                            'bg-gray-100 text-gray-800'
-                                                                    }`}>
-                                                                    {user.status === 'ACTIVE' ? '정상' :
-                                                                        user.status === 'INACTIVE' ? '휴면' :
-                                                                            user.status === 'BANNED' ? '정지' :
-                                                                                user.status === 'WITHDRAWN' ? '탈퇴' : '알 수 없음'}
+                                                                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${user.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : user.status === 'INACTIVE' ? 'bg-yellow-100 text-yellow-800' : user.status === 'BANNED' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'}`}>
+                                                                    {user.status === 'ACTIVE' ? '정상' : user.status === 'INACTIVE' ? '휴면' : user.status === 'BANNED' ? '정지' : user.status === 'WITHDRAWN' ? '탈퇴' : '알 수 없음'}
                                                                 </span>
                                                             </td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -327,7 +317,62 @@ const AdminDashboard = () => {
                                                     ))}
                                                 </tbody>
                                             </table>
+
+                                            {/* 모바일 카드 뷰 - 데스크톱에서는 숨김 */}
+                                            <div className="md:hidden">
+                                                {users.map(user => (
+                                                    <div key={user.id} className={`mb-4 rounded-lg border p-4 ${user.role === 'ROLE_SHELTER' ? 'bg-blue-50 border-blue-200' : 'bg-white border-gray-200'}`}>
+                                                        <div className="flex justify-between items-start mb-2">
+                                                            <div>
+                                                                <h3 className="text-sm font-medium">{user.nickname}</h3>
+                                                                <p className="text-xs text-gray-500">{user.email}</p>
+                                                            </div>
+                                                            <div>
+                                                                <span className={`px-2 py-1 text-xs font-semibold rounded-full ${user.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : user.status === 'INACTIVE' ? 'bg-yellow-100 text-yellow-800' : user.status === 'BANNED' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'}`}>
+                                                                    {user.status === 'ACTIVE' ? '정상' : user.status === 'INACTIVE' ? '휴면' : user.status === 'BANNED' ? '정지' : user.status === 'WITHDRAWN' ? '탈퇴' : '알 수 없음'}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="flex justify-between items-center text-xs text-gray-500 mb-3">
+                                                            <div>
+                                                                <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${user.role === 'ROLE_USER' ? 'bg-gray-100 text-gray-800' : user.role === 'ROLE_SHELTER' ? 'bg-blue-100 text-blue-800' : ''}`}>
+                                                                    {user.role === 'ROLE_USER' ? '일반 사용자' : user.role === 'ROLE_SHELTER' ? '보호소 관리자' : ''}
+                                                                </span>
+                                                            </div>
+                                                            <div>
+                                                                가입: {new Date(user.createdAt).toLocaleDateString()}
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="flex justify-end space-x-2">
+                                                            {user.status === 'BANNED' ? (
+                                                                <button
+                                                                    onClick={() => handleStatusChange(user.id, 'ACTIVE')}
+                                                                    className="px-3 py-1 bg-green-100 text-green-700 rounded-md text-xs font-medium">
+                                                                    복구
+                                                                </button>
+                                                            ) : user.status === 'ACTIVE' || user.status === 'INACTIVE' ? (
+                                                                <button
+                                                                    onClick={() => handleStatusChange(user.id, 'BANNED')}
+                                                                    className="px-3 py-1 bg-red-100 text-red-700 rounded-md text-xs font-medium">
+                                                                    차단
+                                                                </button>
+                                                            ) : null}
+
+                                                            {user.status === 'WITHDRAWN' && (
+                                                                <button
+                                                                    onClick={() => handleStatusChange(user.id, 'ACTIVE')}
+                                                                    className="px-3 py-1 bg-blue-100 text-blue-700 rounded-md text-xs font-medium">
+                                                                    복구
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </div>
+
                                         <div className="mt-4 flex justify-center overflow-x-auto py-2 w-full">
                                             <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
                                                 {/* 이전 그룹의 첫 페이지로 이동 */}
@@ -437,7 +482,8 @@ const AdminDashboard = () => {
                                 {activeTab === 'shelters' && (
                                     <>
                                         <div className="overflow-x-auto">
-                                            <table className="min-w-full divide-y divide-gray-200">
+                                            {/* 데스크톱 테이블 - 모바일에서는 숨김 */}
+                                            <table className="min-w-full divide-y divide-gray-200 hidden md:table">
                                                 <thead className="bg-gray-50">
                                                     <tr>
                                                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
@@ -461,7 +507,37 @@ const AdminDashboard = () => {
                                                     ))}
                                                 </tbody>
                                             </table>
+
+                                            {/* 모바일 카드 뷰 - 데스크톱에서는 숨김 */}
+                                            <div className="md:hidden">
+                                                {shelters.map(shelter => (
+                                                    <div key={shelter.id} className="mb-4 rounded-lg border border-gray-200 p-4 bg-white">
+                                                        <div className="flex justify-between items-start mb-2">
+                                                            <h3 className="text-sm font-medium text-gray-900">{shelter.name}</h3>
+                                                            <span className="text-xs text-gray-500">ID: {shelter.id}</span>
+                                                        </div>
+
+                                                        <div className="mb-3">
+                                                            <p className="text-xs text-gray-700 mb-1">
+                                                                <span className="inline-block w-14 text-gray-500">주소:</span>
+                                                                {shelter.address}
+                                                            </p>
+                                                            <p className="text-xs text-gray-700">
+                                                                <span className="inline-block w-14 text-gray-500">연락처:</span>
+                                                                {shelter.tel}
+                                                            </p>
+                                                        </div>
+
+                                                        <div className="flex justify-end">
+                                                            <button className="px-3 py-1 bg-blue-100 text-blue-700 rounded-md text-xs font-medium">
+                                                                상세 보기
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </div>
+
                                         <div className="mt-4 flex justify-center overflow-x-auto py-2 w-full">
                                             <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
                                                 {/* 이전 그룹의 첫 페이지로 이동 */}
@@ -516,8 +592,8 @@ const AdminDashboard = () => {
                                                                     key={i}
                                                                     onClick={() => fetchShelters(i)}
                                                                     className={`relative inline-flex items-center px-3 py-2 border border-gray-300 bg-white text-sm font-medium ${shelterPagination.currentPage === i
-                                                                            ? 'z-10 bg-orange-50 border-orange-500 text-orange-600'
-                                                                            : 'text-gray-500 hover:bg-gray-50'
+                                                                        ? 'z-10 bg-orange-50 border-orange-500 text-orange-600'
+                                                                        : 'text-gray-500 hover:bg-gray-50'
                                                                         }`}
                                                                 >
                                                                     {i + 1}
@@ -532,8 +608,8 @@ const AdminDashboard = () => {
                                                                     key={i}
                                                                     onClick={() => fetchShelters(i)}
                                                                     className={`relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium ${shelterPagination.currentPage === i
-                                                                            ? 'z-10 bg-orange-50 border-orange-500 text-orange-600'
-                                                                            : 'text-gray-500 hover:bg-gray-50'
+                                                                        ? 'z-10 bg-orange-50 border-orange-500 text-orange-600'
+                                                                        : 'text-gray-500 hover:bg-gray-50'
                                                                         }`}
                                                                 >
                                                                     {i + 1}
