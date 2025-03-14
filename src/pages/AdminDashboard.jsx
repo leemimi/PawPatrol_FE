@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 
 const AdminDashboard = () => {
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
     const [activeTab, setActiveTab] = useState('users');
     const [users, setUsers] = useState([]);
     const [shelters, setShelters] = useState([]);
@@ -170,6 +171,15 @@ const AdminDashboard = () => {
         // fetchReports();
     }, [navigate]);
 
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth < 640);
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
     return (
         <div className="min-h-screen bg-gray-50">
             <div className="bg-white shadow">
@@ -248,7 +258,8 @@ const AdminDashboard = () => {
                                 {activeTab === 'users' && (
                                     <>
                                         <div className="overflow-x-auto">
-                                            <table className="min-w-full divide-y divide-gray-200">
+                                            {/* 데스크톱 테이블 - 모바일에서는 숨김 */}
+                                            <table className="min-w-full divide-y divide-gray-200 hidden md:table">
                                                 <thead className="bg-gray-50">
                                                     <tr>
                                                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
@@ -262,8 +273,7 @@ const AdminDashboard = () => {
                                                 </thead>
                                                 <tbody className="bg-white divide-y divide-gray-200">
                                                     {users.map(user => (
-                                                        <tr key={user.id} className={`hover:bg-gray-50 ${user.role === 'ROLE_SHELTER' ? 'bg-blue-50' : ''
-                                                            }`}>
+                                                        <tr key={user.id} className={`hover:bg-gray-50 ${user.role === 'ROLE_SHELTER' ? 'bg-blue-50' : ''}`}>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.id}</td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{user.email}</td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{user.nickname}</td>
@@ -271,23 +281,13 @@ const AdminDashboard = () => {
                                                                 {new Date(user.createdAt).toLocaleDateString()}
                                                             </td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                                                <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${user.role === 'ROLE_USER' ? 'bg-gray-100 text-gray-800' :
-                                                                    user.role === 'ROLE_SHELTER' ? 'bg-blue-100 text-blue-800' : ''
-                                                                    }`}>
-                                                                    {user.role === 'ROLE_USER' ? '일반 사용자' :
-                                                                        user.role === 'ROLE_SHELTER' ? '보호소 관리자' : ''}
+                                                                <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${user.role === 'ROLE_USER' ? 'bg-gray-100 text-gray-800' : user.role === 'ROLE_SHELTER' ? 'bg-blue-100 text-blue-800' : ''}`}>
+                                                                    {user.role === 'ROLE_USER' ? '일반 사용자' : user.role === 'ROLE_SHELTER' ? '보호소 관리자' : ''}
                                                                 </span>
                                                             </td>
                                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${user.status === 'ACTIVE' ? 'bg-green-100 text-green-800' :
-                                                                    user.status === 'INACTIVE' ? 'bg-yellow-100 text-yellow-800' :
-                                                                        user.status === 'BANNED' ? 'bg-red-100 text-red-800' :
-                                                                            'bg-gray-100 text-gray-800'
-                                                                    }`}>
-                                                                    {user.status === 'ACTIVE' ? '정상' :
-                                                                        user.status === 'INACTIVE' ? '휴면' :
-                                                                            user.status === 'BANNED' ? '정지' :
-                                                                                user.status === 'WITHDRAWN' ? '탈퇴' : '알 수 없음'}
+                                                                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${user.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : user.status === 'INACTIVE' ? 'bg-yellow-100 text-yellow-800' : user.status === 'BANNED' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'}`}>
+                                                                    {user.status === 'ACTIVE' ? '정상' : user.status === 'INACTIVE' ? '휴면' : user.status === 'BANNED' ? '정지' : user.status === 'WITHDRAWN' ? '탈퇴' : '알 수 없음'}
                                                                 </span>
                                                             </td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -317,8 +317,63 @@ const AdminDashboard = () => {
                                                     ))}
                                                 </tbody>
                                             </table>
+
+                                            {/* 모바일 카드 뷰 - 데스크톱에서는 숨김 */}
+                                            <div className="md:hidden">
+                                                {users.map(user => (
+                                                    <div key={user.id} className={`mb-4 rounded-lg border p-4 ${user.role === 'ROLE_SHELTER' ? 'bg-blue-50 border-blue-200' : 'bg-white border-gray-200'}`}>
+                                                        <div className="flex justify-between items-start mb-2">
+                                                            <div>
+                                                                <h3 className="text-sm font-medium">{user.nickname}</h3>
+                                                                <p className="text-xs text-gray-500">{user.email}</p>
+                                                            </div>
+                                                            <div>
+                                                                <span className={`px-2 py-1 text-xs font-semibold rounded-full ${user.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : user.status === 'INACTIVE' ? 'bg-yellow-100 text-yellow-800' : user.status === 'BANNED' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'}`}>
+                                                                    {user.status === 'ACTIVE' ? '정상' : user.status === 'INACTIVE' ? '휴면' : user.status === 'BANNED' ? '정지' : user.status === 'WITHDRAWN' ? '탈퇴' : '알 수 없음'}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="flex justify-between items-center text-xs text-gray-500 mb-3">
+                                                            <div>
+                                                                <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${user.role === 'ROLE_USER' ? 'bg-gray-100 text-gray-800' : user.role === 'ROLE_SHELTER' ? 'bg-blue-100 text-blue-800' : ''}`}>
+                                                                    {user.role === 'ROLE_USER' ? '일반 사용자' : user.role === 'ROLE_SHELTER' ? '보호소 관리자' : ''}
+                                                                </span>
+                                                            </div>
+                                                            <div>
+                                                                가입: {new Date(user.createdAt).toLocaleDateString()}
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="flex justify-end space-x-2">
+                                                            {user.status === 'BANNED' ? (
+                                                                <button
+                                                                    onClick={() => handleStatusChange(user.id, 'ACTIVE')}
+                                                                    className="px-3 py-1 bg-green-100 text-green-700 rounded-md text-xs font-medium">
+                                                                    복구
+                                                                </button>
+                                                            ) : user.status === 'ACTIVE' || user.status === 'INACTIVE' ? (
+                                                                <button
+                                                                    onClick={() => handleStatusChange(user.id, 'BANNED')}
+                                                                    className="px-3 py-1 bg-red-100 text-red-700 rounded-md text-xs font-medium">
+                                                                    차단
+                                                                </button>
+                                                            ) : null}
+
+                                                            {user.status === 'WITHDRAWN' && (
+                                                                <button
+                                                                    onClick={() => handleStatusChange(user.id, 'ACTIVE')}
+                                                                    className="px-3 py-1 bg-blue-100 text-blue-700 rounded-md text-xs font-medium">
+                                                                    복구
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </div>
-                                        <div className="mt-4 flex justify-center">
+
+                                        <div className="mt-4 flex justify-center overflow-x-auto py-2 w-full">
                                             <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
                                                 {/* 이전 그룹의 첫 페이지로 이동 */}
                                                 <button
@@ -337,7 +392,7 @@ const AdminDashboard = () => {
                                                     &laquo;
                                                 </button>
 
-                                                {/* 현재 페이지 그룹의 10개 페이지 버튼 생성 */}
+                                                {/* 현재 페이지 그룹의 페이지 버튼 생성 - 모바일에서는 표시 개수 제한 */}
                                                 {(() => {
                                                     if (!pagination.totalPages) return null;
 
@@ -346,21 +401,59 @@ const AdminDashboard = () => {
                                                     const startPage = currentGroup * 10;
                                                     const endPage = Math.min(startPage + 9, pagination.totalPages - 1);
 
+                                                    // 모바일 화면에서는 현재 페이지 주변의 페이지만 표시
+                                                    const isMobile = window.innerWidth < 640; // sm 브레이크포인트
                                                     const pageButtons = [];
-                                                    for (let i = startPage; i <= endPage; i++) {
-                                                        pageButtons.push(
-                                                            <button
-                                                                key={i}
-                                                                onClick={() => fetchShelters(i)}
-                                                                className={`relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium ${pagination.currentPage === i
-                                                                    ? 'z-10 bg-orange-50 border-orange-500 text-orange-600'
-                                                                    : 'text-gray-500 hover:bg-gray-50'
-                                                                    }`}
-                                                            >
-                                                                {i + 1}
-                                                            </button>
-                                                        );
+
+                                                    if (isMobile) {
+                                                        // 모바일에서는 최대 5개의 페이지 버튼만 표시
+                                                        // 현재 페이지를 중심으로 앞뒤로 최대 2개씩 표시
+                                                        const totalMobileButtons = 5;
+                                                        const halfButtons = Math.floor(totalMobileButtons / 2);
+
+                                                        // 현재 페이지를 중심으로 시작과 끝 페이지 계산
+                                                        let mobileStartPage = Math.max(startPage, pagination.currentPage - halfButtons);
+                                                        let mobileEndPage = Math.min(endPage, mobileStartPage + totalMobileButtons - 1);
+
+                                                        // 끝 페이지가 범위를 벗어나면 시작 페이지 조정
+                                                        if (mobileEndPage > endPage) {
+                                                            mobileStartPage = Math.max(startPage, endPage - totalMobileButtons + 1);
+                                                        }
+
+                                                        // 시작 페이지부터 끝 페이지까지 버튼 생성
+                                                        for (let i = mobileStartPage; i <= mobileEndPage; i++) {
+                                                            pageButtons.push(
+                                                                <button
+                                                                    key={i}
+                                                                    onClick={() => fetchShelters(i)}
+                                                                    className={`relative inline-flex items-center px-3 py-2 border border-gray-300 bg-white text-sm font-medium ${pagination.currentPage === i
+                                                                        ? 'z-10 bg-orange-50 border-orange-500 text-orange-600'
+                                                                        : 'text-gray-500 hover:bg-gray-50'
+                                                                        }`}
+                                                                >
+                                                                    {i + 1}
+                                                                </button>
+                                                            );
+                                                        }
+                                                    } else {
+                                                        // 데스크톱에서는 기존 방식대로 표시
+                                                        for (let i = startPage; i <= endPage; i++) {
+                                                            pageButtons.push(
+                                                                <button
+                                                                    key={i}
+                                                                    onClick={() => fetchShelters(i)}
+                                                                    className={`relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium ${pagination.currentPage === i
+                                                                        ? 'z-10 bg-orange-50 border-orange-500 text-orange-600'
+                                                                        : 'text-gray-500 hover:bg-gray-50'
+                                                                        }`}
+                                                                >
+                                                                    {i + 1}
+                                                                </button>
+                                                            );
+                                                        }
                                                     }
+
+
                                                     return pageButtons;
                                                 })()}
 
@@ -382,13 +475,15 @@ const AdminDashboard = () => {
                                                 </button>
                                             </nav>
                                         </div>
+
                                     </>
                                 )}
 
                                 {activeTab === 'shelters' && (
                                     <>
                                         <div className="overflow-x-auto">
-                                            <table className="min-w-full divide-y divide-gray-200">
+                                            {/* 데스크톱 테이블 - 모바일에서는 숨김 */}
+                                            <table className="min-w-full divide-y divide-gray-200 hidden md:table">
                                                 <thead className="bg-gray-50">
                                                     <tr>
                                                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
@@ -412,8 +507,38 @@ const AdminDashboard = () => {
                                                     ))}
                                                 </tbody>
                                             </table>
+
+                                            {/* 모바일 카드 뷰 - 데스크톱에서는 숨김 */}
+                                            <div className="md:hidden">
+                                                {shelters.map(shelter => (
+                                                    <div key={shelter.id} className="mb-4 rounded-lg border border-gray-200 p-4 bg-white">
+                                                        <div className="flex justify-between items-start mb-2">
+                                                            <h3 className="text-sm font-medium text-gray-900">{shelter.name}</h3>
+                                                            <span className="text-xs text-gray-500">ID: {shelter.id}</span>
+                                                        </div>
+
+                                                        <div className="mb-3">
+                                                            <p className="text-xs text-gray-700 mb-1">
+                                                                <span className="inline-block w-14 text-gray-500">주소:</span>
+                                                                {shelter.address}
+                                                            </p>
+                                                            <p className="text-xs text-gray-700">
+                                                                <span className="inline-block w-14 text-gray-500">연락처:</span>
+                                                                {shelter.tel}
+                                                            </p>
+                                                        </div>
+
+                                                        <div className="flex justify-end">
+                                                            <button className="px-3 py-1 bg-blue-100 text-blue-700 rounded-md text-xs font-medium">
+                                                                상세 보기
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </div>
-                                        <div className="mt-4 flex justify-center">
+
+                                        <div className="mt-4 flex justify-center overflow-x-auto py-2 w-full">
                                             <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
                                                 {/* 이전 그룹의 첫 페이지로 이동 */}
                                                 <button
@@ -432,7 +557,7 @@ const AdminDashboard = () => {
                                                     &laquo;
                                                 </button>
 
-                                                {/* 현재 페이지 그룹의 10개 페이지 버튼 생성 */}
+                                                {/* 현재 페이지 그룹의 페이지 버튼 생성 */}
                                                 {(() => {
                                                     if (!shelterPagination.totalPages) return null;
 
@@ -442,20 +567,57 @@ const AdminDashboard = () => {
                                                     const endPage = Math.min(startPage + 9, shelterPagination.totalPages - 1);
 
                                                     const pageButtons = [];
-                                                    for (let i = startPage; i <= endPage; i++) {
-                                                        pageButtons.push(
-                                                            <button
-                                                                key={i}
-                                                                onClick={() => fetchShelters(i)}
-                                                                className={`relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium ${shelterPagination.currentPage === i
-                                                                    ? 'z-10 bg-orange-50 border-orange-500 text-orange-600'
-                                                                    : 'text-gray-500 hover:bg-gray-50'
-                                                                    }`}
-                                                            >
-                                                                {i + 1}
-                                                            </button>
-                                                        );
+
+                                                    // 모바일 화면 여부 확인 (sm 브레이크포인트)
+                                                    const isMobile = window.innerWidth < 640;
+
+                                                    if (isMobile) {
+                                                        // 모바일에서는 최대 5개의 페이지 버튼만 표시
+                                                        const totalMobileButtons = 5;
+                                                        const halfButtons = Math.floor(totalMobileButtons / 2);
+
+                                                        // 현재 페이지를 중심으로 시작과 끝 페이지 계산
+                                                        let mobileStartPage = Math.max(startPage, shelterPagination.currentPage - halfButtons);
+                                                        let mobileEndPage = Math.min(endPage, mobileStartPage + totalMobileButtons - 1);
+
+                                                        // 끝 페이지가 범위를 벗어나면 시작 페이지 조정
+                                                        if (mobileEndPage > endPage) {
+                                                            mobileStartPage = Math.max(startPage, endPage - totalMobileButtons + 1);
+                                                        }
+
+                                                        // 시작 페이지부터 끝 페이지까지 버튼 생성
+                                                        for (let i = mobileStartPage; i <= mobileEndPage; i++) {
+                                                            pageButtons.push(
+                                                                <button
+                                                                    key={i}
+                                                                    onClick={() => fetchShelters(i)}
+                                                                    className={`relative inline-flex items-center px-3 py-2 border border-gray-300 bg-white text-sm font-medium ${shelterPagination.currentPage === i
+                                                                        ? 'z-10 bg-orange-50 border-orange-500 text-orange-600'
+                                                                        : 'text-gray-500 hover:bg-gray-50'
+                                                                        }`}
+                                                                >
+                                                                    {i + 1}
+                                                                </button>
+                                                            );
+                                                        }
+                                                    } else {
+                                                        // 데스크톱에서는 기존 방식대로 표시
+                                                        for (let i = startPage; i <= endPage; i++) {
+                                                            pageButtons.push(
+                                                                <button
+                                                                    key={i}
+                                                                    onClick={() => fetchShelters(i)}
+                                                                    className={`relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium ${shelterPagination.currentPage === i
+                                                                        ? 'z-10 bg-orange-50 border-orange-500 text-orange-600'
+                                                                        : 'text-gray-500 hover:bg-gray-50'
+                                                                        }`}
+                                                                >
+                                                                    {i + 1}
+                                                                </button>
+                                                            );
+                                                        }
                                                     }
+
                                                     return pageButtons;
                                                 })()}
 
@@ -477,6 +639,8 @@ const AdminDashboard = () => {
                                                 </button>
                                             </nav>
                                         </div>
+
+
                                     </>
                                 )}
 
