@@ -131,7 +131,7 @@ export default defineConfig({
     // Keep your original proxy settings
     proxy: {
       '/api': {
-        target: 'http://localhost:8090',
+        target: 'https://www.api.pawpatrols.shop',
         changeOrigin: true
       }
     }
