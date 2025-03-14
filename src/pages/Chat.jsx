@@ -15,7 +15,7 @@ const Chat = () => {
       title: null,
       type: null,
       userId: null,
-      reward: null // 보상금 정보 추가
+      reward: null
     }
   });
   const [currentRoomId, setCurrentRoomId] = useState(null);
@@ -37,8 +37,6 @@ const Chat = () => {
   };
 
   const isDogOwner = () => {
-    console.log('selectedUser:', selectedUser.postInfo.userId);
-    console.log('currentUser:', currentUser.id);
     return selectedUser?.postInfo?.type === 'PROTECTADOPT' && 
            selectedUser.postInfo.userId == currentUser.id; 
   };
@@ -52,17 +50,17 @@ const Chat = () => {
   const renderAdoptionRequestBanner = () => {
     if (selectedUser?.postInfo?.type === 'PROTECTADOPT') {
       return (
-        <div className="p-3 bg-orange-100 border-b border-orange-200 flex flex-col items-center">
-          <p className="text-center text-orange-800 font-medium mb-2">
+        <div className="p-2 bg-orange-100 border-b border-orange-200 flex flex-col items-center">
+          <p className="text-center text-orange-800 font-medium text-sm">
             {isDogOwner() 
               ? "입양 신청을 수락하거나 거절하시겠습니까?" 
               : "입양 신청이 진행 중입니다"}
           </p>
           {isDogOwner() && (
-            <div className="flex space-x-3">
+            <div className="flex space-x-3 mt-1">
               <button 
                 onClick={() => navigate(`/protection/${selectedUser.postInfo.id}#decision-section`)}
-                className="px-4 py-1.5 bg-orange-500 text-white rounded-full text-sm hover:bg-orange-600 transition duration-300"
+                className="px-3 py-1 bg-orange-500 text-white rounded-full text-xs hover:bg-orange-600 transition duration-300"
               >
                 수락하거나 거절하러 가기
               </button>
@@ -74,13 +72,13 @@ const Chat = () => {
     return null;
   };
   
-  // 보상금 배너 렌더링 (새로 추가됨)
+  // 보상금 배너 렌더링
   const renderRewardBanner = () => {
     if (selectedUser?.postInfo?.type === 'LOSTFOUND' && selectedUser?.postInfo?.reward) {
       return (
-        <div className="p-3 bg-yellow-50 border-b border-yellow-200 flex items-center justify-center">
-          <Award className="w-5 h-5 text-yellow-600 mr-2" />
-          <p className="text-center text-yellow-800 font-medium">
+        <div className="p-2 bg-yellow-50 border-b border-yellow-200 flex items-center justify-center">
+          <Award className="w-4 h-4 text-yellow-600 mr-1" />
+          <p className="text-center text-yellow-800 font-medium text-sm">
             이 게시글은 <span className="font-bold text-yellow-700">{formatReward(selectedUser.postInfo.reward)}</span>의 보상금이 걸려있습니다
           </p>
         </div>
@@ -92,7 +90,6 @@ const Chat = () => {
   // 세션 스토리지에서 채팅 대상 정보 가져오기
   useEffect(() => {
     const chatTargetData = sessionStorage.getItem('chatTarget');
-    console.log('Chat target data:', chatTargetData);
 
     if (chatTargetData) {
       const parsedData = JSON.parse(chatTargetData);
@@ -104,10 +101,9 @@ const Chat = () => {
           title: parsedData.postTitle,
           type: parsedData.type,
           userId: parsedData.owner,
-          reward: parsedData.reward // 보상금 정보 추가
+          reward: parsedData.reward
         } : null
       });
-      console.log('Parsed chat target:', parsedData);
     }
   }, []);
 
@@ -121,8 +117,6 @@ const Chat = () => {
     }
 
     try {
-      console.log('Setting up WebSocket connection...');
-
       const socketFactory = () => {
         return new SockJS(`${import.meta.env.VITE_CORE_API_BASE_URL}/ws`, null, {
           transports: ['websocket', 'xhr-streaming', 'xhr-polling'],
@@ -141,25 +135,21 @@ const Chat = () => {
       });
 
       client.onConnect = (frame) => {
-        console.log('Connected to WebSocket: ' + frame);
         setIsConnected(true);
         setStompClient(client);
       };
 
       client.onStompError = (frame) => {
         console.error('STOMP error:', frame.headers['message']);
-        console.error('Additional details:', frame.body);
         setIsConnected(false);
       };
 
       client.onWebSocketClose = () => {
-        console.log('WebSocket connection closed');
         setIsConnected(false);
       };
 
       // 연결 활성화
       client.activate();
-      console.log('WebSocket client activation requested');
 
     } catch (error) {
       console.error('WebSocket setup error:', error);
@@ -168,7 +158,6 @@ const Chat = () => {
 
     return () => {
       if (client) {
-        console.log('Deactivating WebSocket connection');
         client.deactivate();
         setIsConnected(false);
       }
@@ -179,33 +168,21 @@ const Chat = () => {
   // 채팅방 ID가 설정되면 메시지를 불러오고 WebSocket 구독을 설정
   useEffect(() => {
     if (stompClient && isConnected && selectedUser?.postInfo?.id) {
-      console.log("방번호", selectedUser.postInfo.id);
-
       // 채팅방 식별자 설정
       const identifier = `${selectedUser.postInfo.id}_${Math.min(currentUser.id, selectedUser.id)}_${Math.max(currentUser.id, selectedUser.id)}_${selectedUser.postInfo.type || 'DEFAULT'}`;
       fetchMessages(identifier);
       setRoomIdentifier(identifier);
-      console.log('roomIdentifier:', identifier);
 
       // WebSocket 구독
       subscribeToRoom(identifier);
-    } else {
-      console.log('Cannot setup chat room yet:', {
-        hasStompClient: !!stompClient,
-        isConnected,
-        hasPostInfo: !!selectedUser?.postInfo?.id
-      });
     }
   }, [selectedUser, currentUser.id, stompClient, isConnected]);
 
   // 채팅방 구독
   const subscribeToRoom = (identifier) => {
     if (!stompClient || !identifier) {
-      console.warn('Cannot subscribe to room: Missing stompClient or identifier');
       return;
     }
-
-    console.log(`Subscribing to room: ${identifier}`);
 
     // 기존 구독 해제
     if (window.chatSubscription) {
@@ -214,7 +191,6 @@ const Chat = () => {
 
     // 새 구독 설정
     window.chatSubscription = stompClient.subscribe(`/queue/chat/${identifier}`, (message) => {
-      console.log('Received message:', message.body);
       try {
         // 메시지 형식에 따라 처리 로직 수정
         const messageData = JSON.parse(message.body);
@@ -245,14 +221,11 @@ const Chat = () => {
   const fetchMessages = async (identifier) => {
     try {
       markMessagesAsRead(identifier);
-      console.log(`Fetching messages for room ${identifier}`);
-      const response = await axios.get(`/api/v1/chat/rooms/${identifier}/messages`);
-      console.log('Fetched messages:', response.data);
+      const response = await axios.get(`/api/v1/chat/rooms/${identifier}/messages`, { withCredentials: true });
 
       if (response.data && response.data.resultCode === "200") {
         setMessages(response.data.data || []);
       } else {
-        console.warn('Unexpected response format:', response.data);
         setMessages([]);
       }
     } catch (error) {
@@ -278,16 +251,10 @@ const Chat = () => {
 
   const sendMessage = () => {
     if ((!newMessage.trim() && selectedImages.length === 0) || !selectedUser || !selectedUser.postInfo) {
-      console.log('Cannot send message:', {
-        hasContent: !!(newMessage.trim() || selectedImages.length > 0),
-        selectedUser: !!selectedUser,
-        postInfo: selectedUser?.postInfo,
-      });
       return;
     }
 
     if (!stompClient || !isConnected) {
-      console.error('Cannot send message: WebSocket not connected');
       alert('연결 상태를 확인해주세요. 메시지를 전송할 수 없습니다.');
       return;
     }
@@ -378,13 +345,11 @@ const Chat = () => {
         params: {
           receiverId: selectedUser.id,
           senderId: currentUser.id
-        }
+        },
+        withCredentials: true
       });
 
-      console.log('Image upload response:', response.data);
-
       setMessages(prev => prev.filter(msg => msg.id !== tempMsgId));
-
       setSelectedImages([]);
 
       if (newMessage.trim()) {
@@ -394,7 +359,7 @@ const Chat = () => {
             content: newMessage,
             receiverId: selectedUser.id,
             senderId: currentUser.id,
-            type: currentUser.postInfo.type
+            type: selectedUser.postInfo.type
           })
         });
         setNewMessage('');
@@ -403,7 +368,6 @@ const Chat = () => {
     } catch (error) {
       console.error('Error uploading image:', error);
       alert('이미지 업로드 중 오류가 발생했습니다.');
-
       setMessages(prevMessages => prevMessages.filter(msg => !msg.isTemp));
     } finally {
       setIsUploading(false);
@@ -483,8 +447,11 @@ const Chat = () => {
 
   const markMessagesAsRead = async (identifier) => {
     try {
-      const response = await axios.post(`/api/v1/chat/rooms/${identifier}/read`);
-      console.log('Messages marked as read:', response.data);
+      const response = await axios.post(
+        `/api/v1/chat/rooms/${identifier}/read`, 
+        {}, 
+        { withCredentials: true }
+      );
 
       if (response.data && response.data.resultCode === "200") {
         setMessages(prevMessages =>
@@ -505,7 +472,6 @@ const Chat = () => {
     if (message.messageType === 'IMAGE') {
       try {
         const imageData = JSON.parse(message.content);
-        console.log(imageData);
         return (
           <div className="image-message">
             {Array.isArray(imageData) ? (
@@ -521,10 +487,10 @@ const Chat = () => {
                     src={img.path}
                     alt={`Shared image ${idx + 1}`}
                     className={`rounded-lg object-cover cursor-pointer ${imageData.length === 1
-                        ? 'max-h-48 max-w-full'
+                        ? 'max-h-40 max-w-full'
                         : imageData.length === 2
-                          ? 'max-h-36 max-w-full'
-                          : 'max-h-28 w-full'
+                          ? 'max-h-32 max-w-full'
+                          : 'max-h-24 w-full'
                       }`}
                     onClick={() => window.open(img.url || img.fullPath, '_blank')}
                   />
@@ -556,30 +522,24 @@ const Chat = () => {
   }
 
   return (
-    <div className="flex flex-col h-full bg-white">
-      {/* 채팅 헤더 */}
-      <div className="p-4 border-b border-gray-200 flex items-center">
-        <button
-          onClick={handleBack}
-          className="mr-3"
-        >
-          <ArrowLeft className="text-gray-600" />
+    <div className="flex flex-col h-[100vh] max-h-[100vh] bg-white">
+      {/* 채팅 헤더 - 고정 높이 */}
+      <div className="flex-none h-16 p-4 border-b border-gray-200 flex items-center">
+        <button onClick={handleBack} className="mr-2">
+          <ArrowLeft className="text-gray-600 w-5 h-5" />
         </button>
 
-        <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center mr-3">
-          <UserCircle className="w-8 h-8 text-orange-500" />
+        <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center mr-2">
+          <UserCircle className="w-6 h-6 text-orange-500" />
         </div>
 
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-gray-800">{selectedUser.nickname}</p>
+          <p className="font-semibold text-gray-800 text-sm">{selectedUser.nickname}</p>
 
           {selectedUser.postInfo && (
             <div
-              className="flex items-center text-xs text-blue-500 mt-1 cursor-pointer hover:underline"
-              onClick={(e) => {
-                e.stopPropagation();
-                goToPost(selectedUser.postInfo.id);
-              }}
+              className="flex items-center text-xs text-blue-500 cursor-pointer hover:underline"
+              onClick={() => goToPost(selectedUser.postInfo.id)}
             >
               <FileText className="w-3 h-3 mr-1" />
               <span className="truncate">{selectedUser.postInfo.title}</span>
@@ -587,74 +547,75 @@ const Chat = () => {
           )}
         </div>
 
-        <MoreVertical className="text-gray-600 cursor-pointer" />
-
-        {/* 연결 상태 표시 */}
+        <MoreVertical className="text-gray-600 cursor-pointer w-5 h-5" />
         <div className={`w-2 h-2 rounded-full ml-2 ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
       </div>
 
-      {/* 입양 배너 렌더링 */}
-      {renderAdoptionRequestBanner()}
-      
-      {/* 보상금 배너 렌더링 */}
-      {renderRewardBanner()}
-
-      {/* Messages Area */}
-      <div className="h-full flex-1 overflow-y-auto p-4 bg-gray-50 pb-32"> {/* padding-bottom 추가 */}
-        {!Array.isArray(messages) || messages.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-gray-500 p-4">
-            <div className="bg-orange-100 rounded-full p-4 mb-3">
-              <MessageSquare className="w-8 h-8 text-orange-500" />
-            </div>
-            <p className="text-center">대화를 시작해보세요!</p>
-          </div>
-        ) : (
-          messages.map((msg, index) => {
-            const isMine = msg.sender?.id === currentUser.id || msg.sender === currentUser.id;
-
-            return (
-              <div
-                key={index}
-                className={`mb-3 flex ${isMine ? 'justify-end' : 'justify-start'}`}
-              >
-                <div
-                  className={`max-w-[70%] p-3 rounded-2xl ${isMine
-                      ? 'bg-orange-500 text-white'
-                      : 'bg-white text-gray-800 border border-gray-200'
-                    } ${msg.isTemp ? 'opacity-70' : ''}`}
-                >
-                  {renderMessageContent(msg)}
-                  <div className={`text-xs mt-1 ${isMine ? 'text-orange-200' : 'text-gray-400'}`}>
-                    {formatTime(msg.timestamp)}
-                    {msg.isTemp && ' (전송 중...)'}
-                    {!msg.read && !isMine && ' (읽지 않음)'}
-                  </div>
-                </div>
-              </div>
-            );
-          })
-        )}
-        <div ref={messagesEndRef} />
+      {/* 배너 영역 - 조건부 렌더링 */}
+      <div className="flex-none">
+        {renderAdoptionRequestBanner()}
+        {renderRewardBanner()}
       </div>
 
-      {/* Input Area Container - position fixed 제거하고 하단에 고정 */}
-      <div className="sticky bottom-16 left-0 right-0 bg-white border-t border-gray-200">
-        {/* Image Preview */}
+      {/* 메시지 영역 - 남은 공간을 모두 차지하면서 스크롤 가능 */}
+      <div className="flex-1 min-h-0 overflow-y-auto bg-gray-50">
+        <div className="p-4">
+          {!Array.isArray(messages) || messages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center text-gray-500 p-4 h-full">
+              <div className="bg-orange-100 rounded-full p-3 mb-2">
+                <MessageSquare className="w-6 h-6 text-orange-500" />
+              </div>
+              <p className="text-center text-sm">대화를 시작해보세요!</p>
+            </div>
+          ) : (
+            messages.map((msg, index) => {
+              const isMine = msg.sender?.id === currentUser.id || msg.sender === currentUser.id;
+
+              return (
+                <div
+                  key={index}
+                  className={`mb-2 flex ${isMine ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div
+                    className={`max-w-[70%] p-2 rounded-2xl ${
+                      isMine
+                        ? 'bg-orange-500 text-white'
+                        : 'bg-white text-gray-800 border border-gray-200'
+                    } ${msg.isTemp ? 'opacity-70' : ''} text-sm`}
+                  >
+                    {renderMessageContent(msg)}
+                    <div className={`text-xs mt-1 ${isMine ? 'text-orange-200' : 'text-gray-400'}`}>
+                      {formatTime(msg.timestamp)}
+                      {msg.isTemp && ' (전송 중...)'}
+                      {!msg.read && !isMine && ' (읽지 않음)'}
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+      </div>
+
+      {/* 입력 영역 - 고정 높이 */}
+      <div className="flex-none bg-white border-t border-gray-200">
+        {/* 이미지 미리보기 - 조건부 표시 */}
         {selectedImages.length > 0 && (
-          <div className="p-2 bg-gray-100 border-t border-gray-200">
-            <div className="flex overflow-x-auto gap-2 py-1">
+          <div className="p-2 bg-gray-100">
+            <div className="flex overflow-x-auto gap-2 py-1 max-h-20">
               {selectedImages.map((file, index) => (
                 <div key={index} className="relative flex-shrink-0">
                   <img
                     src={URL.createObjectURL(file)}
                     alt={`Preview ${index}`}
-                    className="h-16 w-16 object-cover rounded-lg border border-gray-300"
+                    className="h-14 w-14 object-cover rounded-lg border border-gray-300"
                   />
                   <button
                     onClick={() => removeImage(index)}
-                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 w-5 h-5 flex items-center justify-center"
+                    className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 w-4 h-4 flex items-center justify-center"
                   >
-                    <X size={12} />
+                    <X size={10} />
                   </button>
                 </div>
               ))}
@@ -662,8 +623,8 @@ const Chat = () => {
           </div>
         )}
 
-        {/* Message Input */}
-        <div className="p-4 flex items-center bg-white">
+        {/* 메시지 입력창 - 고정 높이 */}
+        <div className="h-16 p-4 flex items-center">
           <input
             type="file"
             multiple
@@ -674,7 +635,7 @@ const Chat = () => {
           />
           <button
             onClick={() => fileInputRef.current.click()}
-            className="w-10 h-10 flex items-center justify-center text-gray-500 hover:text-orange-500"
+            className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-orange-500"
             disabled={isUploading}
           >
             <Image className="w-5 h-5" />
@@ -685,18 +646,19 @@ const Chat = () => {
             onChange={handleTyping}
             onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
             placeholder="메시지를 입력하세요"
-            className="flex-1 p-2 border border-gray-300 rounded-full mx-2 focus:outline-none focus:ring-2 focus:ring-orange-400"
+            className="flex-1 p-2 border border-gray-300 rounded-full mx-2 focus:outline-none focus:ring-1 focus:ring-orange-400 text-sm"
             disabled={isUploading}
           />
           <button
             onClick={sendMessage}
             disabled={(!newMessage.trim() && selectedImages.length === 0) || !isConnected || !selectedUser?.postInfo || isUploading}
-            className={`w-10 h-10 rounded-full ${(newMessage.trim() || selectedImages.length > 0) && isConnected && selectedUser?.postInfo && !isUploading
+            className={`w-8 h-8 rounded-full ${
+              (newMessage.trim() || selectedImages.length > 0) && isConnected && selectedUser?.postInfo && !isUploading
                 ? 'bg-orange-500 hover:bg-orange-600'
                 : 'bg-gray-300'
-              } text-white flex items-center justify-center transition duration-300`}
+            } text-white flex items-center justify-center transition duration-300`}
           >
-            <Send className="w-5 h-5" />
+            <Send className="w-4 h-4" />
           </button>
         </div>
       </div>
