@@ -10,7 +10,6 @@ const createServiceWorker = () => {
     name: 'create-service-worker',
     buildStart() {
       const swContent = `// firebase-messaging-sw.js
-// firebase-messaging-sw.js
 importScripts('https://www.gstatic.com/firebasejs/11.4.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/11.4.0/firebase-messaging-compat.js');
 
@@ -56,6 +55,73 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
+      strategies: 'generateSW',  // 명시적으로 전략 설정
+      devOptions: {
+        enabled: true,
+        type: 'module',
+        navigateFallback: 'index.html'
+      },
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg,jpeg,json}'],
+        navigationPreload: true,
+        // globIgnores 사용하여 firebase-messaging-sw.js 제외
+        globIgnores: ['**/firebase-messaging-sw.js'],
+        runtimeCaching: [
+          {
+            // 이미지 파일에 대한 캐싱 전략
+            urlPattern: /\.(?:png|jpg|jpeg|svg|gif)$/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'images-cache',
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 30 * 24 * 60 * 60, // 30일
+              },
+            },
+          },
+          {
+            // API 요청에 대한 캐싱 전략
+            urlPattern: /^https:\/\/api.pawpatrols\.shop\/api/,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'api-cache',
+              networkTimeoutSeconds: 10,
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 24 * 60 * 60, // 1일
+              },
+            },
+          },
+          {
+            // 폰트에 대한 캐싱
+            urlPattern: /\.(?:woff|woff2|ttf|otf|eot)$/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'fonts-cache',
+              expiration: {
+                maxEntries: 10,
+                maxAgeSeconds: 60 * 60 * 24 * 365, // 1년
+              },
+            },
+          },
+          {
+            // 기타 리소스에 대한 기본 캐싱
+            urlPattern: /.*$/,
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'others-cache',
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 7 * 24 * 60 * 60, // 7일
+              },
+            },
+          },
+        ],
+      },
+      // Firebase 메시징 서비스 워커와 공존하도록 이름 변경
+      filename: 'pwa-sw.js',
+      injectRegister: 'script',
+      selfDestroying: false,  // 자동 제거 방지
       manifest: {
         id: 'com.jellyjujoday.pawpatrol',
         name: '젤리구조대',
@@ -131,7 +197,7 @@ export default defineConfig({
     // Keep your original proxy settings
     proxy: {
       '/api': {
-        target: 'http://localhost:8090',
+        target: 'https://www.api.pawpatrols.shop',
         changeOrigin: true
       }
     }

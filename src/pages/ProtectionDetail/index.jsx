@@ -191,7 +191,8 @@ const AnimalDetail = () => {
 
                         {!animalData.isOwner &&
                             (animalData.animalCaseDetail.caseStatus === 'PROTECT_WAITING' ||
-                                animalData.animalCaseDetail.caseStatus === 'SHELTER_PROTECTING') && (
+                                animalData.animalCaseDetail.caseStatus === 'SHELTER_PROTECTING' ||
+                                animalData.animalCaseDetail.caseStatus === 'TEMP_PROTECTING') && (
                                 <ActionButtons handleApplyClick={handleApplyClick} />
                             )}
                     </div>
