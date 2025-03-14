@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { PetApiService } from '../api/PetApiService'; // 경로는 실제 위치에 맞게 조정해주세요
+import { PetApiService } from '../api/PetApiService';
+import { useNavigate } from 'react-router-dom';
+
 
 // 이미지 import
 import dogPosterImage from '../assets/images/LOSTDOG2.png';
@@ -26,6 +28,7 @@ const RewardPoster = ({
 }) => {
     // 배경 이미지는 항상 LOSTDOG2 사용
     const backgroundImage = dogPosterImage;
+    const navigate = useNavigate();
     const [currentIndex, setCurrentIndex] = useState(initialIndex);
     const [imagesLoaded, setImagesLoaded] = useState({});
     const [templateLoaded, setTemplateLoaded] = useState(false);
@@ -54,6 +57,18 @@ const RewardPoster = ({
             localStorage.setItem('lastPosterHiddenTime', new Date().getTime().toString());
         }
         onClose();
+    };
+
+
+    const handleDetailNavigation = () => {
+        const poster = posters[currentIndex];
+        if (poster && poster.id) {
+            console.log('상세 페이지로 이동:', poster.id);
+            navigate(`/PetPostDetail/${poster.id}`);
+            onClose(); // 포스터 창 닫기
+        } else {
+            console.error('유효한 게시물 ID가 없습니다:', poster);
+        }
     };
 
 
@@ -261,9 +276,9 @@ const RewardPoster = ({
                             />
                         )}
 
-                        {/* 반려동물 이미지 오버레이 - 섬세하게 위치와 크기 조절 */}
+                        {/* 변경: 이미지 클릭 시 상세 페이지로 이동 (전체 오버레이를 클릭 가능하게) */}
                         <div
-                            className="absolute rounded-md overflow-hidden"
+                            className="absolute cursor-pointer"
                             style={{
                                 width: imageConfig.width,
                                 height: imageConfig.height,
@@ -271,33 +286,39 @@ const RewardPoster = ({
                                 left: imageConfig.left,
                                 transform: imageConfig.transform,
                             }}
+                            onClick={handleDetailNavigation}
                         >
-                            {poster.imageUrl ? (
-                                <>
-                                    {!isCurrentImageLoaded && (
-                                        <div className="absolute inset-0 flex items-center justify-center bg-gray-200 animate-pulse">
-                                            <span className="text-gray-400">이미지 로딩 중...</span>
-                                        </div>
-                                    )}
-                                    <img
-                                        src={poster.imageUrl}
-                                        alt={poster.petName}
-                                        className={`w-full h-full object-cover transition-opacity duration-300 ${isCurrentImageLoaded ? 'opacity-100' : 'opacity-0'}`}
-                                        onLoad={() => {
-                                            if (!imagesLoaded[currentIndex]) {
-                                                setImagesLoaded(prev => ({
-                                                    ...prev,
-                                                    [currentIndex]: true
-                                                }));
-                                            }
-                                        }}
-                                    />
-                                </>
-                            ) : (
-                                <div className="w-full h-full bg-gray-300 flex items-center justify-center">
-                                    <span>이미지 없음</span>
-                                </div>
-                            )}
+                            {/* 반려동물 이미지 오버레이 - 섬세하게 위치와 크기 조절 */}
+                            <div
+                                className="w-full h-full rounded-md overflow-hidden"
+                            >
+                                {poster.imageUrl ? (
+                                    <>
+                                        {!isCurrentImageLoaded && (
+                                            <div className="absolute inset-0 flex items-center justify-center bg-gray-200 animate-pulse">
+                                                <span className="text-gray-400">이미지 로딩 중...</span>
+                                            </div>
+                                        )}
+                                        <img
+                                            src={poster.imageUrl}
+                                            alt={poster.petName}
+                                            className={`w-full h-full object-cover transition-opacity duration-300 ${isCurrentImageLoaded ? 'opacity-100' : 'opacity-0'}`}
+                                            onLoad={() => {
+                                                if (!imagesLoaded[currentIndex]) {
+                                                    setImagesLoaded(prev => ({
+                                                        ...prev,
+                                                        [currentIndex]: true
+                                                    }));
+                                                }
+                                            }}
+                                        />
+                                    </>
+                                ) : (
+                                    <div className="w-full h-full bg-gray-300 flex items-center justify-center">
+                                        <span>이미지 없음</span>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
 
@@ -396,6 +417,7 @@ const RewardPoster = ({
                             ))}
                         </div>
                     )}
+
 
                     <div className="absolute bottom-0 left-0 right-0 bg-white px-4 py-2 flex items-center text-xs">
                         <input
