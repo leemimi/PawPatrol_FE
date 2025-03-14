@@ -7,15 +7,6 @@ import './index.css';
 
 // Initialize Firebase Cloud Messaging
 if ('serviceWorker' in navigator) {
-  // PWA 서비스 워커 등록 추가
-  navigator.serviceWorker.register('/pwa-sw.js')
-    .then(registration => {
-      console.log('PWA 서비스 워커 등록 성공:', registration.scope);
-    })
-    .catch(error => {
-      console.error('PWA 서비스 워커 등록 실패:', error);
-    });
-
   window.addEventListener('load', () => {
     initializeFCM()
       .then(token => {
