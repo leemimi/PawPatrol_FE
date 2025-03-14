@@ -28,7 +28,7 @@ const ChatList = () => {
     try {
       setIsLoading(true);
       // 탭에 따라 다른 API 엔드포인트 호출
-      let endpoint = '/api/v1/chatlist';
+      let endpoint = `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/chatlist`;
       if (activeTab !== 'ALL') {
         endpoint += `?type=${activeTab}`;
       }
