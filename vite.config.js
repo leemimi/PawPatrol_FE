@@ -90,8 +90,8 @@ export default defineConfig({
       injectRegister: null,   // Don't inject the registration code
       manifest: {
         id: 'com.jellyjujoday.pawpatrol',
-        name: '젤리구조대',
-        short_name: '젤리구조대',
+        name: '발바닥구조대',
+        short_name: '발바닥구조대',
         description: '잃어버린 강아지/고양이를 찾아주는 앱',
         theme_color: '#ffffff',
         background_color: '#ffffff',
@@ -129,7 +129,7 @@ export default defineConfig({
             src: 'screenshot1.png',
             sizes: '1280x720',
             type: 'image/png',
-            label: '젤리구조대 메인 화면'
+            label: '발바닥구조대 메인 화면'
           },
           {
             src: 'screenshot2.png',

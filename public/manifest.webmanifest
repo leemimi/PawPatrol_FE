@@ -1,6 +1,6 @@
 {
-    "name": "젤리구조대",
-    "short_name": "젤리구조대",
+    "name": "발바닥구조대",
+    "short_name": "발바닥구조대",
     "start_url": "/",
     "display": "standalone",
     "background_color": "#ffffff",
@@ -41,7 +41,7 @@
             "src": "screenshot1.png",
             "sizes": "1280x720",
             "type": "image/png",
-            "label": "젤리구조대 메인 화면"
+            "label": "발바닥구조대 메인 화면"
         },
         {
             "src": "screenshot2.png",
