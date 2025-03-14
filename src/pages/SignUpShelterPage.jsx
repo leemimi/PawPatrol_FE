@@ -75,19 +75,51 @@ const SignUpShelter = () => {
     // 보호소 선택 핸들러
     const handleSelectShelter = (shelter) => {
         setSelectedShelter(shelter);
-        setFormData(prev => ({
-            ...prev,
-            shelterName: shelter.name,
-            shelterId: shelter.id,
-            shelterAddress: shelter.address,
-            shelterTel: shelter.tel
-        }));
-        setAddress(shelter.address.split(' ').slice(0, 3).join(' ')); // 주소 기본 부분
-        setDetailAddress(shelter.address.split(' ').slice(3).join(' ')); // 상세 주소 부분
+
+        // baseAddress와 detailAddress가 이미 분리되어 있는 경우
+        if (shelter.baseAddress !== undefined && shelter.detailAddress !== undefined) {
+            setFormData(prev => ({
+                ...prev,
+                shelterName: shelter.name,
+                shelterId: shelter.id,
+                shelterTel: shelter.tel || shelter.phone
+            }));
+
+            setAddress(shelter.baseAddress);
+            setDetailAddress(shelter.detailAddress);
+        }
+        // 신규 보호소 등록에서 넘어온 경우
+        else if (shelter.detailAddress !== undefined) {
+            setFormData(prev => ({
+                ...prev,
+                shelterName: shelter.name,
+                shelterTel: shelter.phone
+            }));
+
+            setAddress(shelter.address);
+            setDetailAddress(shelter.detailAddress);
+        }
+        // 기존 방식 (주소가 통합되어 있는 경우)
+        else {
+            const addressParts = shelter.address.split(' ');
+            const baseAddress = addressParts.slice(0, 3).join(' ');
+            const detailAddress = addressParts.slice(3).join(' ');
+
+            setFormData(prev => ({
+                ...prev,
+                shelterName: shelter.name,
+                shelterId: shelter.id,
+                shelterTel: shelter.tel
+            }));
+
+            setAddress(baseAddress);
+            setDetailAddress(detailAddress);
+        }
 
         // 검색 결과창 닫기
         setShowSearchResults(false);
     };
+
 
     // 사업자등록번호 검증 함수
     const handleBusinessRegistrationVerification = async () => {
@@ -268,7 +300,7 @@ const SignUpShelter = () => {
         if (!address.trim()) {
             setErrors({
                 ...errors,
-                address: '주소를 입력해주세요.'  // 주소 에러 메시지 추가
+                address: '주소를 입력해주세요.'
             });
             return;
         }
@@ -281,7 +313,8 @@ const SignUpShelter = () => {
                     password: formData.password,
                     owner: formData.owner,
                     nickname: formData.shelterName,
-                    address: `${address} ${detailAddress}`.trim(),
+                    address: address.trim(),           // 기본 주소만 전송
+                    detailAddress: detailAddress.trim(), // 상세 주소 별도 전송
                     startDate: startDate.replace(/-/g, ''), // YYYYMMDD 형식으로 변환
                     businessRegistrationNumber: businessRegistrationNumber.replace(/-/g, ''), // '-' 제거
                     shelterId: formData.shelterId,
@@ -299,7 +332,7 @@ const SignUpShelter = () => {
                 text: '회원가입이 완료되었습니다.',
                 confirmButtonText: '확인'
             });
-            setErrors(prevErrors => ({  // 성공 시 에러 초기화
+            setErrors(prevErrors => ({
                 ...prevErrors,
                 email: '',
                 code: '',
@@ -315,6 +348,7 @@ const SignUpShelter = () => {
             });
         }
     };
+
 
     useEffect(() => {
         window.scrollTo(0, 0);
@@ -477,18 +511,38 @@ const SignUpShelter = () => {
                                     ) : searchResults.length > 0 ? (
                                         <div>
                                             <ul className="divide-y divide-gray-200">
-                                                {searchResults.map((shelter) => (
-                                                    <li
-                                                        key={shelter.id}
-                                                        onClick={() => handleSelectShelter(shelter)}
-                                                        className="py-3 px-2 hover:bg-gray-50 cursor-pointer"
-                                                    >
-                                                        <div className="font-semibold">{shelter.name}</div>
-                                                        <div className="text-sm text-gray-600">{shelter.address}</div>
-                                                        <div className="text-sm text-gray-600">{shelter.tel}</div>
-                                                    </li>
-                                                ))}
+                                                {searchResults.map((shelter) => {
+                                                    // 주소를 기본 주소와 상세 주소로 분리
+                                                    const addressParts = shelter.address.split(' ');
+                                                    const baseAddress = addressParts.slice(0, 3).join(' '); // 기본 주소 (시/도, 시/군/구, 동/읍/면)
+                                                    const detailAddress = addressParts.slice(3).join(' '); // 상세 주소
+
+                                                    return (
+                                                        <li
+                                                            key={shelter.id}
+                                                            onClick={() => handleSelectShelter({
+                                                                ...shelter,
+                                                                baseAddress: baseAddress,
+                                                                detailAddress: detailAddress
+                                                            })}
+                                                            className="py-3 px-2 hover:bg-gray-50 cursor-pointer"
+                                                        >
+                                                            <div className="font-semibold">{shelter.name}</div>
+                                                            <div className="text-sm text-gray-600">
+                                                                <span className="font-medium">기본 주소:</span> {baseAddress}
+                                                            </div>
+                                                            {detailAddress && (
+                                                                <div className="text-sm text-gray-600">
+                                                                    <span className="font-medium">상세 주소:</span> {detailAddress}
+                                                                </div>
+                                                            )}
+                                                            <div className="text-sm text-gray-600">{shelter.tel}</div>
+                                                        </li>
+                                                    );
+                                                })}
                                             </ul>
+
+
                                         </div>
                                     ) : (
                                         <div className="text-center py-4">
@@ -509,15 +563,27 @@ const SignUpShelter = () => {
                                 보호소 직접 등록
                             </button>
                         </div>
-                        <input
-                            type="text"
-                            name="address"
-                            placeholder="주소"
-                            value={address + (detailAddress ? ' ' + detailAddress : '')}
-                            readOnly
-                            className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none"
-                            required
-                        />
+                        {/* 주소 입력 필드를 기본 주소와 상세 주소로 분리 */}
+                        <div className="space-y-2">
+                            <input
+                                type="text"
+                                name="address"
+                                placeholder="기본 주소"
+                                value={address}
+                                readOnly
+                                className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none"
+                                required
+                            />
+                            <input
+                                type="text"
+                                name="detailAddress"
+                                placeholder="상세 주소"
+                                value={detailAddress}
+                                readOnly
+                                className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none"
+                            />
+                        </div>
+
                         {/* 대표자명 입력 필드 */}
                         <div>
                             <input

@@ -17,10 +17,8 @@ const ShelterSearchModal = ({ isOpen, onClose, onSelectShelter }) => {
 
     // 주소 선택 이벤트
     const handleAddressComplete = (data) => {
-        let selectedAddress = '';
-        if (data.sido) selectedAddress += data.sido + ' ';
-        if (data.sigungu) selectedAddress += data.sigungu + ' ';
-        if (data.bname) selectedAddress += data.bname;
+        // 도로명 주소가 있는 경우 도로명 주소 사용
+        let selectedAddress = data.roadAddress || data.jibunAddress;
 
         setNewShelter(prev => ({
             ...prev,
@@ -28,6 +26,7 @@ const ShelterSearchModal = ({ isOpen, onClose, onSelectShelter }) => {
         }));
         setOpenPostcode(false);
     };
+
 
     // 신규 보호소 정보 입력 핸들러
     const handleNewShelterChange = (e) => {
@@ -51,15 +50,16 @@ const ShelterSearchModal = ({ isOpen, onClose, onSelectShelter }) => {
             return;
         }
 
-        // 신규 보호소 정보 전달
-        const fullAddress = `${newShelter.address} ${newShelter.detailAddress}`.trim();
+        // 주소와 상세주소를 분리하여 전달
         onSelectShelter({
             name: newShelter.name,
             phone: newShelter.phone,
-            address: fullAddress
+            address: newShelter.address,
+            detailAddress: newShelter.detailAddress
         });
         onClose();
     };
+
 
     // 모달이 닫힐 때 상태 초기화
     useEffect(() => {
