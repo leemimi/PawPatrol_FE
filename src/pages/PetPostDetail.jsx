@@ -28,7 +28,6 @@ const PetPostDetail = ({ onClose }) => {
 
     axios.get(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/lost-foundposts/${postId}`)
       .then(response => {
-        console.log('==============================Post data:', response.data.data); // 로그 추가
         setPost(response.data.data);
       })
       .catch(error => console.error("Error fetching post data:", error));
