@@ -305,17 +305,26 @@ const PetPostDetail = ({ onClose }) => {
           </div>
           <div className="flex items-center mb-3 p-2 bg-orange-50 rounded-lg">
             <div className="flex items-center gap-2">
-              {post.author && post.author.profileImageUrl ? (
+              {post.author && post.author.profileImageUrl && post.author.profileImageUrl.trim() !== '' ? (
                 <img
                   src={post.author.profileImageUrl}
                   alt="프로필"
                   className="w-8 h-8 rounded-full object-cover"
+                  onError={(e) => {
+                    // 이미지 로드 실패 시 fallback UI로 대체
+                    const parent = e.target.parentNode;
+                    const fallback = document.createElement('div');
+                    fallback.className = "w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white font-medium";
+                    fallback.innerText = post.nickname ? post.nickname.charAt(0).toUpperCase() : '?';
+                    parent.replaceChild(fallback, e.target);
+                  }}
                 />
               ) : (
                 <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white font-medium">
                   {post.nickname ? post.nickname.charAt(0).toUpperCase() : '?'}
                 </div>
               )}
+
               <p className="font-medium text-gray-700">{post.nickname}</p>
             </div>
           </div>
