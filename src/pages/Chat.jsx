@@ -221,7 +221,7 @@ const Chat = () => {
   const fetchMessages = async (identifier) => {
     try {
       markMessagesAsRead(identifier);
-      const response = await axios.get(`/api/v1/chat/rooms/${identifier}/messages`, { withCredentials: true });
+      const response = await axios.get(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/chat/rooms/${identifier}/messages`, { withCredentials: true });
 
       if (response.data && response.data.resultCode === "200") {
         setMessages(response.data.data || []);
@@ -338,7 +338,7 @@ const Chat = () => {
 
       setMessages(prev => [...prev, tempImageMsg]);
 
-      const response = await axios.post(`/api/v1/chat/images/${selectedUser.postInfo.id}`, formData, {
+      const response = await axios.post(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/chat/images/${selectedUser.postInfo.id}`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         },
@@ -448,7 +448,7 @@ const Chat = () => {
   const markMessagesAsRead = async (identifier) => {
     try {
       const response = await axios.post(
-        `/api/v1/chat/rooms/${identifier}/read`, 
+        `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/chat/rooms/${identifier}/read`, 
         {}, 
         { withCredentials: true }
       );
