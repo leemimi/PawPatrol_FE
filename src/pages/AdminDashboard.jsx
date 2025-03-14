@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 
 const AdminDashboard = () => {
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
     const [activeTab, setActiveTab] = useState('users');
     const [users, setUsers] = useState([]);
     const [shelters, setShelters] = useState([]);
@@ -170,6 +171,15 @@ const AdminDashboard = () => {
         // fetchReports();
     }, [navigate]);
 
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth < 640);
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
     return (
         <div className="min-h-screen bg-gray-50">
             <div className="bg-white shadow">
@@ -318,7 +328,7 @@ const AdminDashboard = () => {
                                                 </tbody>
                                             </table>
                                         </div>
-                                        <div className="mt-4 flex justify-center">
+                                        <div className="mt-4 flex justify-center overflow-x-auto py-2 w-full">
                                             <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
                                                 {/* 이전 그룹의 첫 페이지로 이동 */}
                                                 <button
@@ -337,7 +347,7 @@ const AdminDashboard = () => {
                                                     &laquo;
                                                 </button>
 
-                                                {/* 현재 페이지 그룹의 10개 페이지 버튼 생성 */}
+                                                {/* 현재 페이지 그룹의 페이지 버튼 생성 - 모바일에서는 표시 개수 제한 */}
                                                 {(() => {
                                                     if (!pagination.totalPages) return null;
 
@@ -346,21 +356,59 @@ const AdminDashboard = () => {
                                                     const startPage = currentGroup * 10;
                                                     const endPage = Math.min(startPage + 9, pagination.totalPages - 1);
 
+                                                    // 모바일 화면에서는 현재 페이지 주변의 페이지만 표시
+                                                    const isMobile = window.innerWidth < 640; // sm 브레이크포인트
                                                     const pageButtons = [];
-                                                    for (let i = startPage; i <= endPage; i++) {
-                                                        pageButtons.push(
-                                                            <button
-                                                                key={i}
-                                                                onClick={() => fetchShelters(i)}
-                                                                className={`relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium ${pagination.currentPage === i
-                                                                    ? 'z-10 bg-orange-50 border-orange-500 text-orange-600'
-                                                                    : 'text-gray-500 hover:bg-gray-50'
-                                                                    }`}
-                                                            >
-                                                                {i + 1}
-                                                            </button>
-                                                        );
+
+                                                    if (isMobile) {
+                                                        // 모바일에서는 최대 5개의 페이지 버튼만 표시
+                                                        // 현재 페이지를 중심으로 앞뒤로 최대 2개씩 표시
+                                                        const totalMobileButtons = 5;
+                                                        const halfButtons = Math.floor(totalMobileButtons / 2);
+
+                                                        // 현재 페이지를 중심으로 시작과 끝 페이지 계산
+                                                        let mobileStartPage = Math.max(startPage, pagination.currentPage - halfButtons);
+                                                        let mobileEndPage = Math.min(endPage, mobileStartPage + totalMobileButtons - 1);
+
+                                                        // 끝 페이지가 범위를 벗어나면 시작 페이지 조정
+                                                        if (mobileEndPage > endPage) {
+                                                            mobileStartPage = Math.max(startPage, endPage - totalMobileButtons + 1);
+                                                        }
+
+                                                        // 시작 페이지부터 끝 페이지까지 버튼 생성
+                                                        for (let i = mobileStartPage; i <= mobileEndPage; i++) {
+                                                            pageButtons.push(
+                                                                <button
+                                                                    key={i}
+                                                                    onClick={() => fetchShelters(i)}
+                                                                    className={`relative inline-flex items-center px-3 py-2 border border-gray-300 bg-white text-sm font-medium ${pagination.currentPage === i
+                                                                        ? 'z-10 bg-orange-50 border-orange-500 text-orange-600'
+                                                                        : 'text-gray-500 hover:bg-gray-50'
+                                                                        }`}
+                                                                >
+                                                                    {i + 1}
+                                                                </button>
+                                                            );
+                                                        }
+                                                    } else {
+                                                        // 데스크톱에서는 기존 방식대로 표시
+                                                        for (let i = startPage; i <= endPage; i++) {
+                                                            pageButtons.push(
+                                                                <button
+                                                                    key={i}
+                                                                    onClick={() => fetchShelters(i)}
+                                                                    className={`relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium ${pagination.currentPage === i
+                                                                        ? 'z-10 bg-orange-50 border-orange-500 text-orange-600'
+                                                                        : 'text-gray-500 hover:bg-gray-50'
+                                                                        }`}
+                                                                >
+                                                                    {i + 1}
+                                                                </button>
+                                                            );
+                                                        }
                                                     }
+
+
                                                     return pageButtons;
                                                 })()}
 
@@ -382,6 +430,7 @@ const AdminDashboard = () => {
                                                 </button>
                                             </nav>
                                         </div>
+
                                     </>
                                 )}
 
@@ -413,7 +462,7 @@ const AdminDashboard = () => {
                                                 </tbody>
                                             </table>
                                         </div>
-                                        <div className="mt-4 flex justify-center">
+                                        <div className="mt-4 flex justify-center overflow-x-auto py-2 w-full">
                                             <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
                                                 {/* 이전 그룹의 첫 페이지로 이동 */}
                                                 <button
@@ -432,7 +481,7 @@ const AdminDashboard = () => {
                                                     &laquo;
                                                 </button>
 
-                                                {/* 현재 페이지 그룹의 10개 페이지 버튼 생성 */}
+                                                {/* 현재 페이지 그룹의 페이지 버튼 생성 */}
                                                 {(() => {
                                                     if (!shelterPagination.totalPages) return null;
 
@@ -442,20 +491,57 @@ const AdminDashboard = () => {
                                                     const endPage = Math.min(startPage + 9, shelterPagination.totalPages - 1);
 
                                                     const pageButtons = [];
-                                                    for (let i = startPage; i <= endPage; i++) {
-                                                        pageButtons.push(
-                                                            <button
-                                                                key={i}
-                                                                onClick={() => fetchShelters(i)}
-                                                                className={`relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium ${shelterPagination.currentPage === i
-                                                                    ? 'z-10 bg-orange-50 border-orange-500 text-orange-600'
-                                                                    : 'text-gray-500 hover:bg-gray-50'
-                                                                    }`}
-                                                            >
-                                                                {i + 1}
-                                                            </button>
-                                                        );
+
+                                                    // 모바일 화면 여부 확인 (sm 브레이크포인트)
+                                                    const isMobile = window.innerWidth < 640;
+
+                                                    if (isMobile) {
+                                                        // 모바일에서는 최대 5개의 페이지 버튼만 표시
+                                                        const totalMobileButtons = 5;
+                                                        const halfButtons = Math.floor(totalMobileButtons / 2);
+
+                                                        // 현재 페이지를 중심으로 시작과 끝 페이지 계산
+                                                        let mobileStartPage = Math.max(startPage, shelterPagination.currentPage - halfButtons);
+                                                        let mobileEndPage = Math.min(endPage, mobileStartPage + totalMobileButtons - 1);
+
+                                                        // 끝 페이지가 범위를 벗어나면 시작 페이지 조정
+                                                        if (mobileEndPage > endPage) {
+                                                            mobileStartPage = Math.max(startPage, endPage - totalMobileButtons + 1);
+                                                        }
+
+                                                        // 시작 페이지부터 끝 페이지까지 버튼 생성
+                                                        for (let i = mobileStartPage; i <= mobileEndPage; i++) {
+                                                            pageButtons.push(
+                                                                <button
+                                                                    key={i}
+                                                                    onClick={() => fetchShelters(i)}
+                                                                    className={`relative inline-flex items-center px-3 py-2 border border-gray-300 bg-white text-sm font-medium ${shelterPagination.currentPage === i
+                                                                            ? 'z-10 bg-orange-50 border-orange-500 text-orange-600'
+                                                                            : 'text-gray-500 hover:bg-gray-50'
+                                                                        }`}
+                                                                >
+                                                                    {i + 1}
+                                                                </button>
+                                                            );
+                                                        }
+                                                    } else {
+                                                        // 데스크톱에서는 기존 방식대로 표시
+                                                        for (let i = startPage; i <= endPage; i++) {
+                                                            pageButtons.push(
+                                                                <button
+                                                                    key={i}
+                                                                    onClick={() => fetchShelters(i)}
+                                                                    className={`relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium ${shelterPagination.currentPage === i
+                                                                            ? 'z-10 bg-orange-50 border-orange-500 text-orange-600'
+                                                                            : 'text-gray-500 hover:bg-gray-50'
+                                                                        }`}
+                                                                >
+                                                                    {i + 1}
+                                                                </button>
+                                                            );
+                                                        }
                                                     }
+
                                                     return pageButtons;
                                                 })()}
 
@@ -477,6 +563,8 @@ const AdminDashboard = () => {
                                                 </button>
                                             </nav>
                                         </div>
+
+
                                     </>
                                 )}
 
