@@ -103,7 +103,7 @@ const LoginScreen = () => {
                 }
             }
         } catch (error) {
-            setError(error.response.data.msg || '비밀번호가 일치하지 않습니다.')
+            setError(error.response.data.msg || error.response.data.message || '비밀번호가 일치하지 않습니다.')
         }
     };
 
