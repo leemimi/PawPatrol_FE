@@ -27,7 +27,6 @@ const ChatList = () => {
 
     try {
       setIsLoading(true);
-      // 탭에 따라 다른 API 엔드포인트 호출
       let endpoint = `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/chatlist`;
       if (activeTab !== 'ALL') {
         endpoint += `?type=${activeTab}`;
@@ -37,7 +36,17 @@ const ChatList = () => {
       console.log('Fetched chat rooms:', response.data);
       
       if (response.data && response.data.resultCode === "200") {
-        setChatRooms(response.data.data || []);
+        // 채팅방 최신 메시지 순으로 정렬
+        const sortedRooms = (response.data.data || []).sort((a, b) => {
+          // 각 채팅방의 lastMessage timestamp 가져오기
+          const timeA = a.lastMessage?.timestamp ? new Date(a.lastMessage.timestamp).getTime() : 0;
+          const timeB = b.lastMessage?.timestamp ? new Date(b.lastMessage.timestamp).getTime() : 0;
+          
+          // 최신순(내림차순) 정렬
+          return timeB - timeA;
+        });
+
+        setChatRooms(sortedRooms);
       } else {
         console.warn('Unexpected response format:', response.data);
         setChatRooms([]);
